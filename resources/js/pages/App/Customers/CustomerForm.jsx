@@ -5,6 +5,7 @@ import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { router, usePage, useForm } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import POSLayout from "@/components/POSLayout";
+import { routeNameForContext } from '@/lib/utils';
 
 const genderOptions = ['male', 'female', 'other'];
 
@@ -35,7 +36,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        isEdit ? put(route('customers.update', customer.id)) : post(route('customers.store'));
+        isEdit ? put(route(routeNameForContext('customers.update'), customer.id)) : post(route(routeNameForContext('customers.store')));
     };
 
     return (
@@ -56,7 +57,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
             }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton>
-                        <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route('customers.index'))} />
+                        <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route(routeNameForContext('customers.index')))} />
                     </IconButton>
                     <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
                         {isEdit ? 'Edit Customer' : 'Add Customer'}

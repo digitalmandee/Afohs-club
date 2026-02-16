@@ -4,6 +4,7 @@ import axios from 'axios';
 import debounce from 'lodash.debounce';
 import { styled } from '@mui/material/styles';
 import { Search } from '@mui/icons-material'
+import { routeNameForContext } from '@/lib/utils';
 
 const RoundedTextField = styled(TextField)({
     '& .MuiOutlinedInput-root': {
@@ -38,7 +39,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
                 if (filters.sub_category_ids && filters.sub_category_ids.length > 0) params.sub_category_ids = filters.sub_category_ids.join(',');
                 if (filters.manufacturer_ids && filters.manufacturer_ids.length > 0) params.manufacturer_ids = filters.manufacturer_ids.join(',');
 
-                const response = await axios.get(route('api.products.filter'), { params });
+                const response = await axios.get(route(routeNameForContext('api.products.filter')), { params });
 
                 if (response.data.success) {
                     onProductsLoaded?.(response.data.products);
@@ -55,7 +56,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
 
     // Fetch Manufacturers
     useEffect(() => {
-        axios.get(route('api.manufacturers.list')).then((response) => {
+        axios.get(route(routeNameForContext('api.manufacturers.list'))).then((response) => {
             setManufacturers(response.data.manufacturers);
         });
     }, []);
@@ -77,7 +78,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
             // The requirement said "Update Product Filter".
             // Let's just handle the case where if 1 category is selected we show its subcategories.
             if (categoryFilter.length === 1) {
-                axios.get(route('api.sub-categories.by-category', categoryFilter[0])).then((response) => {
+                axios.get(route(routeNameForContext('api.sub-categories.by-category'), categoryFilter[0])).then((response) => {
                     setSubCategories(response.data.subCategories);
                 });
             } else {

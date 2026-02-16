@@ -1,5 +1,6 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
+import { routeNameForContext } from '@/lib/utils';
 import { Add as AddIcon, ChevronRight as ChevronRightIcon, RadioButtonUnchecked as CircleIcon, Close as CloseIcon, CallMerge as MergeIcon, OpenWith as MoveIcon } from '@mui/icons-material';
 import { Box, Dialog, Divider, IconButton, List, ListItem, ListItemIcon, ListItemSecondaryAction, ListItemText, Paper, Switch, Typography } from '@mui/material';
 import { useState } from 'react';
@@ -17,7 +18,7 @@ const ActiveTable = ({ table = {}, tableName = 'Table', selectedDate, onClose })
     const handleAddNewReservation = () => {
         handleOrderTypeChange('reservation');
 
-        router.visit(route('order.new'), {
+        router.visit(route(routeNameForContext('order.new')), {
             data: {
                 table: table?.id,
                 floor: table?.floor_id,

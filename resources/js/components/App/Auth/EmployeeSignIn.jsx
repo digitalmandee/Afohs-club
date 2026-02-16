@@ -1,12 +1,11 @@
 'use client';
-
 import { router } from '@inertiajs/react';
 import { ArrowBack as ArrowBackIcon, ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
 import { Box, Button, Link, TextField, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useRef, useState } from 'react';
 
-const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors, transform }) => {
+const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors, transform, routes }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     // Create refs for input fields
     const inputRefs = useRef([]);
@@ -43,10 +42,7 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
             password: data.password.join(''),
         }));
 
-        post(route('tenant.login'), {
-            onSuccess: () => {
-                router.visit(route('tenant.dashboard'));
-            },
+        post(route(routes.login), {
             onError: (errors) => {
                 // Show specific backend error if available
                 const message = errors.employee_id || errors.password || 'Login failed. Please check your credentials and try again.';
@@ -206,7 +202,7 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                                     bgcolor: 'rgba(0,0,0,0.04)',
                                 },
                             }}
-                            onClick={() => setActiveTab('employee-signin')}
+                            onClick={() => setActiveTab('signin')}
                         >
                             Back
                         </Button>

@@ -1,6 +1,7 @@
 'use client';
 
 import { tenantAsset } from '@/helpers/asset';
+import { routeNameForContext } from '@/lib/utils';
 import { Search } from '@mui/icons-material';
 import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import axios from 'axios';
@@ -168,7 +169,7 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, i
 
     useEffect(() => {
         setProducts([]);
-        axios.get(route('products.categories'), { params: { tenant_id: selectedRestaurant } }).then((res) => {
+        axios.get(route(routeNameForContext('products.categories')), { params: { tenant_id: selectedRestaurant } }).then((res) => {
             const nextCategories = res.data.categories || [];
             setCategories(nextCategories);
             setSelectedCategory((prev) => {
@@ -185,7 +186,7 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, i
             return;
         }
         axios
-            .get(route('products.bycategory', { category_id: selectedCategory }), {
+            .get(route(routeNameForContext('products.bycategory'), { category_id: selectedCategory }), {
                 params: { order_type: orderType },
             })
             .then((res) => setProducts(res.data.products));

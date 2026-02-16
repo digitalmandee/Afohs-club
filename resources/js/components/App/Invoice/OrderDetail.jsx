@@ -4,6 +4,7 @@ import { Avatar, Box, Button, Chip, Dialog, Grid, IconButton, LinearProgress, Ty
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder }) => {
     const [loading, setLoading] = useState(true);
@@ -13,7 +14,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
     useEffect(() => {
         if (openModal && invoiceId) {
             setLoading(true);
-            axios.get(route('transaction.invoice', { invoiceId: invoiceId })).then((response) => {
+            axios.get(route(routeNameForContext('transaction.invoice'), { invoiceId: invoiceId })).then((response) => {
                 setPaymentData(response.data);
                 setLoading(false);
             });

@@ -3,6 +3,7 @@
 import UserAutocomplete from '@/components/UserAutocomplete';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
+import { routeNameForContext } from '@/lib/utils';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, CircularProgress, FormControl, FormControlLabel, Grid, IconButton, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
@@ -404,7 +405,7 @@ const RoomDialog = ({ guestTypes, roomTypes, loading }) => {
                     borderTop: '1px solid #e0e0e0',
                 }}
             >
-                <Button sx={{ color: '#666', textTransform: 'none', mr: 1 }} onClick={() => router.visit(route('dashboard'))}>
+                <Button sx={{ color: '#666', textTransform: 'none', mr: 1 }} onClick={() => router.visit(route(routeNameForContext('order.new')))}>
                     Cancel
                 </Button>
                 <Button
@@ -422,7 +423,7 @@ const RoomDialog = ({ guestTypes, roomTypes, loading }) => {
                         const booking = room.current_booking;
 
                         router.visit(
-                            route('order.menu', {
+                            route(routeNameForContext('order.menu'), {
                                 room_id: room.id,
                                 room_booking_id: booking ? booking.id : null,
                                 member_id: orderDetails.member ? orderDetails.member.id : null,

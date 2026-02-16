@@ -11,6 +11,7 @@ import { Avatar, Box, Button, Card, CardContent, Chip, Collapse, Dialog, DialogC
 import 'bootstrap/dist/css/bootstrap.min.css';
 import debounce from 'lodash.debounce';
 import { useMemo, useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -368,14 +369,14 @@ function TransactionDashboard({ Invoices, totalOrders }) {
 
     const handleTabChange = (type) => {
         setActiveTab(type);
-        router.get(route('transaction.index'), { orderType: type, search, page: 1 }, { preserveState: true });
+        router.get(route(routeNameForContext('transaction.index')), { orderType: type, search, page: 1 }, { preserveState: true });
     };
 
     // Debounced function to trigger search after user stops typing
     const triggerSearch = useMemo(
         () =>
             debounce((value) => {
-                router.get(route('transaction.index'), { orderType: activeTab, search: value, page: 1 }, { preserveState: true });
+                router.get(route(routeNameForContext('transaction.index')), { orderType: activeTab, search: value, page: 1 }, { preserveState: true });
             }, 500), // 500ms delay
         [activeTab],
     );
@@ -444,7 +445,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
 
     const handleApplyFilters = () => {
         router.get(
-            route('transaction.index'),
+            route(routeNameForContext('transaction.index')),
             {
                 ...filters,
                 search,
@@ -464,7 +465,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
         };
         setFilters(reset);
         router.get(
-            route('transaction.index'),
+            route(routeNameForContext('transaction.index')),
             {
                 ...reset,
                 search,
@@ -756,7 +757,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                             page={Invoices.current_page}
                                             onChange={(e, page) =>
                                                 router.get(
-                                                    route('transaction.index'),
+                                                    route(routeNameForContext('transaction.index')),
                                                     {
                                                         page,
                                                         search,

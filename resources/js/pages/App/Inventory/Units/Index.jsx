@@ -5,6 +5,7 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, DeleteSweep as DeleteSweepIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -29,7 +30,7 @@ const UnitsIndex = ({ units, filters }) => {
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
-        router.get(route('units.index'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('units.index')), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     // --- Create / Edit Handlers ---
@@ -57,7 +58,7 @@ const UnitsIndex = ({ units, filters }) => {
 
         setProcessing(true);
         if (editingUnit) {
-            router.put(route('units.update', editingUnit.id), formData, {
+            router.put(route(routeNameForContext('units.update'), editingUnit.id), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Unit updated successfully!', { variant: 'success' });
                     handleCloseModal();
@@ -68,7 +69,7 @@ const UnitsIndex = ({ units, filters }) => {
                 onFinish: () => setProcessing(false),
             });
         } else {
-            router.post(route('units.store'), formData, {
+            router.post(route(routeNameForContext('units.store')), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Unit created successfully!', { variant: 'success' });
                     handleCloseModal();
@@ -94,9 +95,8 @@ const UnitsIndex = ({ units, filters }) => {
 
     const handleDelete = () => {
         if (!unitToDelete) return;
-
         setProcessing(true);
-        router.delete(route('units.destroy', unitToDelete.id), {
+        router.delete(route(routeNameForContext('units.destroy'), unitToDelete.id), {
             onSuccess: () => {
                 enqueueSnackbar('Unit deleted successfully!', { variant: 'success' });
                 handleCloseDeleteModal();
@@ -153,7 +153,7 @@ const UnitsIndex = ({ units, filters }) => {
                                 variant="outlined"
                                 color="error"
                                 startIcon={<DeleteIcon />}
-                                onClick={() => router.visit(route('units.trashed'))}
+                            onClick={() => router.visit(route(routeNameForContext('units.trashed')))}
                                 sx={{
                                     bgcolor: 'transparent',
                                     height: 35,
@@ -224,7 +224,7 @@ const UnitsIndex = ({ units, filters }) => {
                     </TableContainer>
 
                     <Box mt={3} display="flex" justifyContent="center">
-                        <Pagination count={units.last_page} page={units.current_page} onChange={(e, p) => router.get(route('units.index'), { page: p, search }, { preserveState: true })} color="primary" />
+                        <Pagination count={units.last_page} page={units.current_page} onChange={(e, p) => router.get(route(routeNameForContext('units.index')), { page: p, search }, { preserveState: true })} color="primary" />
                     </Box>
                 </Box>
             {/* </Box> */}

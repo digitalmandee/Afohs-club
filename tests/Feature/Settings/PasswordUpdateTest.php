@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Hash;
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('password can be updated', function () {
+    $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+
     $user = User::factory()->create();
 
     $response = $this
@@ -25,6 +27,8 @@ test('password can be updated', function () {
 });
 
 test('correct password must be provided to update password', function () {
+    $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+
     $user = User::factory()->create();
 
     $response = $this

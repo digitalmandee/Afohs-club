@@ -5,6 +5,7 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -21,7 +22,7 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
-        router.get(route('category.trashed'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('category.trashed')), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     // Restore
@@ -34,7 +35,7 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
         if (!selectedItem) return;
         setProcessing(true);
         router.post(
-            route('category.restore', selectedItem.id),
+            route(routeNameForContext('category.restore'), selectedItem.id),
             {},
             {
                 onSuccess: () => {
@@ -57,7 +58,7 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
     const handleForceDelete = () => {
         if (!selectedItem) return;
         setProcessing(true);
-        router.delete(route('category.force-delete', selectedItem.id), {
+        router.delete(route(routeNameForContext('category.force-delete'), selectedItem.id), {
             onSuccess: () => {
                 enqueueSnackbar('Category permanently deleted!', { variant: 'success' });
                 setDeleteModalOpen(false);
@@ -86,7 +87,7 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Box display="flex" alignItems="center" gap={1}>
-                        <IconButton onClick={() => router.visit(route('inventory.category'))}>
+                        <IconButton onClick={() => router.visit(route(routeNameForContext('inventory.category')))}>
                             <ArrowBackIcon />
                         </IconButton>
                         <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
@@ -145,7 +146,7 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
                 </TableContainer>
 
                 <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={trashedCategories.last_page} page={trashedCategories.current_page} onChange={(e, p) => router.get(route('category.trashed'), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Pagination count={trashedCategories.last_page} page={trashedCategories.current_page} onChange={(e, p) => router.get(route(routeNameForContext('category.trashed')), { page: p, search }, { preserveState: true })} color="primary" />
                 </Box>
             </Box>
 

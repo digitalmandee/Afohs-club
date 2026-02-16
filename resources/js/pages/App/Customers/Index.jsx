@@ -7,6 +7,7 @@ import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import POSLayout from "@/components/POSLayout";
 import { FaEdit } from 'react-icons/fa';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -33,7 +34,7 @@ const ManageCustomer = ({ customerData }) => {
         if (!customerToDelete) return;
 
         try {
-            await axios.delete(route('customers.destroy', customerToDelete.id), {
+            await axios.delete(route(routeNameForContext('customers.destroy'), customerToDelete.id), {
                 headers: { 'X-CSRF-TOKEN': csrfToken },
             });
             setCustomers((prev) => prev.filter((c) => c.id !== customerToDelete.id));
@@ -80,7 +81,7 @@ const ManageCustomer = ({ customerData }) => {
                             borderRadius: '16px',
                             height: 35,
                             textTransform: 'none'
-                        }} onClick={() => router.visit(route('customers.create'))}>
+                        }} onClick={() => router.visit(route(routeNameForContext('customers.create')))}>
                         Add Customer
                     </Button>
                 </Box>
@@ -106,7 +107,7 @@ const ManageCustomer = ({ customerData }) => {
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{customer.name}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{customer.email}</TableCell>
                                         <TableCell>
-                                            <IconButton onClick={() => router.visit(route('customers.edit', customer.id))} size="small" title="Edit">
+                                            <IconButton onClick={() => router.visit(route(routeNameForContext('customers.edit'), customer.id))} size="small" title="Edit">
                                                 <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
                                             </IconButton>
                                             <IconButton onClick={() => confirmDelete(customer)} size="small" color='error' title="Delete">

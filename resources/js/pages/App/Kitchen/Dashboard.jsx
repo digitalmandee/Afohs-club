@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { enqueueSnackbar } from 'notistack';
+import { routeNameForContext } from '@/lib/utils';
 dayjs.extend(utc);
 
 const drawerWidthOpen = 240;
@@ -213,7 +214,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
         const formData = new FormData();
         formData.append('status', checked ? 'completed' : 'pending');
 
-        router.post(route('kitchen.item.update-status', { order: orderId, item: itemId }), formData, {
+        router.post(route(routeNameForContext('kitchen.item.update-status'), { order: orderId, item: itemId }), formData, {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
@@ -271,7 +272,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                 formattedTime = new Date().toISOString();
             }
 
-            router.post(route('kitchen.update-all', orderId), formData, {
+            router.post(route(routeNameForContext('kitchen.update-all'), orderId), formData, {
                 forceFormData: true,
                 preserveScroll: true,
                 onSuccess: () => {

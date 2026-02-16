@@ -6,6 +6,7 @@ import { Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogCon
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -96,12 +97,12 @@ export default function CategoryIndex({ categories }) {
 
             if (editingCategoryId) {
                 formData.append('_method', 'PUT');
-                router.post(route('category.update', editingCategoryId), formData, {
+                router.post(route(routeNameForContext('category.update'), editingCategoryId), formData, {
                     forceFormData: true,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit(route('inventory.category'));
+                        router.visit(route(routeNameForContext('inventory.category')));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || 'An error occurred while updating the category.');
@@ -110,12 +111,12 @@ export default function CategoryIndex({ categories }) {
                 });
                 setSnackbar({ open: true, message: 'Category updated successfully!', severity: 'success' });
             } else {
-                post(route('inventory.category.store'), {
+                post(route(routeNameForContext('inventory.category.store')), {
                     data: formData,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit(route('inventory.category'));
+                        router.visit(route(routeNameForContext('inventory.category')));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || errors.message || 'An error occurred while creating the category.');
@@ -151,7 +152,7 @@ export default function CategoryIndex({ categories }) {
         if (pendingDeleteCategory) {
             setDeleting(true);
 
-            router.delete(route('category.destroy', { category: pendingDeleteCategory.id }), {
+            router.delete(route(routeNameForContext('category.destroy'), { category: pendingDeleteCategory.id }), {
                 data: {
                     new_category_id: reassignCategoryId || null,
                 },
@@ -160,7 +161,7 @@ export default function CategoryIndex({ categories }) {
                     setPendingDeleteCategory(null);
                     setReassignCategoryId(null);
                     setDeleting(false);
-                    router.visit(route('inventory.category'));
+                    router.visit(route(routeNameForContext('inventory.category')));
                 },
                 onError: (errors) => {
                     setErrorMessage(errors.message || 'An error occurred while deleting the category.');
@@ -183,7 +184,7 @@ export default function CategoryIndex({ categories }) {
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
-        router.get(route('inventory.category'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('inventory.category')), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     useEffect(() => {
@@ -257,10 +258,10 @@ export default function CategoryIndex({ categories }) {
                                 >
                                     Add Category
                                 </Button>
-                                <Button 
-                                variant="outlined" 
-                                color="error" 
-                                startIcon={<DeleteIcon />} onClick={() => router.visit(route('category.trashed'))}
+                                <Button
+                                variant="outlined"
+                                color="error"
+                                startIcon={<DeleteIcon />} onClick={() => router.visit(route(routeNameForContext('category.trashed')))}
                                     sx={{
                                         bgcolor: 'transparent',
                                         borderRadius: '16px',
@@ -286,7 +287,7 @@ export default function CategoryIndex({ categories }) {
                                         }}
                                     >
                                         <CardContent sx={{ p: 2 }}>
-                                            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index', { category_id: category.id }))}>
+                                            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => router.visit(route(routeNameForContext('inventory.index'), { category_id: category.id }))}>
                                                 <div style={{ display: 'flex' }}>
                                                     <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                         <img

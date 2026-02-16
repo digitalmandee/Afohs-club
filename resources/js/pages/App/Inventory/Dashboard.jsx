@@ -9,6 +9,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -150,7 +151,7 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
         // Here you would delete the product from your data
         setDeleteLoading(true);
         try {
-            const response = await axios.delete(route('inventory.destroy', selectedProduct.id));
+            const response = await axios.delete(route(routeNameForContext('inventory.destroy'), selectedProduct.id));
             if (response.data?.success) {
                 setProducts((prev) => prev.filter((product) => product.id !== selectedProduct.id));
                 setOpenDeleteConfirm(false);
@@ -203,7 +204,7 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
-                                onClick={() => router.visit(route('product.create'))}
+                                onClick={() => router.visit(route(routeNameForContext('product.create')))}
                                 sx={{
                                     borderRadius: '16px',
                                     backgroundColor: '#063455',
@@ -221,7 +222,7 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                                 variant="outlined"
                                 color="error"
                                 startIcon={<DeleteIcon />}
-                                onClick={() => router.visit(route('inventory.trashed'))}
+                                onClick={() => router.visit(route(routeNameForContext('inventory.trashed')))}
                                 sx={{
                                     borderRadius: '16px',
                                     // px: 3,
@@ -581,7 +582,7 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                                                 p: 1,
                                             }}
                                         >
-                                            <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={() => router.visit(route('inventory.show', selectedProduct.id))}>
+                                            <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={() => router.visit(route(routeNameForContext('inventory.show'), selectedProduct.id))}>
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
                                             <IconButton sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }} onClick={handleDeleteConfirmOpen}>

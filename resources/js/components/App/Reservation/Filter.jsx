@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Box, Typography, Button, TextField, IconButton, DialogContent } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
+import { routeNameForContext } from '@/lib/utils';
 
 const ReservationFilter = ({ onClose }) => {
     const { filters } = usePage().props;
@@ -12,7 +13,7 @@ const ReservationFilter = ({ onClose }) => {
 
     const applyFilters = () => {
         router.get(
-            route('reservations.index'),
+            route(routeNameForContext('reservations.index')),
             {
                 status: status !== 'all' ? status : '',
                 start_date: startDate,
@@ -27,7 +28,7 @@ const ReservationFilter = ({ onClose }) => {
         setStatus('all');
         setStartDate('');
         setEndDate('');
-        router.get(route('reservations.index'), {}, { preserveScroll: true, preserveState: true, replace: true });
+        router.get(route(routeNameForContext('reservations.index')), {}, { preserveScroll: true, preserveState: true, replace: true });
     };
 
     return (

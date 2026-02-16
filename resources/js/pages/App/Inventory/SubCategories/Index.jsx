@@ -5,6 +5,7 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, DeleteSweep as DeleteSweepIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -29,7 +30,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
-        router.get(route('sub-categories.index'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('sub-categories.index')), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     // --- Create / Edit Handlers ---
@@ -65,7 +66,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
 
         setProcessing(true);
         if (editingSubCategory) {
-            router.put(route('sub-categories.update', editingSubCategory.id), formData, {
+            router.put(route(routeNameForContext('sub-categories.update'), editingSubCategory.id), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Sub Category updated successfully!', { variant: 'success' });
                     handleCloseModal();
@@ -76,7 +77,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
                 onFinish: () => setProcessing(false),
             });
         } else {
-            router.post(route('sub-categories.store'), formData, {
+            router.post(route(routeNameForContext('sub-categories.store')), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Sub Category created successfully!', { variant: 'success' });
                     handleCloseModal();
@@ -102,9 +103,8 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
 
     const handleDelete = () => {
         if (!subCategoryToDelete) return;
-
         setProcessing(true);
-        router.delete(route('sub-categories.destroy', subCategoryToDelete.id), {
+        router.delete(route(routeNameForContext('sub-categories.destroy'), subCategoryToDelete.id), {
             onSuccess: () => {
                 enqueueSnackbar('Sub Category deleted successfully!', { variant: 'success' });
                 handleCloseDeleteModal();
@@ -171,10 +171,11 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
                                 variant="outlined"
                                 color="error"
                                 startIcon={<DeleteIcon />}
-                                onClick={() => router.visit(route('sub-categories.trashed'))}
+                            onClick={() => router.visit(route(routeNameForContext('sub-categories.trashed')))}
                                 sx={{
                                     bgcolor: 'transparent',
                                     textTransform: 'none',
+                                    borderRadius: '16px',
                                     borderRadius: '16px',
                                     height: 35,
                                     '&:hover': { bgcolor: 'transparent' }
@@ -230,7 +231,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
                     </TableContainer>
 
                     <Box mt={3} display="flex" justifyContent="center">
-                        <Pagination count={subCategories.last_page} page={subCategories.current_page} onChange={(e, p) => router.get(route('sub-categories.index'), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Pagination count={subCategories.last_page} page={subCategories.current_page} onChange={(e, p) => router.get(route(routeNameForContext('sub-categories.index')), { page: p, search }, { preserveState: true })} color="primary" />
                     </Box>
                 </Box>
             {/* </Box> */}

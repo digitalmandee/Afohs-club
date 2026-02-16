@@ -5,6 +5,7 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -21,7 +22,7 @@ const CakeTypesTrashed = ({ trashedTypes, filters }) => {
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
-        router.get(route('cake-types.trashed'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('cake-types.trashed')), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     // --- Restore Handlers ---
@@ -39,7 +40,7 @@ const CakeTypesTrashed = ({ trashedTypes, filters }) => {
         if (!selectedType) return;
         setProcessing(true);
         router.post(
-            route('cake-types.restore', selectedType.id),
+            route(routeNameForContext('cake-types.restore'), selectedType.id),
             {},
             {
                 onSuccess: () => {
@@ -66,7 +67,7 @@ const CakeTypesTrashed = ({ trashedTypes, filters }) => {
     const handleForceDelete = () => {
         if (!selectedType) return;
         setProcessing(true);
-        router.delete(route('cake-types.force-delete', selectedType.id), {
+        router.delete(route(routeNameForContext('cake-types.force-delete'), selectedType.id), {
             onSuccess: () => {
                 enqueueSnackbar('Cake Type permanently deleted!', { variant: 'success' });
                 handleCloseForceDeleteModal();
@@ -101,7 +102,7 @@ const CakeTypesTrashed = ({ trashedTypes, filters }) => {
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Box display="flex" alignItems="center">
                         <IconButton>
-                            <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route('cake-types.index'))} />
+                            <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route(routeNameForContext('cake-types.index')))} />
                         </IconButton>
                         <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
                             Trashed Cake Types
@@ -169,7 +170,7 @@ const CakeTypesTrashed = ({ trashedTypes, filters }) => {
                 </TableContainer>
 
                 <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={trashedTypes.last_page} page={trashedTypes.current_page} onChange={(e, p) => router.get(route('cake-types.trashed'), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Pagination count={trashedTypes.last_page} page={trashedTypes.current_page} onChange={(e, p) => router.get(route(routeNameForContext('cake-types.trashed')), { page: p, search }, { preserveState: true })} color="primary" />
                 </Box>
             </Box >
 

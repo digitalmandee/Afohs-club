@@ -14,10 +14,20 @@ use Inertia\Inertia;
 
 class FloorController extends Controller
 {
+    private function restaurantId(Request $request = null)
+    {
+        $request = $request ?? request();
+        return $request->session()->get('active_restaurant_id') ?? tenant('id');
+    }
+
     public function index()
     {
-        $floors = Floor::all();
-        $tables = Table::with('floor')->get();
+        $restaurantId = $this->restaurantId();
+
+        $floors = Floor::where('tenant_id', $restaurantId)->get();
+        $tables = Table::with('floor')
+            ->where('tenant_id', $restaurantId)
+            ->get();
         return Inertia::render('App/Table/Newfloor', [
             'floorsdata' => $floors,
             'tablesData' => $tables,
@@ -31,6 +41,8 @@ class FloorController extends Controller
 
     public function store(Request $request)
     {
+        $restaurantId = $this->restaurantId($request);
+
         $request->validate([
             'floor.name' => 'required|string|max:255',
             'floor.area' => 'required|string|max:255',
@@ -48,12 +60,14 @@ class FloorController extends Controller
         $floor = Floor::create([
             'name' => $request->floor['name'],
             'area' => $request->floor['area'],
+            'tenant_id' => $restaurantId,
         ]);
 
         foreach ($request->tables as $tableData) {
             $floor->tables()->create([
                 'table_no' => $tableData['table_no'],
                 'capacity' => $tableData['capacity'],
+                'tenant_id' => $restaurantId,
             ]);
         }
 
@@ -62,8 +76,12 @@ class FloorController extends Controller
 
     public function floorTable()
     {
-        $floors = Floor::all();
-        $tables = Table::with('floor')->get();
+        $restaurantId = $this->restaurantId();
+
+        $floors = Floor::where('tenant_id', $restaurantId)->get();
+        $tables = Table::with('floor')
+            ->where('tenant_id', $restaurantId)
+            ->get();
 
         return Inertia::render('App/Table/Dashboard', [
             'floorsdata' => $floors,
@@ -73,7 +91,8 @@ class FloorController extends Controller
 
     public function toggleStatus(Request $request, $id)
     {
-        $floor = Floor::findOrFail($id);
+        $restaurantId = $this->restaurantId($request);
+        $floor = Floor::where('tenant_id', $restaurantId)->findOrFail($id);
         $floor->status = $request->status;
         $floor->save();
 
@@ -82,7 +101,8 @@ class FloorController extends Controller
 
     public function createOrEdit($id = null)
     {
-        $floor = $id ? Floor::with('tables')->findOrFail($id) : null;
+        $restaurantId = $this->restaurantId();
+        $floor = $id ? Floor::where('tenant_id', $restaurantId)->with('tables')->findOrFail($id) : null;
 
         return Inertia::render('App/Table/Newfloor', [
             'floorInfo' => $floor,
@@ -91,9 +111,13 @@ class FloorController extends Controller
 
     public function edit($id)
     {
-        $floor = Floor::with('tables')->findOrFail($id);
-        $floors = Floor::all();
-        $tables = Table::with('floor')->get();
+        $restaurantId = $this->restaurantId();
+
+        $floor = Floor::where('tenant_id', $restaurantId)->with('tables')->findOrFail($id);
+        $floors = Floor::where('tenant_id', $restaurantId)->get();
+        $tables = Table::with('floor')
+            ->where('tenant_id', $restaurantId)
+            ->get();
 
         return Inertia::render('App/Table/Newfloor', [
             'floorInfo' => $floor,
@@ -104,6 +128,8 @@ class FloorController extends Controller
 
     public function update(Request $request, $id)
     {
+        $restaurantId = $this->restaurantId($request);
+
         $request->validate([
             'floor.name' => 'required|string|max:255',
             'floor.area' => 'required|string|max:255',
@@ -112,7 +138,7 @@ class FloorController extends Controller
             'tables.*.capacity' => 'required|string|max:255',
         ]);
 
-        $floor = Floor::findOrFail($id);
+        $floor = Floor::where('tenant_id', $restaurantId)->findOrFail($id);
 
         // Update floor details
         $floor->update([
@@ -131,6 +157,7 @@ class FloorController extends Controller
                 $floor->tables()->create([
                     'table_no' => $tableData['table_no'],
                     'capacity' => $tableData['capacity'],
+                    'tenant_id' => $restaurantId,
                 ]);
             } elseif ($tableId && str_starts_with($tableId, 'update-')) {
                 // Updated existing table
@@ -158,21 +185,26 @@ class FloorController extends Controller
 
     public function getFloors(Request $request)
     {
+        $restaurantId = $this->restaurantId($request);
+
         $date = $request->date;
         $floorId = $request->floor;
 
         $parsedDate = Carbon::parse($date)->startOfDay();
 
-        $floor = Floor::where('id', $floorId)
+        $floor = Floor::where('tenant_id', $restaurantId)
+            ->where('id', $floorId)
             ->whereDate('created_at', '<=', $parsedDate)
-            ->with(['tables' => function ($query) use ($parsedDate) {
+            ->with(['tables' => function ($query) use ($parsedDate, $restaurantId) {
                 $query
+                    ->where('tenant_id', $restaurantId)
                     ->whereDate('created_at', '<=', $parsedDate)
                     ->select('id', 'floor_id', 'table_no', 'capacity')
                     ->with([
                         // Reservations for the day
-                        'reservations' => function ($resQuery) use ($parsedDate) {
+                        'reservations' => function ($resQuery) use ($parsedDate, $restaurantId) {
                             $resQuery
+                                ->where('tenant_id', $restaurantId)
                                 ->whereDate('date', $parsedDate)
                                 ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'member_id', 'customer_id')
                                 ->with([
@@ -184,8 +216,9 @@ class FloorController extends Controller
                                 ]);
                         },
                         // Direct dinein/takeaway orders
-                        'orders' => function ($orderQuery) use ($parsedDate) {
+                        'orders' => function ($orderQuery) use ($parsedDate, $restaurantId) {
                             $orderQuery
+                                ->where('tenant_id', $restaurantId)
                                 ->whereDate('start_date', $parsedDate)
                                 ->whereNull('reservation_id')
                                 ->whereIn('order_type', ['dinein', 'takeaway'])

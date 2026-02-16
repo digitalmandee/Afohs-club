@@ -1,6 +1,7 @@
 import UserAutocomplete from '@/components/UserAutocomplete';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
+import { routeNameForContext } from '@/lib/utils';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Box, Button, FormControl, FormControlLabel, Grid, Radio, RadioGroup, TextField, Typography, Autocomplete } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -12,7 +13,7 @@ const TakeAwayDialog = ({ guestTypes }) => {
 
     useEffect(() => {
         if (orderDetails.order_type === 'delivery') {
-            axios.get(route('riders.all')).then((res) => {
+            axios.get(route(routeNameForContext('riders.all'))).then((res) => {
                 if (res.data.success) {
                     setRiders(res.data.riders);
                 }
@@ -38,7 +39,7 @@ const TakeAwayDialog = ({ guestTypes }) => {
         const handleKeyDown = (e) => {
             if (e.key === 'F10' && !isDisabled) {
                 e.preventDefault();
-                router.visit(route('order.menu'));
+                router.visit(route(routeNameForContext('order.menu')));
             }
         };
 
@@ -206,7 +207,7 @@ const TakeAwayDialog = ({ guestTypes }) => {
                     disabled={isDisabled}
                     onClick={() =>
                         router.visit(
-                            route('order.menu', {
+                            route(routeNameForContext('order.menu'), {
                                 member_id: orderDetails.member.id,
                                 member_type: orderDetails.member_type,
                                 order_type: orderDetails.order_type,

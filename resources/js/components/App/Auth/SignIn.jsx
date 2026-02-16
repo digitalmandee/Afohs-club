@@ -2,7 +2,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import BackspaceIcon from '@mui/icons-material/Backspace';
 import { Box, Button, Link, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 
-const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
+const SignIn = ({ setActiveTab, post, errors, data, setData, processing, routes }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -15,7 +15,7 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing }) => {
     };
 
     const handleSubmit = () => {
-        post(route('tenant.check-user-id'), {
+        post(route(routes.checkUserId), {
             onSuccess: () => {
                 setActiveTab('employee-signin');
             },

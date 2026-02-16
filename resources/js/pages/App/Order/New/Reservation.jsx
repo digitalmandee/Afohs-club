@@ -1,6 +1,7 @@
 import UserAutocomplete from '@/components/UserAutocomplete';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router, usePage } from '@inertiajs/react';
+import { routeNameForContext } from '@/lib/utils';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -215,7 +216,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                 ...orderDetails,
                 table: selectedTableId,
             };
-            const response = await axios.post(route('order.reservation'), payload);
+            const response = await axios.post(route(routeNameForContext('order.reservation')), payload);
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
 
@@ -237,7 +238,13 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                 // Actually, store handled redirect. We just need to navigate.
                 // Store table selection in order details before going to menu
                 handleOrderDetailChange('table', selectedTableId);
-                router.visit(route('order.menu', { reservation_id: response.data.order.id, order_type: 'reservation', is_new_order: true }));
+                router.visit(
+                    route(routeNameForContext('order.menu'), {
+                        reservation_id: response.data.order.id,
+                        order_type: 'reservation',
+                        is_new_order: true,
+                    }),
+                );
             } else {
                 setForm({ member: null, date: '', time: '', custom_time: '', person_count: '', down_payment: '', note: '' });
                 handleOrderDetailChange('member', null);
@@ -249,7 +256,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                 handleOrderDetailChange('paymentAccount', '');
                 handleOrderDetailChange('price', '');
                 setErrors({});
-                router.visit(route('order.new'));
+                router.visit(route(routeNameForContext('order.new')));
             }
         } catch (error) {
             if (printWindow) {
@@ -292,7 +299,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
 
             setSlotsLoading(true);
             axios
-                .get(route('tables.available-times', selectedTableId), {
+                .get(route(routeNameForContext('tables.available-times'), selectedTableId), {
                     params: { date: formattedDate },
                 })
                 .then((res) => {
@@ -978,7 +985,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
 
                     {/* Footer Buttons */}
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                        <Button variant="text" sx={{ color: '#666', textTransform: 'none' }} onClick={() => router.visit(route('order.new'))}>
+                        <Button variant="text" sx={{ color: '#666', textTransform: 'none' }} onClick={() => router.visit(route(routeNameForContext('order.new')))}>
                             Cancel
                         </Button>
                         <Button

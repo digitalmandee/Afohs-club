@@ -8,6 +8,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { ChevronDown } from 'lucide-react';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useRef, useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -307,7 +308,7 @@ const AddProduct = ({ product, id }) => {
     // Ingredient functions
     const loadIngredients = async () => {
         try {
-            const response = await axios.get(route('api.ingredients'));
+            const response = await axios.get(route(routeNameForContext('api.ingredients')));
             setIngredients(response.data);
         } catch (error) {
             console.error('Error loading ingredients:', error);
@@ -359,14 +360,14 @@ const AddProduct = ({ product, id }) => {
                 cost: ing.cost,
             })),
         }));
-        submit('post', route(id ? 'inventory.update' : 'inventory.store', { id }), {
+        submit('post', route(routeNameForContext(id ? 'inventory.update' : 'inventory.store'), { id }), {
             onSuccess: () => {
                 enqueueSnackbar(id ? 'Product updated successfully' : 'Product added successfully', { variant: 'success' });
                 reset();
                 setUploadedImages([]);
                 setExistingImages([]);
                 setDeletedImages([]);
-                router.visit(route('inventory.index'));
+                router.visit(route(routeNameForContext('inventory.index')));
             },
             onError: (errors) => {
                 console.log(errors);
@@ -391,19 +392,19 @@ const AddProduct = ({ product, id }) => {
     }, [data.cost_of_goods_sold, data.base_price]);
 
     const fetchCategories = () => {
-        axios.get(route('inventory.categories')).then((response) => {
+        axios.get(route(routeNameForContext('inventory.categories'))).then((response) => {
             setCategories(response.data.categories);
         });
     };
 
     const fetchManufacturers = () => {
-        axios.get(route('api.manufacturers.list')).then((response) => {
+        axios.get(route(routeNameForContext('api.manufacturers.list'))).then((response) => {
             setManufacturers(response.data.manufacturers);
         });
     };
 
     const fetchUnits = () => {
-        axios.get(route('api.units.list')).then((response) => {
+        axios.get(route(routeNameForContext('api.units.list'))).then((response) => {
             setUnits(response.data.units);
         });
     };
@@ -413,7 +414,7 @@ const AddProduct = ({ product, id }) => {
             setSubCategories([]);
             return;
         }
-        axios.get(route('api.sub-categories.by-category', categoryId)).then((response) => {
+        axios.get(route(routeNameForContext('api.sub-categories.by-category'), categoryId)).then((response) => {
             setSubCategories(response.data.subCategories);
         });
     };
@@ -476,7 +477,7 @@ const AddProduct = ({ product, id }) => {
                 }}
             >
                 <Box sx={{ p: 3, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                    <ArrowBackIcon sx={{ fontSize: 24, color: '#063455', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index'))} />
+                    <ArrowBackIcon sx={{ fontSize: 24, color: '#063455', cursor: 'pointer' }} onClick={() => router.visit(route(routeNameForContext('inventory.index')))} />
                     <Typography
                         fontWeight="bold"
                         sx={{

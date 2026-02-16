@@ -1,6 +1,7 @@
 import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { routeNameForContext } from '@/lib/utils';
 
 const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfirm }) => {
     const [product, setProduct] = useState(null);
@@ -15,7 +16,7 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
         const fetchProduct = async () => {
             setLoading(true);
             try {
-                const response = await axios.get(route('product.single', { id: productId }));
+                const response = await axios.get(route(routeNameForContext('product.single'), { id: productId }));
                 setProduct(response.data.product);
             } catch (error) {
                 console.error('Error loading product:', error);

@@ -113,8 +113,8 @@ class PosCakeBooking extends Model
     // Optional: Local scope for tenant or branch if not using Global Scopes
     public function scopeTenant($query)
     {
-        if (session()->has('tenant_id')) {
-            return $query->where('tenant_id', session('tenant_id'));
+        if (session()->has('active_restaurant_id')) {
+            return $query->where('tenant_id', session('active_restaurant_id'));
         }
         return $query;
     }

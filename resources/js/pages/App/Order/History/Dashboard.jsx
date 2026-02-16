@@ -9,6 +9,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import debounce from 'lodash.debounce';
 import axios from 'axios';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -49,7 +50,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                 }
                 setLoadingSuggestions(true);
                 try {
-                    const response = await axios.get(route('api.orders.search-customers'), {
+                    const response = await axios.get(route(routeNameForContext('api.orders.search-customers')), {
                         params: { query, type },
                     });
                     setSuggestions(response.data);
@@ -73,7 +74,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
     const handleApply = () => {
         setIsLoading(true);
         router.get(
-            route('order.history'),
+            route(routeNameForContext('order.history')),
             {
                 search_id: searchId || undefined,
                 search_name: searchName || undefined,
@@ -110,7 +111,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
 
         setIsLoading(true);
         router.get(
-            route('order.history'),
+            route(routeNameForContext('order.history')),
             {},
             {
                 preserveState: true,
@@ -123,7 +124,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
     const handlePageChange = (event, page) => {
         setIsLoading(true);
         router.get(
-            route('order.history'),
+            route(routeNameForContext('order.history')),
             { ...filters, page },
             {
                 preserveState: true,

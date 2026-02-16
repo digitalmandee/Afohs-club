@@ -13,24 +13,23 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Stancl\Tenancy\Database\TenantScope;
+use Illuminate\Validation\Rule;
 
 class ReservationController extends Controller
 {
+    private function restaurantId(Request $request = null)
+    {
+        $request = $request ?? request();
+        return $request->session()->get('active_restaurant_id') ?? tenant('id');
+    }
+
     public function index(Request $request)
     {
-        $tenantId = tenant('id');
+        $restaurantId = $this->restaurantId($request);
 
         $query = Reservation::query();
-        if ($tenantId) {
-            $query = Reservation::withoutGlobalScope(TenantScope::class)
-                ->where(function ($q) use ($tenantId) {
-                    $q
-                        ->where('tenant_id', $tenantId)
-                        ->orWhere(function ($q2) {
-                            $q2->whereNull('tenant_id')->whereHas('table');
-                        });
-                });
+        if ($restaurantId) {
+            $query->where('tenant_id', $restaurantId);
         }
 
         $query->with([
@@ -76,6 +75,8 @@ class ReservationController extends Controller
 
     public function orderReservation(Request $request)
     {
+        $restaurantId = $this->restaurantId($request);
+
         $validated = $request->validate([
             // 'member.id' => 'required|exists:members,user_id',
             'person_count' => 'required|integer|min:1',
@@ -88,7 +89,7 @@ class ReservationController extends Controller
             'nature_of_function' => 'nullable|string|max:255',
             'theme_of_function' => 'nullable|string|max:255',
             'special_request' => 'nullable|string|max:1000',
-            'table' => 'required|exists:tables,id',
+            'table' => ['required', Rule::exists('tables', 'id')->where('tenant_id', $restaurantId)],
         ], [
             'member.id.required' => 'Please select a member.',
             'member.id.exists' => 'The selected member does not exist.',
@@ -111,7 +112,7 @@ class ReservationController extends Controller
             'special_request' => $validated['special_request'] ?? null,
             'table_id' => $validated['table'] ?? null,
             'status' => 'pending',
-            'tenant_id' => tenant('id'),
+            'tenant_id' => $restaurantId,
         ];
 
         if (($request->member['booking_type'] ?? null) === 'member') {
@@ -174,6 +175,7 @@ class ReservationController extends Controller
     {
         $date = $request->query('date');
         $floorId = $request->query('floor');  // optional if provided
+        $restaurantId = $this->restaurantId($request);
 
         if (!$date) {
             return response()->json(['error' => 'Date is required'], 400);
@@ -195,6 +197,7 @@ class ReservationController extends Controller
         // If table is selected → check only this table
         if ($tableId) {
             $reservations = Reservation::where('table_id', $tableId)
+                ->where('tenant_id', $restaurantId)
                 ->whereIn('status', ['pending', 'confirmed'])
                 ->whereDate('date', $date)
                 ->select('start_time', 'end_time')
@@ -203,11 +206,11 @@ class ReservationController extends Controller
             Log::info('Found reservations for table:', ['count' => $reservations->count()]);
         } else {
             // No table selected → get reservations for all tables in floor or restaurant
-            $query = Reservation::whereDate('date', $date);
+            $query = Reservation::where('tenant_id', $restaurantId)->whereDate('date', $date);
 
             if ($floorId) {
-                $query->whereHas('table', function ($q) use ($floorId) {
-                    $q->where('floor_id', $floorId);
+                $query->whereHas('table', function ($q) use ($floorId, $restaurantId) {
+                    $q->where('tenant_id', $restaurantId)->where('floor_id', $floorId);
                 });
             }
 
@@ -225,7 +228,7 @@ class ReservationController extends Controller
 
                 // If all tables are taken at this slot, exclude it
                 // Suppose 10 tables total (hardcoded or fetched dynamically)
-                $totalTables = Table::count();
+                $totalTables = Table::where('tenant_id', $restaurantId)->count();
                 return $conflicts->count() < $totalTables;
             }
 

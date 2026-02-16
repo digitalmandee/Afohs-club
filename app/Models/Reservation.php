@@ -3,11 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class Reservation extends BaseModel
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     protected $fillable = [
         'member_id',

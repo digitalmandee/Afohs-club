@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import axios from 'axios';
+import { routeNameForContext } from '@/lib/utils';
 import { AccountBalance as AccountBalanceIcon, ArrowForward as ArrowForwardIcon, Backspace as BackspaceIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
 import { Box, Button, Dialog, Grid, InputAdornment, MenuItem, Select, Switch, TextField, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
@@ -49,7 +50,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     // Fetch Settings
     useEffect(() => {
         axios
-            .get(route('setting.financial'))
+            .get(route(routeNameForContext('setting.financial')))
             .then((response) => {
                 setBankChargesType(response.data.bank_charges_type || 'percentage');
                 setBankChargesValue(parseFloat(response.data.bank_charges_value || 0));
@@ -368,7 +369,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                 }
             }
 
-            router.post(route('order.payment'), formData, {
+            router.post(route(routeNameForContext('order.payment')), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Payment successful', { variant: 'success' });
                     setSelectedOrder((prev) => ({ ...prev, paid_amount: inputAmount, payment_status: 'paid' }));
@@ -428,7 +429,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                 payload.bank_charges_amount = bankChargesAmount;
             }
 
-            router.post(route('order.payment'), payload, {
+            router.post(route(routeNameForContext('order.payment')), payload, {
                 onSuccess: () => {
                     setSelectedOrder((prev) => ({ ...prev, paid_amount: inputAmount, payment_status: 'paid' }));
                     enqueueSnackbar('Payment successful', { variant: 'success' });

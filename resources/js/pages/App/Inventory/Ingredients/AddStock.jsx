@@ -4,6 +4,7 @@ import { Save as SaveIcon, ArrowBack as ArrowBackIcon, Add as AddIcon } from '@m
 import { router } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import SideNav from '@/components/App/SideBar/SideNav';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -17,7 +18,7 @@ const AddStock = ({ ingredient }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('ingredients.add-stock', ingredient.id), {
+        post(route(routeNameForContext('ingredients.add-stock'), ingredient.id), {
             onSuccess: () => {
                 // Will redirect automatically on success
             },
@@ -183,7 +184,7 @@ const AddStock = ({ ingredient }) => {
                                             {/* Action Buttons */}
                                             <Grid item xs={12}>
                                                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                                                    <Button variant="outlined" onClick={() => router.visit(route('ingredients.index'))} disabled={processing}>
+                                                    <Button variant="outlined" onClick={() => router.visit(route(routeNameForContext('ingredients.index')))} disabled={processing}>
                                                         Cancel
                                                     </Button>
                                                     <Button type="submit" variant="contained" startIcon={<AddIcon />} disabled={processing} sx={{ backgroundColor: '#063455' }}>

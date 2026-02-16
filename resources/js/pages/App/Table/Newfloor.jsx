@@ -8,6 +8,7 @@ import Table1Icon from '@/components/App/Icons/Table1';
 import Table2Icon from '@/components/App/Icons/Table2';
 import Table6Icon from '@/components/App/Icons/Table6';
 import Table8Icon from '@/components/App/Icons/Table8';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -124,12 +125,12 @@ const NewFloor = ({ floorInfo }) => {
             console.log(updatedData);
 
             // Update existing floor
-            router.put(route('floors.update', floorInfo.id), updatedData, {
+            router.put(route(routeNameForContext('floors.update'), floorInfo.id), updatedData, {
                 onSuccess: () => {
                     reset();
                     setModalOpen(false);
                     setSnackbar({ open: true, message: 'Floor updated successfully!', severity: 'success' });
-                    router.visit(route('table.management'));
+                    router.visit(route(routeNameForContext('table.management')));
                 },
                 onError: (err) => {
                     setSnackbar({ open: true, message: 'Failed to update floor.', severity: 'error' });
@@ -138,12 +139,12 @@ const NewFloor = ({ floorInfo }) => {
             });
         } else {
             // Create new floor
-            router.post(route('floors.store'), data, {
+            router.post(route(routeNameForContext('floors.store')), data, {
                 onSuccess: () => {
                     reset();
                     setModalOpen(false);
                     setSnackbar({ open: true, message: 'Floor created successfully!', severity: 'success' });
-                    router.visit(route('table.management'));
+                    router.visit(route(routeNameForContext('table.management')));
                 },
                 onError: (err) => {
                     setSnackbar({ open: true, message: 'Failed to create floor.', severity: 'error' });
