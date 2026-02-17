@@ -671,7 +671,8 @@ class OrderController extends Controller
         }
 
         // 🔎 Case 2: Direct order flow (via query params)
-        if (!$orderContext && $request->has('order_type')) {
+        // If reservation flow is active, ignore order_type query param to avoid overriding reservation context.
+        if (!$orderContext && !$reservation && $request->has('order_type')) {
             if ($request->filled('order_type')) {
                 $orderContext = [
                     'order_type' => $request->get('order_type'),
@@ -2089,6 +2090,7 @@ class OrderController extends Controller
     public function getProducts(Request $request, $category_id)
     {
         $order_type = $request->input('order_type', '');
+        $productOrderType = $order_type === 'reservation' ? 'dineIn' : $order_type;
         $category = Category::find($category_id);
 
         if (!$category) {
@@ -2113,8 +2115,8 @@ class OrderController extends Controller
         }
 
         // Only filter by order_type if it exists and is not 'room_service'
-        if ($order_type && $order_type !== 'room_service') {
-            $productsQuery->whereJsonContains('available_order_types', $order_type);
+        if ($productOrderType && $productOrderType !== 'room_service') {
+            $productsQuery->whereJsonContains('available_order_types', $productOrderType);
         }
 
         $productsQuery->where('is_salable', true);

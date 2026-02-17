@@ -1,9 +1,13 @@
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableRow, Typography } from '@mui/material';
+import { isPosPath } from '@/lib/utils';
 
 const LogoutScreen = ({ setProfileView }) => {
+    const { url } = usePage();
+    const isPos = isPosPath(url);
+
     const revenueDetails = [
         { method: 'Cash', amount: 'Rs 0' },
         { method: 'Bank Transfer', amount: 'Rs 0' },
@@ -11,7 +15,7 @@ const LogoutScreen = ({ setProfileView }) => {
     ];
 
     const handleLogout = () => {
-        router.post(route('tenant.logout'));
+        router.post(route(isPos ? 'pos.logout' : 'tenant.logout'));
     };
 
     return (

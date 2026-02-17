@@ -32,6 +32,7 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
     const [loading, setLoading] = useState(false);
     const [shiftInfo, setShiftInfo] = useState(null);
     const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId);
+    const [tablesReloadKey, setTablesReloadKey] = useState(0);
 
     // Booking Search State
     const [bookingSearchTerm, setBookingSearchTerm] = useState('');
@@ -126,8 +127,8 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
 
     const handleRestaurantChange = (restaurantId) => {
         setSelectedRestaurant(restaurantId);
-        resetOrderDetails();
         if (orderDetails.order_type === 'dineIn' || orderDetails.order_type === 'reservation') {
+            setTablesReloadKey((k) => k + 1);
             loadFloorTables(restaurantId);
         }
     };
@@ -588,7 +589,7 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
                             {/* =====  */}
                             {orderDetails.order_type === 'dineIn' && <DineDialog guestTypes={guestTypes} floorTables={floorTables} />}
                             {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog guestTypes={guestTypes} />}
-                            {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} floorTables={floorTables} />}
+                            {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} floorTables={floorTables} tablesReloadKey={tablesReloadKey} />}
                             {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} />}
 
                             {orderDetails.order_type === 'load_booking' && (

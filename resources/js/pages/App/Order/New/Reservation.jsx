@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
+const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0 }) => {
     // Get from props if available (for table-based navigation)
     const { selectedTable: propsTable, tenant } = usePage().props;
 
@@ -70,6 +70,16 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
     );
 
     const selectedTable = allTables.find((t) => t.id === selectedTableId) || null;
+
+    useEffect(() => {
+        if (!tablesReloadKey) return;
+        setSelectedTableId('');
+        setErrors((prev) => {
+            if (!prev || typeof prev !== 'object') return {};
+            const { table, ...rest } = prev;
+            return rest;
+        });
+    }, [tablesReloadKey]);
 
     const handleTableChange = (tableId) => {
         setSelectedTableId(tableId);
@@ -406,16 +416,18 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                                     #{orderDetails.order_no}
                                 </Typography>
                             </Box>
-                            {selectedFloor?.id && selectedTable?.id && (
+                            {selectedTable?.id && (
                                 <>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1, fontSize: '16px', color: '#7F7F7F' }}>
-                                            Floor:
-                                        </Typography>
-                                        <Typography variant="body1" fontWeight="600" color="#063455">
-                                            {selectedFloor.name}
-                                        </Typography>
-                                    </Box>
+                                    {selectedTable?.floor_name && (
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <Typography variant="body2" color="text.secondary" sx={{ mr: 1, fontSize: '16px', color: '#7F7F7F' }}>
+                                                Floor:
+                                            </Typography>
+                                            <Typography variant="body1" fontWeight="600" color="#063455">
+                                                {selectedTable.floor_name}
+                                            </Typography>
+                                        </Box>
+                                    )}
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <Typography variant="body2" color="text.secondary" sx={{ mr: 1, fontSize: '16px', color: '#7F7F7F' }}>
                                             Table:
@@ -504,7 +516,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '14px', color: '#121212' }}>
                             Customer Name or Scan Member Card
                         </Typography>
-                        <UserAutocomplete memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                        <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                     </Box>
 
                     {/* Customer Qty and Down Payment */}

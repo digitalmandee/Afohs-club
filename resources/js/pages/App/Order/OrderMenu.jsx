@@ -264,12 +264,25 @@ const OrderMenu = () => {
     };
 
     useEffect(() => {
+        setProducts([]);
         axios
             .get(route(routeNameForContext('products.categories')), { params: { restaurant_id: selectedRestaurant } })
-            .then((res) => setCategories(res.data.categories));
+            .then((res) => {
+                const nextCategories = res.data.categories || [];
+                setCategories(nextCategories);
+                setSelectedCategory((prev) => {
+                    if (!prev) return nextCategories[0]?.id || '';
+                    const exists = nextCategories.some((c) => c.id === prev);
+                    return exists ? prev : nextCategories[0]?.id || '';
+                });
+            });
     }, [selectedRestaurant]);
 
     useEffect(() => {
+        if (!selectedCategory) {
+            setProducts([]);
+            return;
+        }
         axios
             .get(route(routeNameForContext('products.bycategory'), { category_id: selectedCategory }), {
                 params: { order_type: orderDetails.order_type, restaurant_id: selectedRestaurant },
@@ -280,7 +293,7 @@ const OrderMenu = () => {
     useEffect(() => {
         if (reservation) {
             handleOrderDetailChange('reservation_id', reservation.id);
-            handleOrderDetailChange('order_type', is_new_order ? 'reservation' : 'dineIn');
+            handleOrderDetailChange('order_type', 'reservation');
 
             if (reservation.member || reservation.customer || reservation.employee) {
                 const memberData = {

@@ -249,7 +249,7 @@ class AuthenticatedSessionController extends Controller
     {
         TenantLogout::logout($request, 'tenant');
 
-        return redirect()->route('login');
+        return redirect()->route('pos.login');
     }
 
     /**

@@ -663,7 +663,7 @@ const Dashboard = () => {
                                                             size="small"
                                                             onClick={() => {
                                                                 if (item.status === 'pending') {
-                                                                    router.visit(route(routeNameForContext('order.menu'), { reservation_id: item.id, order_type: 'reservation' }));
+                                                                    router.visit(route(routeNameForContext('order.menu'), { reservation_id: item.id, order_type: 'dineIn' }));
                                                                 }
                                                             }}
                                                             startIcon={
