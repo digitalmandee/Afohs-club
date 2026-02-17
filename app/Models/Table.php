@@ -11,7 +11,7 @@ class Table extends Model
     use HasFactory;
 
     // Allow mass assignment for these attributes
-    protected $fillable = ['floor_id', 'table_no', 'capacity', 'tenant_id'];
+    protected $fillable = ['floor_id', 'table_no', 'capacity', 'tenant_id', 'location_id'];
 
     protected $appends = ['available'];
 

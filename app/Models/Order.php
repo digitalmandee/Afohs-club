@@ -64,6 +64,7 @@ class Order extends BaseModel
         'payment_method',
         'reciept',
         'tenant_id',
+        'location_id',
         'deducted_in_payslip_id',
         'deducted_at',
         'created_by',

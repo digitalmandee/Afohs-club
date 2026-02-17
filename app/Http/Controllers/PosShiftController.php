@@ -15,16 +15,24 @@ class PosShiftController extends Controller
         return $request->session()->get('active_restaurant_id') ?? tenant('id');
     }
 
+    private function getActiveShiftForUser(int $userId)
+    {
+        return PosShift::where('user_id', $userId)
+            ->where('status', 'active')
+            ->with('tenant:id,name')
+            ->latest()
+            ->first();
+    }
+
     /**
      * Get shift history for the current user.
      */
     public function history()
     {
         $user = Auth::user();
-        $tenantId = $this->restaurantId();
 
         $shifts = PosShift::where('user_id', $user->id)
-            ->where('tenant_id', $tenantId)
+            ->with('tenant:id,name')
             ->latest()
             ->limit(50)
             ->get();
@@ -38,17 +46,8 @@ class PosShiftController extends Controller
     public function status()
     {
         $user = Auth::user();
-        $tenantId = $this->restaurantId();
-        $today = Carbon::today()->toDateString();
 
-        // Check for an active shift for today (User Global)
-        $activeShift = PosShift::where('user_id', $user->id)
-            ->where('tenant_id', $tenantId)
-            ->where('status', 'active')
-            // ->whereDate('start_date', $today) // Allow persistent shifts across dates
-            ->with('tenant:id,name')  // Load tenant name
-            ->latest()
-            ->first();
+        $activeShift = $this->getActiveShiftForUser($user->id);
 
         return response()->json([
             'has_active_shift' => (bool) $activeShift,
@@ -66,11 +65,7 @@ class PosShiftController extends Controller
         $user = Auth::user();
         $tenantId = $this->restaurantId($request);
 
-        // Prevent double shift (User Global)
-        $existingShift = PosShift::where('user_id', $user->id)
-            ->where('tenant_id', $tenantId)
-            ->where('status', 'active')
-            ->first();
+        $existingShift = $this->getActiveShiftForUser($user->id);
 
         if ($existingShift) {
             return response()->json([
@@ -92,7 +87,7 @@ class PosShiftController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Shift started successfully.',
-            'shift' => $shift
+            'shift' => $shift->load('tenant:id,name')
         ]);
     }
 
@@ -102,30 +97,28 @@ class PosShiftController extends Controller
     public function end()
     {
         $user = Auth::user();
-        $tenantId = $this->restaurantId();
-
-        $activeShift = PosShift::where('user_id', $user->id)
-            ->where('tenant_id', $tenantId)
-            ->where('status', 'active')
-            ->latest()
-            ->first();
+        $activeShift = $this->getActiveShiftForUser($user->id);
+        $tenantId = $activeShift?->tenant_id;
 
         // Check for incomplete orders created by this user
         // An order is incomplete if:
         // 1. Status is NOT 'completed' AND NOT 'cancelled'
         // 2. OR Payment Status is NOT 'paid' OR 'awaiting' (unless cancelled)
-        $incompleteOrders = \App\Models\Order::where('created_by', $user->id)
-            ->where('tenant_id', $tenantId)
-            ->where(function ($query) {
-                $query
-                    ->whereNotIn('status', ['completed', 'cancelled'])
-                    ->orWhere(function ($q) {
-                        $q
-                            ->whereNotIn('payment_status', ['paid', 'awaiting'])
-                            ->where('status', '!=', 'cancelled');
-                    });
-            })
-            ->exists();
+        $incompleteOrders = false;
+        if ($tenantId) {
+            $incompleteOrders = \App\Models\Order::where('created_by', $user->id)
+                ->where('tenant_id', $tenantId)
+                ->where(function ($query) {
+                    $query
+                        ->whereNotIn('status', ['completed', 'cancelled'])
+                        ->orWhere(function ($q) {
+                            $q
+                                ->whereNotIn('payment_status', ['paid', 'awaiting'])
+                                ->where('status', '!=', 'cancelled');
+                        });
+                })
+                ->exists();
+        }
 
         // if ($incompleteOrders) {
         //     return response()->json([

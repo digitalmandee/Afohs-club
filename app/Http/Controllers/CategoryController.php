@@ -15,12 +15,24 @@ class CategoryController extends Controller
     private function restaurantId(Request $request = null)
     {
         $request = $request ?? request();
+        $requestedId = $request->query('restaurant_id');
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $tenants = $user ? $user->getAccessibleTenants() : collect();
+
+        if ($requestedId !== null && $requestedId !== '') {
+            if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
+                return $requestedId;
+            }
+        }
+
         return $request->session()->get('active_restaurant_id') ?? $request->route('tenant');
     }
 
     public function index(Request $request)
     {
         $restaurantId = $this->restaurantId($request);
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
 
         $query = Category::query();
         if ($restaurantId) {
@@ -38,7 +50,9 @@ class CategoryController extends Controller
 
         return Inertia::render('App/Inventory/Categories/Index', [
             'categories' => $categoriesList,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'restaurant_id']),
+            'allrestaurants' => $allrestaurants->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+            'activeTenantId' => $restaurantId,
         ]);
     }
 
@@ -75,6 +89,7 @@ class CategoryController extends Controller
         }
 
         $validated['tenant_id'] = $restaurantId;
+        $validated['location_id'] = $restaurantId;
         $validated['created_by'] = Auth::id();
 
         Category::create($validated);
@@ -155,6 +170,8 @@ class CategoryController extends Controller
     public function trashed(Request $request)
     {
         $restaurantId = $this->restaurantId($request);
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
 
         $query = Category::onlyTrashed();
         if ($restaurantId) {
@@ -171,7 +188,9 @@ class CategoryController extends Controller
 
         return Inertia::render('App/Inventory/Categories/Trashed', [
             'trashedCategories' => $trashedCategories,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'restaurant_id']),
+            'allrestaurants' => $allrestaurants->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+            'activeTenantId' => $restaurantId,
         ]);
     }
 

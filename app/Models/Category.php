@@ -16,6 +16,7 @@ class Category extends BaseModel
         'name',
         'image',
         'tenant_id',
+        'location_id',
         'status',
         'created_by',
         'updated_by',

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -222,6 +223,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->validate([
             'restaurant_id' => ['required', Rule::in($restaurants->pluck('id')->all())],
+            'redirect_to' => ['nullable', 'string', 'max:2048'],
         ]);
 
         $restaurant = $restaurants->firstWhere('id', $request->restaurant_id);
@@ -231,7 +233,16 @@ class AuthenticatedSessionController extends Controller
             'active_restaurant_id' => $restaurant->id,
         ]);
 
-        return redirect()->route('pos.dashboard');
+        $redirectTo = $request->input('redirect_to');
+        $isSafeRedirect =
+            $redirectTo
+            && Str::startsWith($redirectTo, '/')
+            && !Str::startsWith($redirectTo, '//')
+            && !Str::contains($redirectTo, ['://', "\n", "\r"]);
+
+        return $isSafeRedirect
+            ? redirect()->to($redirectTo)
+            : redirect()->route('pos.dashboard');
     }
 
     public function destroyPos(Request $request): RedirectResponse

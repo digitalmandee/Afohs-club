@@ -26,7 +26,8 @@ class Reservation extends BaseModel
         'created_by',
         'updated_by',
         'deleted_by',
-        'tenant_id'
+        'tenant_id',
+        'location_id'
     ];
 
     public function table()

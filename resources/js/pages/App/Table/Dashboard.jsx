@@ -1,11 +1,7 @@
-import TableIcon from '@/components/App/Icons/BTable';
-import Table10Icon from '@/components/App/Icons/CTable';
-import Table1Icon from '@/components/App/Icons/Table1';
 import Table2Icon from '@/components/App/Icons/Table2';
-import Table6Icon from '@/components/App/Icons/Table6';
-import Table8Icon from '@/components/App/Icons/Table8';
 import POSLayout from "@/components/POSLayout";
 import { KeyboardArrowDown, Settings } from '@mui/icons-material';
+import { router } from '@inertiajs/react';
 import { Box, Button, FormControl, MenuItem, Modal, Select, Typography, InputLabel } from '@mui/material';
 import axios from 'axios';
 import update from 'immutability-helper';
@@ -81,7 +77,7 @@ const DraggableTable = ({ data, index, moveTable, onClick, fill }) => {
             }}
         >
             {/* Table shape */}
-            {data.capacity == 2 ? <Table2Icon fillColor={getBgColor()} /> : data.capacity == 4 ? <Table1Icon fillColor={getBgColor()} /> : data.capacity == 6 ? <Table6Icon fillColor={getBgColor()} /> : data.capacity == 8 ? <Table8Icon fillColor={getBgColor()} /> : data.capacity == 10 ? <Table10Icon fillColor={getBgColor()} /> : null}
+            <Table2Icon fillColor={getBgColor()} />
 
             <Box
                 sx={{
@@ -96,6 +92,9 @@ const DraggableTable = ({ data, index, moveTable, onClick, fill }) => {
                 {/* Table number */}
                 <Typography variant="body2" sx={{ fontWeight: 'medium', color: getTextColor() }}>
                     {data.table_no}
+                </Typography>
+                <Typography variant="caption" sx={{ color: getTextColor(), fontSize: '0.7rem' }}>
+                    Cap: {data.capacity}
                 </Typography>
 
                 {/* Active reservation display */}
@@ -136,9 +135,10 @@ const DraggableTable = ({ data, index, moveTable, onClick, fill }) => {
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const TableManagement = ({ floorsdata, tablesData }) => {
+const TableManagement = ({ floorsdata, tablesData, allrestaurants, activeTenantId }) => {
     // const [open, setOpen] = useState(true);
-    const [selectedFloor, setSelectedFloor] = useState(null);
+    const [selectedFloor, setSelectedFloor] = useState('no_floor');
+    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId || '');
     const today = new Date();
     const [selectedDate, setSelectedDate] = useState({
         date: today.getDate(),
@@ -227,18 +227,13 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     });
 
     useEffect(() => {
-        if (matchedFloors.length > 0) {
-            setSelectedFloor(selectedFloor || matchedFloors[0].id);
-        }
-    }, [matchedFloors]);
-
-    useEffect(() => {
         if (selectedDate.full_date) {
             axios
                 .get(route(routeNameForContext('floors.getFloors')), {
                     params: {
                         date: selectedDate.full_date,
                         floor: selectedFloor,
+                        restaurant_id: selectedRestaurant,
                     },
                 })
                 .then((res) => {
@@ -246,7 +241,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                     setAvailableCapacity(res.data.total_capacity);
                 });
         }
-    }, [selectedDate, selectedFloor]);
+    }, [selectedDate, selectedFloor, selectedRestaurant]);
 
     return (
         <>
@@ -292,6 +287,48 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {Array.isArray(allrestaurants) && allrestaurants.length > 1 && (
+                            <Box sx={{ minWidth: 240 }}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel id="restaurant-label">Restaurant</InputLabel>
+                                    <Select
+                                        labelId="restaurant-label"
+                                        value={selectedRestaurant || ''}
+                                        label="Restaurant"
+                                        onChange={(e) => {
+                                            const restaurantId = e.target.value;
+                                            setSelectedRestaurant(restaurantId);
+                                            router.get(
+                                                route(routeNameForContext('table.management')),
+                                                { restaurant_id: restaurantId },
+                                                { preserveScroll: true, replace: true },
+                                            );
+                                        }}
+                                        sx={{
+                                            height: 40,
+                                            fontSize: "14px",
+                                            color: "#063455",
+                                            "& .MuiOutlinedInput-notchedOutline": {
+                                                border: "1px solid #063455",
+                                                borderRadius: "16px",
+                                            },
+                                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                                                border: "1px solid #063455",
+                                            },
+                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                                border: "1px solid #063455",
+                                            },
+                                        }}
+                                    >
+                                        {allrestaurants.map((item) => (
+                                            <MenuItem value={item.id} key={item.id}>
+                                                {item.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        )}
                         {/* <img
                                 src="/assets/qbutton.png"
                                 alt=""
@@ -315,7 +352,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
 
                                 <Select
                                     labelId="dropdown-label"
-                                    value={selectedFloor || ""}
+                                    value={selectedFloor || "no_floor"}
                                     label="Choose floor"   // MUST match InputLabel text
                                     displayEmpty
                                     onChange={handleFloorChange}
@@ -338,9 +375,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                         },
                                     }}
                                 >
-                                    <MenuItem value="">
-                                        Select floor
-                                    </MenuItem>
+                                    <MenuItem value="no_floor">Without Floor</MenuItem>
 
                                     {matchedFloors.map((floor) => (
                                         <MenuItem key={floor.id} value={floor.id}
@@ -394,7 +429,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                 overflowY: 'hidden', // Enables scrolling if content overflows
                             }}
                         >
-                            <TableSetting floorsdata={floorsdata} tablesData={tablesData} />
+                            <TableSetting floorsdata={floorsdata} tablesData={tablesData} onClose={handleCloseSettings} />
                         </Box>
                     </Modal>
                 </Box>

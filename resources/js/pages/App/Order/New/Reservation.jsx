@@ -24,7 +24,7 @@ dayjs.extend(isSameOrBefore);
 
 const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
     // Get from props if available (for table-based navigation)
-    const { selectedFloor: propsFloor, selectedTable: propsTable, tenant } = usePage().props;
+    const { selectedTable: propsTable, tenant } = usePage().props;
 
     const { orderDetails, weeks, selectedWeek, monthYear, setMonthYear, handleOrderDetailChange } = useOrderStore();
     const [availableSlots, setAvailableSlots] = useState([]);
@@ -33,12 +33,10 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
 
     // Read URL params for floor, table, and date
     const urlParams = new URLSearchParams(window.location.search);
-    const urlFloorId = urlParams.get('floor');
     const urlTableId = urlParams.get('table');
     const urlDate = urlParams.get('date');
 
     // Local floor/table selection - prefer URL params, then props
-    const [selectedFloorId, setSelectedFloorId] = useState('');
     const [selectedTableId, setSelectedTableId] = useState('');
     const [initialized, setInitialized] = useState(false);
 
@@ -46,14 +44,10 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
     useEffect(() => {
         if (!initialized && floorTables.length > 0) {
             // Try URL params first, then props
-            const floorId = urlFloorId ? parseInt(urlFloorId) : propsFloor?.id;
             const tableId = urlTableId ? parseInt(urlTableId) : propsTable?.id;
 
-            if (floorId) {
-                setSelectedFloorId(floorId);
-                if (tableId) {
-                    setSelectedTableId(tableId);
-                }
+            if (tableId) {
+                setSelectedTableId(tableId);
             }
 
             // Set date from URL if available
@@ -63,20 +57,19 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
 
             setInitialized(true);
         }
-    }, [floorTables, initialized, urlFloorId, urlTableId, urlDate, propsFloor, propsTable]);
+    }, [floorTables, initialized, urlTableId, urlDate, propsTable]);
 
     const [errors, setErrors] = useState({});
     const [Form, setForm] = useState({});
 
-    // Derive selected floor and table objects
-    const selectedFloor = floorTables.find((f) => f.id === selectedFloorId) || propsFloor || null;
-    const selectedTable = selectedFloor?.tables?.find((t) => t.id === selectedTableId) || propsTable || null;
+    const allTables = floorTables.flatMap((floor) =>
+        (floor.tables || []).map((table) => ({
+            ...table,
+            floor_name: floor.name,
+        })),
+    );
 
-    const handleFloorChange = (floorId) => {
-        setSelectedFloorId(floorId);
-        setSelectedTableId(''); // Reset table when floor changes
-        setAvailableSlots([]);
-    };
+    const selectedTable = allTables.find((t) => t.id === selectedTableId) || null;
 
     const handleTableChange = (tableId) => {
         setSelectedTableId(tableId);
@@ -480,37 +473,20 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                         </RadioGroup>
                     </Box>
 
-                    {/* Floor and Table Selection */}
+                    {/* Table Selection */}
                     <Grid container spacing={2} sx={{ mb: 2 }}>
-                        <Grid item xs={6}>
-                            <Typography variant="body2" color="#121212" sx={{ mb: 1 }}>
-                                Select Floor
-                            </Typography>
-                            <FormControl fullWidth size="small">
-                                <Select value={selectedFloorId} onChange={(e) => handleFloorChange(e.target.value)} displayEmpty sx={{ borderRadius: 1 }}>
-                                    <MenuItem value="" disabled>
-                                        Select Floor
-                                    </MenuItem>
-                                    {floorTables.map((floor) => (
-                                        <MenuItem key={floor.id} value={floor.id}>
-                                            {floor.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={6}>
+                        <Grid item xs={12}>
                             <Typography variant="body2" color="#121212" sx={{ mb: 1 }}>
                                 Select Table
                             </Typography>
                             <FormControl fullWidth size="small" error={!!errors.table}>
-                                <Select value={selectedTableId} onChange={(e) => handleTableChange(e.target.value)} displayEmpty disabled={!selectedFloorId} sx={{ borderRadius: 1 }}>
+                                <Select value={selectedTableId || ''} onChange={(e) => handleTableChange(e.target.value)} displayEmpty sx={{ borderRadius: 1 }}>
                                     <MenuItem value="" disabled>
-                                        {selectedFloorId ? 'Select Table' : 'Select Floor First'}
+                                        Select Table
                                     </MenuItem>
-                                    {selectedFloor?.tables?.map((table) => (
+                                    {allTables.map((table) => (
                                         <MenuItem key={table.id} value={table.id}>
-                                            Table {table.table_no} (Capacity: {table.capacity})
+                                            {table.floor_name ? `${table.floor_name} - ` : ''}Table {table.table_no} (Capacity: {table.capacity})
                                         </MenuItem>
                                     ))}
                                 </Select>
