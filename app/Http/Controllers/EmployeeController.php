@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\Department;
 use App\Models\Employee;
-use App\Models\EmployeeLog;
 use App\Models\EmployeeSalaryStructure;
 use App\Models\Subdepartment;
 use App\Models\Media;
 use App\Models\User;
+use App\Models\UserLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -368,19 +368,21 @@ class EmployeeController extends Controller
 
     public function employeeLog(Request $request)
     {
-        $employeeId = Auth::user()->employee->id;
-        $logs = EmployeeLog::where('employee_id', $employeeId)
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        if (!$user) {
+            return response()->json([]);
+        }
+
+        $logs = UserLog::where('user_id', $user->id)
             ->orderByDesc('logged_at')
+            ->limit(50)
             ->get()
             ->map(function ($log) {
                 return [
                     'id' => $log->id,
-                    'employee_id' => $log->employee_id,
+                    'user_id' => $log->user_id,
                     'type' => $log->type,
-                    // Format as string without timezone conversion
-                    'logged_at' => $log->logged_at->format('d/m/Y h:i A'),
-                    'created_at' => $log->created_at,
-                    'updated_at' => $log->updated_at,
+                    'logged_at' => $log->logged_at ? $log->logged_at->toIso8601String() : null,
                 ];
             });
 

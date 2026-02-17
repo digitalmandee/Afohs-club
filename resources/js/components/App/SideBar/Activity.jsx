@@ -1,8 +1,8 @@
-import { router } from '@inertiajs/react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 const LoginActivityScreen = ({ setProfileView }) => {
     const [loginActivities, setLoginActivities] = useState([]);
@@ -10,13 +10,13 @@ const LoginActivityScreen = ({ setProfileView }) => {
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const response = await axios.get(route('api.employee-logs'));
+                const response = await axios.get(route(routeNameForContext('api.employee-logs')));
 
                 // Map API data if needed
                 const activities = response.data.map((log) => {
                     // Server is in US timezone, convert to Pakistan timezone (UTC+5)
                     // Format: "2025-10-02 12:34:59"
-                    const serverDateTime = new Date(log.logged_at.replace(' ', 'T'));
+                    const serverDateTime = new Date(log.logged_at);
                     
                     // Convert to Pakistan timezone (Asia/Karachi)
                     const pakistanTime = new Date(serverDateTime.toLocaleString("en-US", {timeZone: "Asia/Karachi"}));

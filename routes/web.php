@@ -109,6 +109,7 @@ Route::prefix('pos')->middleware('web')->group(function () {
         Route::get('api/orders/search-customers', [\App\Http\Controllers\OrderController::class, 'searchCustomers'])->name('pos.api.orders.search-customers');
 
         Route::get('api/users/global-search', [\App\Http\Controllers\UserController::class, 'searchUsers'])->name('pos.api.users.global-search');
+        Route::get('api/employee-logs', [\App\Http\Controllers\EmployeeController::class, 'employeeLog'])->name('pos.api.employee-logs');
         Route::get('api/floors-with-tables', [\App\Http\Controllers\OrderController::class, 'getFloorsWithTables'])->name('pos.api.floors-with-tables');
         Route::get('api/cake-bookings/search', [\App\Http\Controllers\PosCakeBookingController::class, 'search'])->name('pos.api.cake-bookings.search');
         Route::get('api/members/{id}/family', [\App\Http\Controllers\PosCakeBookingController::class, 'getFamilyMembers'])->name('pos.api.members.family');
