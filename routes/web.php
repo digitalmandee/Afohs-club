@@ -1288,10 +1288,14 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
     // tenant route
     Route::group(['prefix' => 'admin/restaurant'], function () {
         Route::get('', [TenantController::class, 'index'])->name('locations.index')->middleware('permission:restaurant.locations.view|kitchen.locations.view');
+        Route::get('trashed', [TenantController::class, 'trashed'])->name('locations.trashed')->middleware('permission:restaurant.locations.delete|kitchen.locations.delete');
         Route::get('register', [TenantController::class, 'create'])->name('locations.create')->middleware('permission:restaurant.locations.create|kitchen.locations.create');
         Route::post('store', [TenantController::class, 'store'])->name('locations.store')->middleware('permission:restaurant.locations.create|kitchen.locations.create');
+        Route::post('{id}/restore', [TenantController::class, 'restore'])->name('locations.restore')->middleware('permission:restaurant.locations.delete|kitchen.locations.delete');
         Route::get('{tenant}/edit', [TenantController::class, 'edit'])->name('locations.edit')->middleware('permission:restaurant.locations.edit|kitchen.locations.edit');
+        Route::put('{tenant}/status', [TenantController::class, 'toggleStatus'])->name('locations.status')->middleware('permission:restaurant.locations.edit|kitchen.locations.edit');
         Route::put('{tenant}', [TenantController::class, 'update'])->name('locations.update')->middleware('permission:restaurant.locations.edit|kitchen.locations.edit');
+        Route::delete('{tenant}', [TenantController::class, 'destroy'])->name('locations.destroy')->middleware('permission:restaurant.locations.delete|kitchen.locations.delete');
     });
 
     // Admin POS Reports Routes
