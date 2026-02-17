@@ -74,7 +74,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::guard('tenant')->user();
-        $restaurantId = $request->route('tenant');
+        $restaurantId = tenant('id');
 
         // 🔹 Super Admin Bypass
         if ($user->hasRole('super-admin')) {

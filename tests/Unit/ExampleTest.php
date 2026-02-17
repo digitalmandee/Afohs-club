@@ -1,5 +1,5 @@
 <?php
 
-test('that true is true', function () {
+it('has unit test placeholder', function () {
     expect(true)->toBeTrue();
 });

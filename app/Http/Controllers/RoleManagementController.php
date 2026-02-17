@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -74,6 +75,8 @@ class RoleManagementController extends Controller
             $role->givePermissionTo($request->permissions);
         }
 
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         return redirect()
             ->route('admin.roles.index')
             ->with('success', 'Role created successfully!');
@@ -128,6 +131,8 @@ class RoleManagementController extends Controller
             $role->syncPermissions([]);
         }
 
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         return redirect()
             ->route('admin.roles.index')
             ->with('success', 'Role updated successfully!');
@@ -149,6 +154,8 @@ class RoleManagementController extends Controller
         }
 
         $role->delete();
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()
             ->route('admin.roles.index')
@@ -180,6 +187,8 @@ class RoleManagementController extends Controller
         $user = \App\Models\User::findOrFail($request->user_id);
         $user->assignRole($request->role_name);
 
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         return response()->json([
             'message' => 'Role assigned successfully!',
             'user' => $user->load('roles'),
@@ -198,6 +207,8 @@ class RoleManagementController extends Controller
 
         $user = \App\Models\User::findOrFail($request->user_id);
         $user->removeRole($request->role_name);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return response()->json([
             'message' => 'Role removed successfully!',

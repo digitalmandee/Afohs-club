@@ -19,11 +19,12 @@ class RolesSeeder extends Seeder
 
         // Create Super Admin Role (has all permissions)
         $superAdmin = Role::firstOrCreate(['name' => 'super-admin']);
-        $superAdmin->givePermissionTo(Permission::all());
+        $superAdmin->syncPermissions(Permission::all());
 
         // Create Admin Role (has most permissions except super admin features)
         $admin = Role::firstOrCreate(['name' => 'admin']);
         $adminPermissions = [
+            'admin.access',
             // Dashboard
             'dashboard.view',
             
@@ -77,11 +78,12 @@ class RolesSeeder extends Seeder
             // 'pos.view', 'pos.orders.create', 'pos.orders.edit', 'pos.orders.delete',
             // 'pos.product.view', 'pos.product.create', 'pos.product.edit', 'pos.product.delete',
         ];
-        $admin->givePermissionTo($adminPermissions);
+        $admin->syncPermissions(Permission::whereIn('name', $adminPermissions)->get());
 
         // Create Manager Role (can manage most things but not delete or create users)
         $manager = Role::firstOrCreate(['name' => 'manager']);
         $managerPermissions = [
+            'admin.access',
             // Dashboard
             'dashboard.view',
             
@@ -127,11 +129,12 @@ class RolesSeeder extends Seeder
             // 'pos.view', 'pos.orders.create', 'pos.orders.edit',
             // 'pos.product.view',
         ];
-        $manager->givePermissionTo($managerPermissions);
+        $manager->syncPermissions(Permission::whereIn('name', $managerPermissions)->get());
 
         // Create User Role (read-only access to most things)
         $user = Role::firstOrCreate(['name' => 'user']);
         $userPermissions = [
+            'admin.access',
             // Dashboard
             'dashboard.view',
             
@@ -172,11 +175,12 @@ class RolesSeeder extends Seeder
             // // POS System (commented out)
             // 'pos.view',
         ];
-        $user->givePermissionTo($userPermissions);
+        $user->syncPermissions(Permission::whereIn('name', $userPermissions)->get());
 
         // Create Guest Role (very limited access)
         $guest = Role::firstOrCreate(['name' => 'guest']);
         $guestPermissions = [
+            'admin.access',
             // Dashboard
             'dashboard.view',
             
@@ -192,7 +196,26 @@ class RolesSeeder extends Seeder
             'rooms.bookings.view',
             'rooms.view',
         ];
-        $guest->givePermissionTo($guestPermissions);
+        $guest->syncPermissions(Permission::whereIn('name', $guestPermissions)->get());
+
+        $cashier = Role::firstOrCreate(['name' => 'cashier']);
+        $cashierPermissions = [
+            'pos.view',
+            'pos.dashboard.view',
+            'pos.orders.view',
+            'pos.orders.create',
+            'pos.orders.edit',
+            'pos.orders.delete',
+            'pos.orders.send-to-kitchen',
+            'pos.orders.generate-invoice',
+            'pos.orders.payment',
+            'pos.tables.view',
+            'pos.tables.manage',
+            'pos.customers.view',
+            'pos.customers.create',
+            'pos.customers.edit',
+        ];
+        $cashier->syncPermissions(Permission::whereIn('name', $cashierPermissions)->get());
 
         $this->command->info('Roles and permissions assigned successfully!');
     }

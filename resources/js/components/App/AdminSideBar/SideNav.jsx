@@ -118,9 +118,8 @@ export default function SideNav({ open, setOpen }) {
 
     const hasPermission = (itemPermission) => {
         if (!itemPermission) return true;
-        // If super admin (role check if needed, but usually permissions cover it)
-        // If the user has the permission directly
-        return permissions.includes(itemPermission);
+        const permissionList = Array.isArray(itemPermission) ? itemPermission : String(itemPermission).split('|');
+        return permissionList.some((p) => permissions.includes(String(p).trim()));
     };
 
     const filterMenuItems = (items) => {
@@ -632,34 +631,20 @@ export default function SideNav({ open, setOpen }) {
             path: route('cards.dashboard'),
             permission: 'cards.view',
         },
-        // {
-        //     text: 'Kitchen',
-        //     icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
-        //     children: [
-        //         {
-        //             text: 'Dashboard',
-        //             path: route('kitchen.dashboard'),
-        //         },
-        //         {
-        //             text: 'Customer History',
-        //             path: route('kitchen.history'),
-        //         },
-        //     ],
-        // },
         {
-            text: 'Kitchens',
+            text: 'Restaurants',
             icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
-            permission: 'kitchen.locations.view',
+            permission: 'restaurant.locations.view|kitchen.locations.view',
             children: [
                 {
                     text: 'Dashboard',
                     path: route('locations.index'),
-                    permission: 'kitchen.locations.view',
+                    permission: 'restaurant.locations.view|kitchen.locations.view',
                 },
                 {
                     text: 'Create New',
                     path: route('locations.create'),
-                    permission: 'kitchen.locations.create',
+                    permission: 'restaurant.locations.create|kitchen.locations.create',
                 },
             ],
         },

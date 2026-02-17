@@ -16,6 +16,8 @@ const SignIn = ({ setActiveTab, post, errors, data, setData, processing, routes 
 
     const handleSubmit = () => {
         post(route(routes.checkUserId), {
+            preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 setActiveTab('employee-signin');
             },

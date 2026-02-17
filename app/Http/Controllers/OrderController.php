@@ -886,7 +886,12 @@ class OrderController extends Controller
                     ], 409);
                 }
 
-                $orderDateTime = Carbon::parse($activeShift->start_date . ' ' . $orderData['start_time'], 'Asia/Karachi');
+                $shiftDay = Carbon::parse($activeShift->start_date, 'Asia/Karachi')->startOfDay();
+                try {
+                    $orderDateTime = $shiftDay->copy()->setTimeFromTimeString($orderData['start_time']);
+                } catch (\Throwable $e) {
+                    $orderDateTime = Carbon::parse($shiftDay->toDateString() . ' ' . $orderData['start_time'], 'Asia/Karachi');
+                }
 
                 $reservationConflicts = Reservation::select('id', 'date', 'start_time', 'end_time', 'status')
                     ->where('table_id', $tableId)

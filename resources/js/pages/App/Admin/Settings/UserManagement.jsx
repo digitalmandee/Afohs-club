@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Grid, Pagination, Avatar, Tooltip, Autocomplete } from '@mui/material';
+import UserAutocomplete from '@/components/UserAutocomplete';
+import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Grid, Pagination, Avatar, Tooltip, Tabs, Tab } from '@mui/material';
 import { Edit as EditIcon, Search as SearchIcon, Person as PersonIcon, AdminPanelSettings as AdminIcon, Work as WorkIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -10,22 +11,31 @@ const UserManagement = () => {
     // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [createUserOpen, setCreateUserOpen] = useState(false);
-    const [createEmployeeUserOpen, setCreateEmployeeUserOpen] = useState(false);
+    const [createUserTab, setCreateUserTab] = useState(0);
     const [editEmployeeUserOpen, setEditEmployeeUserOpen] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: '' });
-    const [employeeUser, setEmployeeUser] = useState({ employee_id: '', password: '', tenant_ids: [] });
-    const [editingUser, setEditingUser] = useState({ id: null, name: '', employee_id: '', password: '', tenant_ids: [] });
+    const [employeeUser, setEmployeeUser] = useState({ employee_id: '', password: '', role: 'cashier' });
+    const [employeeLookup, setEmployeeLookup] = useState(null);
+    const [editingUser, setEditingUser] = useState({ id: null, name: '', employee_id: '', password: '' });
+    const [editingUserAllowedTenants, setEditingUserAllowedTenants] = useState([]);
 
     const handleSearch = (e) => {
         e.preventDefault();
         router.get(route('admin.users.index'), { search }, { preserveState: true });
     };
 
+    const resetCreateUserDialog = () => {
+        setCreateUserOpen(false);
+        setCreateUserTab(0);
+        setNewUser({ name: '', email: '', password: '', role: '' });
+        setEmployeeUser({ employee_id: '', password: '', role: 'cashier' });
+        setEmployeeLookup(null);
+    };
+
     const handleCreateSuperAdminUser = () => {
         router.post(route('admin.users.create-super-admin'), newUser, {
             onSuccess: () => {
-                setCreateUserOpen(false);
-                setNewUser({ name: '', email: '', password: '', role: '' });
+                resetCreateUserDialog();
                 enqueueSnackbar('Super Admin user created successfully!', { variant: 'success' });
             },
             onError: (errors) => {
@@ -44,8 +54,7 @@ const UserManagement = () => {
     const handleCreateEmployeeUser = () => {
         router.post(route('admin.users.create-employee'), employeeUser, {
             onSuccess: () => {
-                setCreateEmployeeUserOpen(false);
-                setEmployeeUser({ employee_id: '', password: '', tenant_ids: [] });
+                resetCreateUserDialog();
                 enqueueSnackbar('Employee user created successfully!', { variant: 'success' });
             },
             onError: (errors) => {
@@ -67,8 +76,8 @@ const UserManagement = () => {
             name: user.name,
             employee_id: user.employee?.employee_id || '',
             password: '', // Password empty by default to keep existing
-            tenant_ids: user.allowed_tenants?.map((t) => t.id) || [],
         });
+        setEditingUserAllowedTenants(user.allowed_tenants || []);
         setEditEmployeeUserOpen(true);
     };
 
@@ -77,12 +86,12 @@ const UserManagement = () => {
             route('admin.users.update-employee', editingUser.id),
             {
                 password: editingUser.password,
-                tenant_ids: editingUser.tenant_ids,
             },
             {
                 onSuccess: () => {
                     setEditEmployeeUserOpen(false);
-                    setEditingUser({ id: null, name: '', employee_id: '', password: '', tenant_ids: [] });
+                    setEditingUser({ id: null, name: '', employee_id: '', password: '' });
+                    setEditingUserAllowedTenants([]);
                     enqueueSnackbar('Employee user updated successfully!', { variant: 'success' });
                 },
                 onError: (errors) => {
@@ -186,20 +195,7 @@ const UserManagement = () => {
                                     '&:hover': { backgroundColor: '#063455' },
                                 }}
                             >
-                                Create Super Admin
-                            </Button>
-                            <Button
-                                variant="contained"
-                                startIcon={<WorkIcon />}
-                                onClick={() => setCreateEmployeeUserOpen(true)}
-                                sx={{
-                                    backgroundColor: '#063455',
-                                    textTransform: 'none',
-                                    borderRadius: '16px',
-                                    '&:hover': { borderColor: '#1565c0', backgroundColor: '#063455' },
-                                }}
-                            >
-                                Create Employee User
+                                Create User
                             </Button>
                         </Box>
                     )}
@@ -387,89 +383,121 @@ const UserManagement = () => {
                     </Box>
                 )}
 
-                {/* Create Super Admin User Dialog */}
-                <Dialog open={createUserOpen} onClose={() => setCreateUserOpen(false)} maxWidth="sm" fullWidth>
+                {/* Create User Dialog */}
+                <Dialog open={createUserOpen} onClose={resetCreateUserDialog} maxWidth="sm" fullWidth>
                     <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
                         <AdminIcon sx={{ mr: 1, color: '#063455' }} />
-                        Create Super Admin User
+                        Create User
                     </DialogTitle>
                     <DialogContent>
-                        <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12}>
-                                <TextField fullWidth label="Full Name" value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField fullWidth label="Email" type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField fullWidth label="Password" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Role</InputLabel>
-                                    <Select value={newUser.role} label="Role" onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
-                                        {roles.map((role) => (
-                                            <MenuItem key={role.id} value={role.name}>
-                                                <Chip label={role.name} color={getRoleColor(role.name)} size="small" sx={{ mr: 1 }} />
-                                                {role.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                        </Grid>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setCreateUserOpen(false)} sx={{ border: '1px solid #063455', color: '#063455', textTransform: 'none' }}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleCreateSuperAdminUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }}>
-                            Create User
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                        <Tabs
+                            value={createUserTab}
+                            onChange={(e, value) => {
+                                setCreateUserTab(value);
+                                if (value !== 1) {
+                                    setEmployeeLookup(null);
+                                }
+                            }}
+                            sx={{ borderBottom: 1, borderColor: 'divider' }}
+                        >
+                            <Tab label="Normal User" />
+                            <Tab label="Employee User" />
+                        </Tabs>
 
-                {/* Create Employee User Dialog */}
-                <Dialog open={createEmployeeUserOpen} onClose={() => setCreateEmployeeUserOpen(false)} maxWidth="sm" fullWidth>
-                    <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
-                        <WorkIcon sx={{ mr: 1, color: '#063455' }} />
-                        Create Employee User Account
-                    </DialogTitle>
-                    <DialogContent>
-                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                            Create a user account for an existing employee to access the POS system.
-                        </Typography>
-                        <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12}>
-                                <TextField fullWidth label="Employee ID" placeholder="Enter employee ID" value={employeeUser.employee_id} onChange={(e) => setEmployeeUser({ ...employeeUser, employee_id: e.target.value })} helperText="The employee must exist in the employee system" />
+                        {createUserTab === 0 && (
+                            <Grid container spacing={2} sx={{ mt: 1 }}>
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Full Name" value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Email" type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Password" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Role</InputLabel>
+                                        <Select value={newUser.role} label="Role" onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
+                                            {roles.map((role) => (
+                                                <MenuItem key={role.id} value={role.name}>
+                                                    <Chip label={role.name} color={getRoleColor(role.name)} size="small" sx={{ mr: 1 }} />
+                                                    {role.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={12}>
-                                <TextField fullWidth label="Password" type="password" value={employeeUser.password} onChange={(e) => setEmployeeUser({ ...employeeUser, password: e.target.value })} helperText="Password for the employee to login to POS system" />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Autocomplete
-                                    multiple
-                                    options={tenants || []}
-                                    getOptionLabel={(option) => option.name}
-                                    value={(tenants || []).filter((t) => employeeUser.tenant_ids.includes(t.id))}
-                                    onChange={(e, values) =>
-                                        setEmployeeUser({
-                                            ...employeeUser,
-                                            tenant_ids: values.map((v) => v.id),
-                                        })
-                                    }
-                                    renderInput={(params) => <TextField {...params} label="Allowed Restaurants" placeholder="Select restaurants this employee can access" helperText="Select which restaurants this cashier can punch orders for" />}
-                                />
-                            </Grid>
-                        </Grid>
+                        )}
+
+                        {createUserTab === 1 && (
+                            <>
+                                <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+                                    Search employee by employee ID, then create login access.
+                                </Typography>
+                                <Grid container spacing={2} sx={{ mt: 1 }}>
+                                    <Grid item xs={12}>
+                                        <UserAutocomplete
+                                            memberType="3"
+                                            label="Employee"
+                                            placeholder="Search by name, email, or employee ID"
+                                            value={employeeLookup}
+                                            onChange={(employee) => {
+                                                setEmployeeLookup(employee);
+                                                setEmployeeUser({
+                                                    ...employeeUser,
+                                                    employee_id: employee?.employee_id || '',
+                                                });
+                                            }}
+                                        />
+                                    </Grid>
+
+                                    {employeeLookup && (
+                                        <>
+                                            <Grid item xs={12}>
+                                                <TextField fullWidth label="Employee Name" value={employeeLookup.name || ''} InputProps={{ readOnly: true }} />
+                                            </Grid>
+                                            <Grid item xs={12}>
+                                                <TextField fullWidth label="Employee Email" value={employeeLookup.email || ''} InputProps={{ readOnly: true }} />
+                                            </Grid>
+                                        </>
+                                    )}
+
+                                    <Grid item xs={12}>
+                                        <TextField fullWidth label="Password" type="password" value={employeeUser.password} onChange={(e) => setEmployeeUser({ ...employeeUser, password: e.target.value })} />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <FormControl fullWidth>
+                                            <InputLabel>Role</InputLabel>
+                                            <Select value={employeeUser.role} label="Role" onChange={(e) => setEmployeeUser({ ...employeeUser, role: e.target.value })}>
+                                                {roles.map((role) => (
+                                                    <MenuItem key={role.id} value={role.name}>
+                                                        <Chip label={role.name} color={getRoleColor(role.name)} size="small" sx={{ mr: 1 }} />
+                                                        {role.name}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                </Grid>
+                            </>
+                        )}
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setCreateEmployeeUserOpen(false)} sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
+                        <Button onClick={resetCreateUserDialog} sx={{ border: '1px solid #063455', color: '#063455', textTransform: 'none' }}>
                             Cancel
                         </Button>
-                        <Button onClick={handleCreateEmployeeUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }}>
-                            Create Employee User
-                        </Button>
+                        {createUserTab === 0 && (
+                            <Button onClick={handleCreateSuperAdminUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }}>
+                                Create User
+                            </Button>
+                        )}
+                        {createUserTab === 1 && (
+                            <Button onClick={handleCreateEmployeeUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }} disabled={!employeeUser.employee_id || !employeeUser.password || !employeeUser.role}>
+                                Create Employee User
+                            </Button>
+                        )}
                     </DialogActions>
                 </Dialog>
 
@@ -481,23 +509,21 @@ const UserManagement = () => {
                     </DialogTitle>
                     <DialogContent>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                            Update access and password for <strong>{editingUser.name}</strong> ({editingUser.employee_id}).
+                            Update password for <strong>{editingUser.name}</strong> ({editingUser.employee_id}).
                         </Typography>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
                             <Grid item xs={12}>
-                                <Autocomplete
-                                    multiple
-                                    options={tenants || []}
-                                    getOptionLabel={(option) => option.name}
-                                    value={(tenants || []).filter((t) => editingUser.tenant_ids.includes(t.id))}
-                                    onChange={(e, values) =>
-                                        setEditingUser({
-                                            ...editingUser,
-                                            tenant_ids: values.map((v) => v.id),
-                                        })
-                                    }
-                                    renderInput={(params) => <TextField {...params} label="Allowed Restaurants" placeholder="Select restaurants this employee can access" helperText="Assigned restaurants" />}
-                                />
+                                {editingUserAllowedTenants.length > 0 ? (
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                        {editingUserAllowedTenants.map((t) => (
+                                            <Chip key={t.id} label={t.name} size="small" variant="outlined" />
+                                        ))}
+                                    </Box>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        No restaurants assigned
+                                    </Typography>
+                                )}
                             </Grid>
                             <Grid item xs={12}>
                                 <TextField

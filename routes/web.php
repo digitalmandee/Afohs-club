@@ -234,7 +234,7 @@ Route::prefix('pos')->middleware('web')->group(function () {
 Route::get('/members/{id}', [MembershipController::class, 'viewProfile'])->name('member.profile');
 
 // Central auth-protected routes
-Route::middleware(['auth:web', 'verified'])->group(function () {
+Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(function () {
     // admin dashboard routes
     Route::get('dashboard', [AdminController::class, 'index'])->name('dashboard')->middleware('super.admin:dashboard.view');
     Route::get('activity-log', [App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activity-log');
@@ -1279,19 +1279,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::group(['prefix' => 'admin/users', 'middleware' => ['auth:web', 'super.admin:users.view']], function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('admin.users.index');
         Route::post('/create-super-admin', [UserManagementController::class, 'createSuperAdminUser'])->name('admin.users.create-super-admin')->middleware('super.admin:users.create');
-        Route::post('/create-employee-user', [UserManagementController::class, 'createEmployeeUser'])->name('admin.users.create-employee');
-        Route::post('/update-employee-user/{id}', [UserManagementController::class, 'updateEmployeeUser'])->name('admin.users.update-employee');
+        Route::post('/create-employee-user', [UserManagementController::class, 'createEmployeeUser'])->name('admin.users.create-employee')->middleware('super.admin:users.create');
+        Route::post('/update-employee-user/{id}', [UserManagementController::class, 'updateEmployeeUser'])->name('admin.users.update-employee')->middleware('super.admin:users.edit');
         Route::post('/assign-role', [UserManagementController::class, 'assignRole'])->name('admin.users.assign-role')->middleware('super.admin:users.edit');
         Route::post('/remove-role', [UserManagementController::class, 'removeRole'])->name('admin.users.remove-role')->middleware('super.admin:users.edit');
     });
 
     // tenant route
-    Route::group(['prefix' => 'admin/kitchen'], function () {
-        Route::get('', [TenantController::class, 'index'])->name('locations.index')->middleware('permission:kitchen.locations.view');
-        Route::get('register', [TenantController::class, 'create'])->name('locations.create')->middleware('permission:kitchen.locations.create');
-        Route::post('store', [TenantController::class, 'store'])->name('locations.store')->middleware('permission:kitchen.locations.create');
-        Route::get('{tenant}/edit', [TenantController::class, 'edit'])->name('locations.edit')->middleware('permission:kitchen.locations.edit');
-        Route::put('{tenant}', [TenantController::class, 'update'])->name('locations.update')->middleware('permission:kitchen.locations.edit');
+    Route::group(['prefix' => 'admin/restaurant'], function () {
+        Route::get('', [TenantController::class, 'index'])->name('locations.index')->middleware('permission:restaurant.locations.view|kitchen.locations.view');
+        Route::get('register', [TenantController::class, 'create'])->name('locations.create')->middleware('permission:restaurant.locations.create|kitchen.locations.create');
+        Route::post('store', [TenantController::class, 'store'])->name('locations.store')->middleware('permission:restaurant.locations.create|kitchen.locations.create');
+        Route::get('{tenant}/edit', [TenantController::class, 'edit'])->name('locations.edit')->middleware('permission:restaurant.locations.edit|kitchen.locations.edit');
+        Route::put('{tenant}', [TenantController::class, 'update'])->name('locations.update')->middleware('permission:restaurant.locations.edit|kitchen.locations.edit');
     });
 
     // Admin POS Reports Routes

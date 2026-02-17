@@ -5,12 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     protected $guard_name = 'web';  // Default guard for super admin
 
@@ -31,7 +31,7 @@ class User extends Authenticatable
         'password',
         'parent_user_id',
         'tenant_id',
-        'profile_photo'
+        'profile_photo',
     ];
 
     /**
@@ -118,7 +118,7 @@ class User extends Authenticatable
 
     public function getAccessibleTenants()
     {
-        $this->loadMissing('employee');
+        $this->load('employee:id,user_id,branch_id');
 
         $query = Tenant::query()->select('id', 'name', 'branch_id', 'status');
 
@@ -128,32 +128,25 @@ class User extends Authenticatable
 
         $query->where('status', 'active');
 
-        if ($this->hasRole('admin')) {
-            return $query->get();
-        }
-
-        $allowedTenantIds = $this->allowedTenants()->pluck('tenants.id');
+        $allowedTenantIds = $this->getAllowedTenantIds();
         $branchId = $this->employee?->branch_id;
 
-        if (!$branchId && $allowedTenantIds->isEmpty()) {
+
+        if ($branchId) {
+            $tenantsByCompany = (clone $query)->where('branch_id', $branchId)->get();
+
+            if ($tenantsByCompany->isNotEmpty()) {
+                return $tenantsByCompany;
+            }
+
+            return $query->where('id', $branchId)->get();
+        }
+
+        if (empty($allowedTenantIds)) {
             return $query->whereRaw('1 = 0')->get();
         }
 
-        $query->where(function ($q) use ($branchId, $allowedTenantIds) {
-            if ($branchId) {
-                $q->where('branch_id', $branchId);
-            }
-
-            if ($allowedTenantIds->isNotEmpty()) {
-                if ($branchId) {
-                    $q->orWhereIn('id', $allowedTenantIds);
-                } else {
-                    $q->whereIn('id', $allowedTenantIds);
-                }
-            }
-        });
-
-        return $query->get();
+        return $query->whereIn('id', $allowedTenantIds)->get();
     }
 
     // Password is automatically hashed by the 'hashed' cast in $casts

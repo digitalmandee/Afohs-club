@@ -20,7 +20,7 @@ const Index = ({ tenants }) => {
                 {/* Page Header */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                     <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
-                        Kitchen Dashboard
+                        Restaurant Dashboard
                     </Typography>
                     {/* <Button
                         variant="contained"
@@ -35,7 +35,7 @@ const Index = ({ tenants }) => {
                         }}
                         onClick={() => router.visit(route('locations.create'))}
                     >
-                        Create Kitchen
+                        Create Restaurant
                     </Button> */}
                 </Box>
 

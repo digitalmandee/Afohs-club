@@ -12,7 +12,7 @@ class AuthenticateTenant
 {
     public function handle(Request $request, Closure $next, string $guard = 'tenant'): Response
     {
-        $currentTenant = tenant('id');  // Always available after InitializeTenancyByPath
+        $currentTenant = tenant('id');
 
         if (Auth::guard($guard)->check()) {
             // Compare logged-in tenant vs current tenant

@@ -1,7 +1,7 @@
 <?php
 
-it('returns a successful response', function () {
-    $response = $this->get('/');
+it('renders the login page', function () {
+    $response = $this->get(route('pos.login'));
 
-    $response->assertRedirect(route('login'));
+    $response->assertStatus(200);
 });

@@ -31,12 +31,12 @@ class AuthController extends Controller
             return back()->withErrors(['employee_id' => 'This employee has no login access.'])->withInput();
         }
 
-        // Step 3: Ensure cashier role
-        if (!$user->roles()->where('name', 'cashier')->exists()) {
-            return back()->withErrors(['employee_id' => 'This employee is not a cashier.'])->withInput();
+
+        if (!$user->hasPermissionTo('pos.view')) {
+            return back()->withErrors(['employee_id' => 'This employee does not have POS access.'])->withInput();
         }
 
         // ✅ Passed all checks
-        return response()->noContent();
+        return back();
     }
 }
