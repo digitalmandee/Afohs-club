@@ -247,6 +247,14 @@ return new class extends Migration
 
             $this->reAddTenantForeignKeysBigint();
 
+            if (Schema::hasColumn('tenants', 'old_id')) {
+                DB::statement('ALTER TABLE '.$this->q('tenants').' DROP COLUMN '.$this->q('old_id'));
+            }
+
+            if (Schema::hasColumn('tenants', 'new_id')) {
+                DB::statement('ALTER TABLE '.$this->q('tenants').' DROP COLUMN '.$this->q('new_id'));
+            }
+
             return;
         }
 
