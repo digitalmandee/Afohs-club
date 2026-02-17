@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tenant;
 use App\Models\Branch;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
-use Stancl\Tenancy\Database\Models\Domain;
 
 class TenantController extends Controller
 {
@@ -16,9 +14,22 @@ class TenantController extends Controller
      */
     public function index()
     {
-        $tenants = Tenant::with('domains')->get();
+        $tenants = Tenant::query()->orderBy('name')->get();
 
-        return Inertia::render('tenant/index', compact('tenants'));
+        return Inertia::render('tenant/index', [
+            'tenants' => $tenants,
+            'showTrashed' => false,
+        ]);
+    }
+
+    public function trashed()
+    {
+        $tenants = Tenant::onlyTrashed()->orderBy('name')->get();
+
+        return Inertia::render('tenant/index', [
+            'tenants' => $tenants,
+            'showTrashed' => true,
+        ]);
     }
 
     /**
@@ -41,21 +52,11 @@ class TenantController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'branch_id' => 'required|exists:branches,id',
-            'domain_name' => 'required|string|max:255',
             'printer_ip' => 'required|string|max:255',
             'printer_port' => 'required',
         ]);
 
-        // Custom domain validation
-        if (Domain::where('domain', $request->input('domain_name'))->exists()) {
-            return back()->withErrors(['domain_name' => 'The domain is already taken.'])->withInput();
-        }
-
-        $tenant = Tenant::create($validatedData);
-
-        $tenant->domains()->create([
-            'domain' => $request->input('domain_name'),
-        ]);
+        Tenant::create($validatedData);
 
         return to_route('locations.create');
     }
@@ -96,11 +97,35 @@ class TenantController extends Controller
         return to_route('locations.index')->with('success', 'Tenant updated successfully!');
     }
 
+    public function toggleStatus(Tenant $tenant)
+    {
+        $tenant->update([
+            'status' => $tenant->status === 'active' ? 'inactive' : 'active',
+        ]);
+
+        return back()->with('success', 'Restaurant status updated successfully!');
+    }
+
+    public function restore(string $id)
+    {
+        $tenant = Tenant::withTrashed()->findOrFail($id);
+        $tenant->restore();
+
+        return back()->with('success', 'Restaurant restored successfully!');
+    }
+
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Tenant $tenant)
     {
-        //
+        if (auth()->check()) {
+            $tenant->deleted_by = auth()->id();
+            $tenant->save();
+        }
+
+        $tenant->delete();
+
+        return back()->with('success', 'Restaurant deleted successfully!');
     }
 }

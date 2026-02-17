@@ -76,6 +76,16 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::guard('tenant')->user();
         $restaurantId = tenant('id');
 
+        if (tenant('status') !== 'active') {
+            Auth::guard('tenant')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('tenant.login', ['tenant' => tenant('id')])->withErrors([
+                'employee_id' => 'Access denied. Restaurant is inactive.',
+            ]);
+        }
+
         // 🔹 Super Admin Bypass
         if ($user->hasRole('super-admin')) {
             UserLog::create([
@@ -154,7 +164,7 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        $restaurants = $user->getAccessibleTenants();
+        $restaurants = $user->getAccessibleTenants()->where('status', 'active')->values();
 
         if ($restaurants->count() === 1) {
             $restaurant = $restaurants->first();
@@ -187,7 +197,7 @@ class AuthenticatedSessionController extends Controller
     public function selectRestaurant(Request $request): Response|RedirectResponse
     {
         $user = Auth::guard('tenant')->user();
-        $restaurants = $user->getAccessibleTenants();
+        $restaurants = $user->getAccessibleTenants()->where('status', 'active')->values();
 
         if ($restaurants->count() === 1) {
             $restaurant = $restaurants->first();
@@ -208,7 +218,7 @@ class AuthenticatedSessionController extends Controller
     public function setRestaurant(Request $request): RedirectResponse
     {
         $user = Auth::guard('tenant')->user();
-        $restaurants = $user->getAccessibleTenants();
+        $restaurants = $user->getAccessibleTenants()->where('status', 'active')->values();
 
         $request->validate([
             'restaurant_id' => ['required', Rule::in($restaurants->pluck('id')->all())],

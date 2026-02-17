@@ -1,8 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import { ArrowBack } from '@mui/icons-material';
-import { Alert, Box, Button, Paper, IconButton, CircularProgress, TextField, Typography, MenuItem } from '@mui/material';
-import { Col, Container, Row } from 'react-bootstrap';
+import { Box, Button, CircularProgress, MenuItem, Paper, TextField, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 
 
@@ -13,28 +10,9 @@ const Register = ({ tenant, branches }) => {
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: tenant?.name || '',
         branch_id: tenant?.branch_id ? String(tenant.branch_id) : '',
-        domain_name: tenant?.id || '',
         printer_ip: tenant?.printer_ip || '',
         printer_port: tenant?.printer_port || '',
     });
-
-    const slugify = (value) =>
-        value
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-');
-
-    const handleNameChange = (e) => {
-        const nameValue = e.target.value;
-        setData('name', nameValue);
-
-        // Only auto-update domain on create
-        if (!isEdit) {
-            setData('domain_name', slugify(nameValue));
-        }
-    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -49,7 +27,7 @@ const Register = ({ tenant, branches }) => {
                 preserveScroll: true,
                 onSuccess: () => {
                     enqueueSnackbar('Restaurant created successfully!', { variant: 'success' });
-                    reset(['name', 'branch_id', 'domain_name', 'printer_ip', 'printer_port']);
+                    reset(['name', 'branch_id', 'printer_ip', 'printer_port']);
                 },
             });
         }
@@ -94,7 +72,7 @@ const Register = ({ tenant, branches }) => {
                     <form onSubmit={submit}>
                         {/* Name */}
                         <div style={{ marginBottom: '1.5rem' }}>
-                            <TextField label="Name" type="text" required fullWidth autoFocus autoComplete="name" value={data.name} onChange={handleNameChange} disabled={processing} placeholder="Full name" error={!!errors.name} helperText={errors.name} variant="outlined" />
+                            <TextField label="Name" type="text" required fullWidth autoFocus autoComplete="name" value={data.name} onChange={(e) => setData('name', e.target.value)} disabled={processing} placeholder="Full name" error={!!errors.name} helperText={errors.name} variant="outlined" />
                         </div>
 
                         <div style={{ marginBottom: '1.5rem' }}>
@@ -116,11 +94,6 @@ const Register = ({ tenant, branches }) => {
                                     </MenuItem>
                                 ))}
                             </TextField>
-                        </div>
-
-                        {/* Domain Name (auto-filled, but editable if needed) */}
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <TextField label="Domain Name" type="text" required fullWidth autoComplete="domain_name" value={data.domain_name} onChange={(e) => setData('domain_name', slugify(e.target.value))} disabled={isEdit || processing} placeholder="example" error={!!errors.domain_name} helperText={errors.domain_name} variant="outlined" />
                         </div>
 
                         <div style={{ marginBottom: '1.5rem' }}>

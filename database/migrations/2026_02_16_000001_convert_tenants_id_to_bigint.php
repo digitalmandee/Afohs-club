@@ -254,11 +254,20 @@ return new class extends Migration
 
         DB::statement('ALTER TABLE ' . $this->q('tenants') . ' DROP PRIMARY KEY');
         DB::statement('ALTER TABLE ' . $this->q('tenants') . ' DROP COLUMN ' . $this->q('id'));
+        $dropNewIdUniqueSql = $this->hasIndex('tenants', 'tenants_new_id_unique')
+            ? ', DROP INDEX ' . $this->q('tenants_new_id_unique')
+            : '';
+
         DB::statement(
             'ALTER TABLE ' . $this->q('tenants')
-            . ' CHANGE COLUMN ' . $this->q('new_id') . ' ' . $this->q('id') . ' BIGINT UNSIGNED NOT NULL AUTO_INCREMENT'
+            . ' CHANGE COLUMN ' . $this->q('new_id') . ' ' . $this->q('id') . ' BIGINT UNSIGNED NOT NULL'
+            . $dropNewIdUniqueSql
+            . ', ADD PRIMARY KEY (' . $this->q('id') . ')'
         );
-        DB::statement('ALTER TABLE ' . $this->q('tenants') . ' ADD PRIMARY KEY (' . $this->q('id') . ')');
+        DB::statement(
+            'ALTER TABLE ' . $this->q('tenants')
+            . ' MODIFY COLUMN ' . $this->q('id') . ' BIGINT UNSIGNED NOT NULL AUTO_INCREMENT'
+        );
 
         $this->reAddTenantForeignKeysBigint();
 

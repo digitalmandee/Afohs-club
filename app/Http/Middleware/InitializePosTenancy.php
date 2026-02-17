@@ -18,7 +18,7 @@ class InitializePosTenancy
 
         $tenant = Tenant::find($tenantId);
 
-        if (!$tenant) {
+        if (!$tenant || $tenant->status !== 'active') {
             $request->session()->forget(['active_restaurant_id', 'active_company_id']);
             return redirect()->route('pos.select-restaurant');
         }

@@ -3,11 +3,8 @@
 namespace Database\Seeders\Tenant;
 
 use App\Models\KitchenDetail;
-use App\Models\MemberType;
-use App\Models\Restaurant;
 use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class RestuarantDatabaseSeeder extends Seeder
@@ -49,15 +46,10 @@ class RestuarantDatabaseSeeder extends Seeder
 
         for ($i = 1; $i <= 5; $i++) {
             $tenantName = "Afohs Restaurant $i";
-            $subdomain = strtolower(str_replace(' ', '-', $tenantName));
             $tenant = Tenant::create([
                 'name' => $tenantName,
                 'email' => "afohs$i@gmail.com",
                 'password' => $tenantPassword,
-            ]);
-
-            $tenant->domains()->create([
-                'domain' => $subdomain,
             ]);
 
 

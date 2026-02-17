@@ -15,6 +15,13 @@ class AuthenticateTenant
         $currentTenant = tenant('id');
 
         if (Auth::guard($guard)->check()) {
+            if (tenant('status') !== 'active') {
+                TenantLogout::logout($request);
+                return redirect()
+                    ->route('tenant.login', ['tenant' => $currentTenant])
+                    ->with('error', 'Restaurant is inactive.');
+            }
+
             // Compare logged-in tenant vs current tenant
             $loggedInTenant = session('active_restaurant_id');
 
