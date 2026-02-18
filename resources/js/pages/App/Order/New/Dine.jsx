@@ -40,24 +40,23 @@ const DineDialog = ({ guestTypes, floorTables }) => {
         }
     };
 
-    const handleFloorChange = (value) => {
-        handleOrderDetailChange('floor', value);
-        handleOrderDetailChange('table', '');
-    };
-
     useEffect(() => {
         axios.get(route(routeNameForContext('waiters.all'))).then((res) => setWaiters(res.data.waiters));
     }, ['']);
 
-    const currentFloor = floorTables.find((f) => f.id === orderDetails.floor);
+    const allTables = floorTables.flatMap((floor) =>
+        (floor.tables || []).map((table) => ({
+            ...table,
+            floor_name: floor.name,
+        })),
+    );
 
-    const filteredTables = currentFloor?.tables?.length
-        ? currentFloor.tables.filter((table) => {
-              if (filterOption === 'available' && !table.is_available) return false;
-              const keyword = searchTerm.toLowerCase();
-              return table.table_no.toLowerCase().includes(keyword) || String(table.capacity).includes(keyword);
-          })
-        : [];
+    const filteredTables = allTables
+        .filter((table) => {
+            if (filterOption === 'available' && !table.is_available) return false;
+            const keyword = searchTerm.toLowerCase();
+            return table.table_no.toLowerCase().includes(keyword) || String(table.capacity).includes(keyword);
+        });
 
     const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0 || !orderDetails.waiter || typeof orderDetails.waiter !== 'object' || !orderDetails.waiter.id || !orderDetails.table;
 
@@ -244,18 +243,6 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                         <SearchIcon />
                     </IconButton>
                 </Paper>
-                {/* Select Floor */}
-                <FormControl sx={{ marginLeft: 1 }}>
-                    <InputLabel id="select-floor">Floor</InputLabel>
-                    <Select labelId="select-floor" id="floor" value={orderDetails.floor} label="Floor" onChange={(e) => handleFloorChange(e.target.value)}>
-                        {floorTables.map((item, index) => (
-                            <MenuItem value={item.id} key={index}>
-                                {item.name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-
                 <ToggleButtonGroup value={filterOption} exclusive onChange={handleFilterOptionChange} aria-label="filter option" size="small" sx={{ ml: 1 }}>
                     <ToggleButton
                         value="all"
@@ -395,7 +382,7 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                                 member_type: orderDetails.member_type,
                                 waiter_id: orderDetails.waiter.id,
                                 person_count: orderDetails.person_count,
-                                floor_id: orderDetails.floor,
+                                floor_id: orderDetails.table?.floor_id ?? orderDetails.floor,
                                 order_type: 'dineIn',
                             }),
                         )

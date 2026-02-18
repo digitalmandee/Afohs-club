@@ -400,7 +400,7 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
                             format="DD-MM-YYYY"
                             value={formData.checkInDate ? dayjs(formData.checkInDate) : null}
                             onChange={(newValue) => handleChange({ target: { name: 'checkInDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
-                            minDate={dayjs().subtract(1, 'day')}
+                            minDate={isCheckout ? undefined : dayjs().subtract(1, 'day')}
                             slotProps={{
                                 textField: { fullWidth: true, name: 'checkInDate', onClick: (e) => !isCheckout && e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
                                 actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },

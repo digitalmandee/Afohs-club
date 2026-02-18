@@ -761,9 +761,16 @@ class RoomBookingController extends Controller
 
     public function update(Request $req, $id)
     {
+        $booking = RoomBooking::findOrFail($id);
+
+        $checkInDateRule = 'nullable|date';
+        if (($req->input('statusType') ?? '') !== 'checked_out' && $booking->status !== 'checked_in') {
+            $checkInDateRule .= '|after_or_equal:yesterday';
+        }
+
         $req->validate([
             'bookingDate' => 'nullable|date',
-            'checkInDate' => 'nullable|date|after_or_equal:yesterday',
+            'checkInDate' => $checkInDateRule,
             'checkOutDate' => 'nullable|date',
             'arrivalDetails' => 'nullable|string',
             'departureDetails' => 'nullable|string',
@@ -797,7 +804,6 @@ class RoomBookingController extends Controller
         DB::beginTransaction();
 
         try {
-            $booking = RoomBooking::findOrFail($id);
             $data = $req->all();
 
             // check duplicate booking

@@ -116,7 +116,7 @@ export const useOrderStore = create((set, get) => ({
                 ...state.orderDetails,
                 order_no: orderNo,
                 // membership_type: memberTypes[0]?.id ?? '', // Legacy? Removed to prevent crash
-                floor: floorTables[0]?.id ?? '',
+                floor: floorTables?.length === 1 ? floorTables[0]?.id ?? '' : '',
                 table: table ?? '',
                 time: time ?? dayjs().format('HH:mm'),
             },

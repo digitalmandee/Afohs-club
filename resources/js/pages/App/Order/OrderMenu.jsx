@@ -37,6 +37,11 @@ const OrderMenu = () => {
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [searchMode, setSearchMode] = useState('product'); // 'product' or 'booking'
 
+    const handleRestaurantChange = (restaurantId) => {
+        setSelectedRestaurant(restaurantId);
+        setSelectedCategory('');
+    };
+
     const handleCategoryClick = (categoryId) => {
         setSelectedCategory(categoryId);
         // Clear search when selecting category
@@ -259,23 +264,36 @@ const OrderMenu = () => {
     };
 
     useEffect(() => {
+        setProducts([]);
         axios
-            .get(route(routeNameForContext('products.categories')), { params: { tenant_id: selectedRestaurant } })
-            .then((res) => setCategories(res.data.categories));
+            .get(route(routeNameForContext('products.categories')), { params: { restaurant_id: selectedRestaurant } })
+            .then((res) => {
+                const nextCategories = res.data.categories || [];
+                setCategories(nextCategories);
+                setSelectedCategory((prev) => {
+                    if (!prev) return nextCategories[0]?.id || '';
+                    const exists = nextCategories.some((c) => c.id === prev);
+                    return exists ? prev : nextCategories[0]?.id || '';
+                });
+            });
     }, [selectedRestaurant]);
 
     useEffect(() => {
+        if (!selectedCategory) {
+            setProducts([]);
+            return;
+        }
         axios
             .get(route(routeNameForContext('products.bycategory'), { category_id: selectedCategory }), {
-                params: { order_type: orderDetails.order_type },
+                params: { order_type: orderDetails.order_type, restaurant_id: selectedRestaurant },
             })
             .then((res) => setProducts(res.data.products));
-    }, [selectedCategory]);
+    }, [selectedCategory, selectedRestaurant, orderDetails.order_type]);
 
     useEffect(() => {
         if (reservation) {
             handleOrderDetailChange('reservation_id', reservation.id);
-            handleOrderDetailChange('order_type', is_new_order ? 'reservation' : 'dineIn');
+            handleOrderDetailChange('order_type', 'reservation');
 
             if (reservation.member || reservation.customer || reservation.employee) {
                 const memberData = {
@@ -403,7 +421,7 @@ const OrderMenu = () => {
                         <Box>
                             <FormControl fullWidth>
                                 <InputLabel id="restuarant-label">Restuarants</InputLabel>
-                                <Select labelId="restuarant-label" value={selectedRestaurant} size="small" label="Restuarants" onChange={(e) => setSelectedRestaurant(e.target.value)}>
+                                <Select labelId="restuarant-label" value={selectedRestaurant} size="small" label="Restuarants" onChange={(e) => handleRestaurantChange(e.target.value)}>
                                     {allrestaurants && allrestaurants.length > 0
                                         ? allrestaurants.map((item, index) => (
                                               <MenuItem value={item.id} key={index}>

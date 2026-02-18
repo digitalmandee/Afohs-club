@@ -12,7 +12,10 @@ class PosSubCategoryController extends Controller
 {
     public function index(Request $request)
     {
+        $restaurantId = session('active_restaurant_id') ?? tenant('id');
+
         $subCategories = PosSubCategory::with('category')
+            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->when($request->search, function ($query, $search) {
                 $query
                     ->where('name', 'like', "%{$search}%")
@@ -24,7 +27,9 @@ class PosSubCategoryController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $categories = Category::select('id', 'name')->get();
+        $categories = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
+            ->select('id', 'name')
+            ->get();
 
         return Inertia::render('App/Inventory/SubCategories/Index', [
             'subCategories' => $subCategories,
@@ -48,7 +53,9 @@ class PosSubCategoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $subCategory = PosSubCategory::findOrFail($id);
+        $restaurantId = session('active_restaurant_id') ?? tenant('id');
+        $subCategory = PosSubCategory::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
+            ->findOrFail($id);
 
         $request->validate([
             'category_id' => 'required|exists:pos_categories,id',
@@ -63,7 +70,9 @@ class PosSubCategoryController extends Controller
 
     public function destroy($id)
     {
-        $subCategory = PosSubCategory::findOrFail($id);
+        $restaurantId = session('active_restaurant_id') ?? tenant('id');
+        $subCategory = PosSubCategory::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
+            ->findOrFail($id);
         $subCategory->update(['deleted_by' => Auth::id()]);
         $subCategory->delete();
 
@@ -74,6 +83,7 @@ class PosSubCategoryController extends Controller
     {
         $trashedSubCategories = PosSubCategory::onlyTrashed()
             ->with('category')
+            ->when(session('active_restaurant_id') ?? tenant('id'), fn($q, $restaurantId) => $q->where('tenant_id', $restaurantId))
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })
@@ -89,7 +99,10 @@ class PosSubCategoryController extends Controller
 
     public function restore($id)
     {
-        $subCategory = PosSubCategory::withTrashed()->findOrFail($id);
+        $restaurantId = session('active_restaurant_id') ?? tenant('id');
+        $subCategory = PosSubCategory::withTrashed()
+            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
+            ->findOrFail($id);
         $subCategory->restore();
 
         return redirect()->back()->with('success', 'Sub Category restored successfully.');
@@ -97,7 +110,10 @@ class PosSubCategoryController extends Controller
 
     public function forceDelete($id)
     {
-        $subCategory = PosSubCategory::withTrashed()->findOrFail($id);
+        $restaurantId = session('active_restaurant_id') ?? tenant('id');
+        $subCategory = PosSubCategory::withTrashed()
+            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
+            ->findOrFail($id);
         $subCategory->forceDelete();
 
         return redirect()->back()->with('success', 'Sub Category permanently deleted.');
@@ -106,6 +122,7 @@ class PosSubCategoryController extends Controller
     public function getByCategory($categoryId)
     {
         $subCategories = PosSubCategory::where('category_id', $categoryId)
+            ->when(session('active_restaurant_id') ?? tenant('id'), fn($q, $restaurantId) => $q->where('tenant_id', $restaurantId))
             ->select('id', 'name')
             ->get();
 

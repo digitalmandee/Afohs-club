@@ -3,7 +3,7 @@ import ShopIcon from '@/components/App/Icons/ShoppingBag';
 import SofaIcon from '@/components/App/Icons/Sofa';
 import POSLayout from "@/components/POSLayout";
 import { useOrderStore } from '@/stores/useOrderStore';
-import { Box, Button, List, ListItem, ListItemSecondaryAction, ListItemText, Paper, Radio, ToggleButton, ToggleButtonGroup, Typography, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, CircularProgress } from '@mui/material';
+import { Box, Button, List, ListItem, ListItemSecondaryAction, ListItemText, Paper, Radio, ToggleButton, ToggleButtonGroup, Typography, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, CircularProgress, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { router } from '@inertiajs/react';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
@@ -23,7 +23,7 @@ import { routeNameForContext } from '@/lib/utils';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewOrder = ({ orderNo, guestTypes }) => {
+const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
     const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [open, setOpen] = useState(true);
@@ -31,6 +31,8 @@ const NewOrder = ({ orderNo, guestTypes }) => {
     const [roomTypes, setRoomTypes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [shiftInfo, setShiftInfo] = useState(null);
+    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId);
+    const [tablesReloadKey, setTablesReloadKey] = useState(0);
 
     // Booking Search State
     const [bookingSearchTerm, setBookingSearchTerm] = useState('');
@@ -123,14 +125,22 @@ const NewOrder = ({ orderNo, guestTypes }) => {
         }
     }, []);
 
-    const loadFloorTables = async () => {
+    const handleRestaurantChange = (restaurantId) => {
+        setSelectedRestaurant(restaurantId);
+        if (orderDetails.order_type === 'dineIn' || orderDetails.order_type === 'reservation') {
+            setTablesReloadKey((k) => k + 1);
+            loadFloorTables(restaurantId);
+        }
+    };
+
+    const loadFloorTables = async (restaurantId = selectedRestaurant) => {
         try {
-            const response = await axios.get(route(routeNameForContext('api.floors-with-tables')));
+            const response = await axios.get(route(routeNameForContext('api.floors-with-tables')), {
+                params: { restaurant_id: restaurantId },
+            });
             setFloorTables(response.data);
-            if (response.data.length > 0) {
-                handleOrderDetailChange('floor', response.data[0].id);
-                handleOrderDetailChange('table', '');
-            }
+            handleOrderDetailChange('floor', '');
+            handleOrderDetailChange('table', '');
         } catch (error) {
             console.error(error);
         }
@@ -168,6 +178,25 @@ const NewOrder = ({ orderNo, guestTypes }) => {
                         padding:'20px'
                     }}
                 >
+                    {Array.isArray(allrestaurants) && allrestaurants.length > 1 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                            <FormControl size="small" sx={{ minWidth: 260 }}>
+                                <InputLabel id="restaurant-label">Restaurant</InputLabel>
+                                <Select
+                                    labelId="restaurant-label"
+                                    value={selectedRestaurant || ''}
+                                    label="Restaurant"
+                                    onChange={(e) => handleRestaurantChange(e.target.value)}
+                                >
+                                    {allrestaurants.map((item) => (
+                                        <MenuItem value={item.id} key={item.id}>
+                                            {item.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    )}
                     {/* Active Shift Info */}
                     {shiftInfo && (
                         <Paper
@@ -560,7 +589,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
                             {/* =====  */}
                             {orderDetails.order_type === 'dineIn' && <DineDialog guestTypes={guestTypes} floorTables={floorTables} />}
                             {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog guestTypes={guestTypes} />}
-                            {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} floorTables={floorTables} />}
+                            {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} floorTables={floorTables} tablesReloadKey={tablesReloadKey} />}
                             {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} />}
 
                             {orderDetails.order_type === 'load_booking' && (

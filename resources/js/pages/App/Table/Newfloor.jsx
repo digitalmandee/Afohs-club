@@ -2,23 +2,20 @@ import { useState } from 'react';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
 import { Add, ArrowBack, Delete, ExpandMore } from '@mui/icons-material';
-import { Alert, Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Paper, Select, Snackbar, TextField, Typography } from '@mui/material';
-import Table10Icon from '@/components/App/Icons/CTable';
-import Table1Icon from '@/components/App/Icons/Table1';
+import { Alert, Box, Button, Container, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Snackbar, TextField, Typography } from '@mui/material';
 import Table2Icon from '@/components/App/Icons/Table2';
-import Table6Icon from '@/components/App/Icons/Table6';
-import Table8Icon from '@/components/App/Icons/Table8';
 import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewFloor = ({ floorInfo }) => {
+const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
     const [open, setOpen] = useState(true);
     const [modalOpen, setModalOpen] = useState(true);
     const [isFloorExpanded, setIsFloorExpanded] = useState(true);
     const [isTableExpanded, setIsTableExpanded] = useState(true);
     const [duplicateError, setDuplicateError] = useState(false);
+    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId || '');
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
@@ -26,14 +23,14 @@ const NewFloor = ({ floorInfo }) => {
     });
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
-        floor: floorInfo ? { name: floorInfo.name || '', area: floorInfo.area || '' } : { name: '', area: '' },
+        floor: floorInfo ? { name: floorInfo.name || '' } : { name: '' },
         tables:
             floorInfo && floorInfo.tables && floorInfo.tables.length > 0
                 ? floorInfo.tables.map((t) => ({
                       id: t.id,
                       original_table_no: t.table_no,
                       table_no: t.table_no || '',
-                      capacity: t.capacity || '2',
+                      capacity: Number(t.capacity) || 2,
                   }))
                 : [],
     });
@@ -70,7 +67,7 @@ const NewFloor = ({ floorInfo }) => {
                 id: `new`,
                 original_table_no: '',
                 table_no: '',
-                capacity: '2',
+                capacity: 2,
             },
         ]);
     };
@@ -101,13 +98,15 @@ const NewFloor = ({ floorInfo }) => {
     };
 
     const handleSaveFloorAndTable = () => {
-        const hasEmptyFields = !data.floor.name.trim() || !data.floor.area.trim() || data.tables.some((t) => !t.table_no.trim());
+        const isNoFloor = floorInfo?.id === 'no_floor';
+        const isEditingFloor = Boolean(floorInfo && floorInfo.id && !isNoFloor);
+        const hasEmptyFields = data.tables.some((t) => !t.table_no.trim()) || (isEditingFloor && !data.floor.name.trim());
 
         const tableNumbers = data.tables.map((t) => t.table_no.trim());
         const hasDuplicateTableNumbers = new Set(tableNumbers).size !== tableNumbers.length;
 
         if (hasEmptyFields) {
-            setSnackbar({ open: true, message: 'Please fill all fields before saving.', severity: 'error' });
+            setSnackbar({ open: true, message: isEditingFloor ? 'Floor name and all table fields are required.' : 'All table fields are required.', severity: 'error' });
             return;
         }
 
@@ -117,10 +116,30 @@ const NewFloor = ({ floorInfo }) => {
             return;
         }
 
-        if (floorInfo && floorInfo.id) {
+        if (isNoFloor) {
             const updatedData = {
                 ...data,
                 tables: processTableData(),
+                restaurant_id: selectedRestaurant,
+            };
+
+            router.put(route(routeNameForContext('tables.no-floor.update')), updatedData, {
+                onSuccess: () => {
+                    reset();
+                    setModalOpen(false);
+                    setSnackbar({ open: true, message: 'Tables updated successfully!', severity: 'success' });
+                    router.visit(route(routeNameForContext('table.management'), { restaurant_id: selectedRestaurant }));
+                },
+                onError: (err) => {
+                    setSnackbar({ open: true, message: 'Failed to update tables.', severity: 'error' });
+                    console.error('Update error:', err);
+                },
+            });
+        } else if (floorInfo && floorInfo.id) {
+            const updatedData = {
+                ...data,
+                tables: processTableData(),
+                restaurant_id: selectedRestaurant,
             };
             console.log(updatedData);
 
@@ -130,7 +149,7 @@ const NewFloor = ({ floorInfo }) => {
                     reset();
                     setModalOpen(false);
                     setSnackbar({ open: true, message: 'Floor updated successfully!', severity: 'success' });
-                    router.visit(route(routeNameForContext('table.management')));
+                    router.visit(route(routeNameForContext('table.management'), { restaurant_id: selectedRestaurant }));
                 },
                 onError: (err) => {
                     setSnackbar({ open: true, message: 'Failed to update floor.', severity: 'error' });
@@ -139,12 +158,12 @@ const NewFloor = ({ floorInfo }) => {
             });
         } else {
             // Create new floor
-            router.post(route(routeNameForContext('floors.store')), data, {
+            router.post(route(routeNameForContext('floors.store')), { ...data, restaurant_id: selectedRestaurant }, {
                 onSuccess: () => {
                     reset();
                     setModalOpen(false);
                     setSnackbar({ open: true, message: 'Floor created successfully!', severity: 'success' });
-                    router.visit(route(routeNameForContext('table.management')));
+                    router.visit(route(routeNameForContext('table.management'), { restaurant_id: selectedRestaurant }));
                 },
                 onError: (err) => {
                     setSnackbar({ open: true, message: 'Failed to create floor.', severity: 'error' });
@@ -199,7 +218,7 @@ const NewFloor = ({ floorInfo }) => {
                                 }}
                             />
                             <Typography onClick={() => setModalOpen(true)} variant="body2" sx={{ color: 'white', cursor: 'pointer', fontWeight: 500 }}>
-                                {data.floor.name ? (data.floor.area ? `${data.floor.name} • ${data.floor.area}` : `${data.floor.name} • Untitled Area`) : data.floor.area ? `Untitled Floor • ${data.floor.area}` : 'Untitled Floor • Untitled Area'}
+                                {data.floor.name ? data.floor.name : 'No Floor'}
                             </Typography>
                         </Box>
                         {/* Grid pattern */}
@@ -316,6 +335,31 @@ const NewFloor = ({ floorInfo }) => {
 
                                 {/* Floor List Section */}
                                 <Box sx={{ p: 2 }}>
+                                    {Array.isArray(allrestaurants) && allrestaurants.length > 1 && (
+                                        <Box sx={{ mb: 2 }}>
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel id="restaurant-label">Restaurant</InputLabel>
+                                                <Select
+                                                    labelId="restaurant-label"
+                                                    value={selectedRestaurant || ''}
+                                                    label="Restaurant"
+                                                    onChange={(e) => {
+                                                        const restaurantId = e.target.value;
+                                                        setSelectedRestaurant(restaurantId);
+                                                        const currentFloorId = floorInfo?.id ? String(floorInfo.id) : undefined;
+                                                        const params = currentFloorId ? { id: currentFloorId, restaurant_id: restaurantId } : { restaurant_id: restaurantId };
+                                                        router.get(route(routeNameForContext('floors.createOrEdit'), params), {}, { preserveScroll: true, replace: true });
+                                                    }}
+                                                >
+                                                    {allrestaurants.map((item) => (
+                                                        <MenuItem value={item.id} key={item.id}>
+                                                            {item.name}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </Box>
+                                    )}
                                     <Box
                                         sx={{
                                             display: 'flex',
@@ -337,17 +381,11 @@ const NewFloor = ({ floorInfo }) => {
                                     {isFloorExpanded && (
                                         <>
                                             <Grid container spacing={2} alignItems="center" sx={{ mt: 0.5 }}>
-                                                <Grid item xs={5}>
+                                                <Grid item xs={12}>
                                                     <Typography variant="body2" color="text.secondary">
-                                                        Floor Name
+                                                        Floor Name (optional)
                                                     </Typography>
                                                     <TextField size="small" value={data.floor.name} onChange={(e) => handleFloorChange('name', e.target.value)} fullWidth error={!!errors[`floor.name`]} helperText={errors[`floor.name`]} />
-                                                </Grid>
-                                                <Grid item xs={5}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Floor Area
-                                                    </Typography>
-                                                    <TextField size="small" value={data.floor.area} onChange={(e) => handleFloorChange('area', e.target.value)} fullWidth error={!!errors[`floor.area`]} helperText={errors[`floor.area`]} />
                                                 </Grid>
                                             </Grid>
                                         </>
@@ -392,11 +430,11 @@ const NewFloor = ({ floorInfo }) => {
                                                         </Typography>
                                                         <FormControl fullWidth size="small">
                                                             <Select value={table.capacity} onChange={(e) => handleTableChange(index, 'capacity', e.target.value)} error={!!errors[`tables.${index}.capacity`]}>
-                                                                <MenuItem value="2">2 Person</MenuItem>
-                                                                <MenuItem value="4">4 Person</MenuItem>
-                                                                <MenuItem value="6">6 Person</MenuItem>
-                                                                <MenuItem value="8">8 Person</MenuItem>
-                                                                <MenuItem value="10">10 Person</MenuItem>
+                                                                {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
+                                                                    <MenuItem value={n} key={n}>
+                                                                        {n}
+                                                                    </MenuItem>
+                                                                ))}
                                                             </Select>
                                                         </FormControl>
                                                     </Grid>
@@ -456,42 +494,7 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
                 },
             }}
         >
-            {data.capacity == 2 ? (
-                <Table2Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : data.capacity == 4 ? (
-                <Table1Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : data.capacity == 6 ? (
-                <Table6Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : data.capacity == 8 ? (
-                <Table8Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : data.capacity == 10 ? (
-                <Table10Icon
-                    style={{
-                        height: '100%',
-                        bgcolor: fill,
-                    }}
-                />
-            ) : null}
+            <Table2Icon fillColor={fill} />
 
             <Box
                 sx={{
@@ -505,6 +508,9 @@ const DraggableTable = ({ data, reservation, index, moveTable, onClick, fill }) 
             >
                 <Typography variant="body2" sx={{ fontWeight: 'medium', color: getTextColor() }}>
                     {data.table_no}
+                </Typography>
+                <Typography variant="caption" sx={{ color: getTextColor(), fontSize: '0.7rem' }}>
+                    Cap: {data.capacity}
                 </Typography>
             </Box>
         </Box>

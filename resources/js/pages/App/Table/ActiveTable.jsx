@@ -50,6 +50,10 @@ const ActiveTable = ({ table, floorName, onClose }) => {
                 {floorName}
             </Typography>
 
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', px: 2.5 }}>
+                Capacity: {table.capacity}
+            </Typography>
+
             {orderType && (
                 <Typography variant="body2" color="text.primary" sx={{ fontSize: '0.9rem', px: 2.5 }}>
                     Order Type: {orderType}

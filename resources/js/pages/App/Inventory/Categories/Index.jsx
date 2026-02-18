@@ -11,7 +11,7 @@ import { routeNameForContext } from '@/lib/utils';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-export default function CategoryIndex({ categories }) {
+export default function CategoryIndex({ categories, allrestaurants, activeTenantId, filters }) {
     // Note: Converted categoriesList to categories (paginated object) from controller
     // If controller sends 'categories' variable as pagination object: { data: [...], ... }
 
@@ -22,7 +22,8 @@ export default function CategoryIndex({ categories }) {
     const [open, setOpen] = useState(true);
     const [openAddMenu, setOpenAddMenu] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId || '');
     const [reassignCategoryId, setReassignCategoryId] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
@@ -97,12 +98,12 @@ export default function CategoryIndex({ categories }) {
 
             if (editingCategoryId) {
                 formData.append('_method', 'PUT');
-                router.post(route(routeNameForContext('category.update'), editingCategoryId), formData, {
+                router.post(route(routeNameForContext('category.update'), { category: editingCategoryId, restaurant_id: selectedRestaurant }), formData, {
                     forceFormData: true,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit(route(routeNameForContext('inventory.category')));
+                        router.visit(route(routeNameForContext('inventory.category'), { restaurant_id: selectedRestaurant }));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || 'An error occurred while updating the category.');
@@ -111,12 +112,12 @@ export default function CategoryIndex({ categories }) {
                 });
                 setSnackbar({ open: true, message: 'Category updated successfully!', severity: 'success' });
             } else {
-                post(route(routeNameForContext('inventory.category.store')), {
+                post(route(routeNameForContext('inventory.category.store'), { restaurant_id: selectedRestaurant }), {
                     data: formData,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit(route(routeNameForContext('inventory.category')));
+                        router.visit(route(routeNameForContext('inventory.category'), { restaurant_id: selectedRestaurant }));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || errors.message || 'An error occurred while creating the category.');
@@ -125,7 +126,7 @@ export default function CategoryIndex({ categories }) {
                 });
             }
         },
-        [data, editingCategoryId, post, handleAddMenuClose],
+        [data, editingCategoryId, post, handleAddMenuClose, selectedRestaurant],
     );
 
     const handleEdit = useCallback(
@@ -152,7 +153,7 @@ export default function CategoryIndex({ categories }) {
         if (pendingDeleteCategory) {
             setDeleting(true);
 
-            router.delete(route(routeNameForContext('category.destroy'), { category: pendingDeleteCategory.id }), {
+            router.delete(route(routeNameForContext('category.destroy'), { category: pendingDeleteCategory.id, restaurant_id: selectedRestaurant }), {
                 data: {
                     new_category_id: reassignCategoryId || null,
                 },
@@ -161,7 +162,7 @@ export default function CategoryIndex({ categories }) {
                     setPendingDeleteCategory(null);
                     setReassignCategoryId(null);
                     setDeleting(false);
-                    router.visit(route(routeNameForContext('inventory.category')));
+                    router.visit(route(routeNameForContext('inventory.category'), { restaurant_id: selectedRestaurant }));
                 },
                 onError: (errors) => {
                     setErrorMessage(errors.message || 'An error occurred while deleting the category.');
@@ -172,7 +173,7 @@ export default function CategoryIndex({ categories }) {
                 },
             });
         }
-    }, [pendingDeleteCategory, reassignCategoryId]);
+    }, [pendingDeleteCategory, reassignCategoryId, selectedRestaurant]);
 
     const handleCancelDelete = useCallback(() => {
         setPendingDeleteCategory(null);
@@ -184,7 +185,20 @@ export default function CategoryIndex({ categories }) {
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
-        router.get(route(routeNameForContext('inventory.category')), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(
+            route(routeNameForContext('inventory.category')),
+            { search: e.target.value, restaurant_id: selectedRestaurant },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const handleRestaurantChange = (restaurantId) => {
+        setSelectedRestaurant(restaurantId);
+        router.get(
+            route(routeNameForContext('inventory.category')),
+            { search: searchTerm, restaurant_id: restaurantId },
+            { preserveState: true, replace: true },
+        );
     };
 
     useEffect(() => {
@@ -242,6 +256,29 @@ export default function CategoryIndex({ categories }) {
                                     ),
                                 }}
                             />
+                            <FormControl
+                                size="small"
+                                sx={{
+                                    ml: 2,
+                                    minWidth: 220,
+                                    '& .MuiOutlinedInput-root': { borderRadius: '16px' },
+                                }}
+                            >
+                                <InputLabel id="category-restaurant-select-label">Restaurant</InputLabel>
+                                <Select
+                                    labelId="category-restaurant-select-label"
+                                    value={selectedRestaurant}
+                                    label="Restaurant"
+                                    onChange={(e) => handleRestaurantChange(e.target.value)}
+                                >
+                                    {Array.isArray(allrestaurants) &&
+                                        allrestaurants.map((r) => (
+                                            <MenuItem key={r.id} value={r.id}>
+                                                {r.name}
+                                            </MenuItem>
+                                        ))}
+                                </Select>
+                            </FormControl>
                             <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
 
                                 <Button
@@ -261,7 +298,7 @@ export default function CategoryIndex({ categories }) {
                                 <Button
                                 variant="outlined"
                                 color="error"
-                                startIcon={<DeleteIcon />} onClick={() => router.visit(route(routeNameForContext('category.trashed')))}
+                                startIcon={<DeleteIcon />} onClick={() => router.visit(route(routeNameForContext('category.trashed'), { restaurant_id: selectedRestaurant }))}
                                     sx={{
                                         bgcolor: 'transparent',
                                         borderRadius: '16px',
@@ -287,7 +324,7 @@ export default function CategoryIndex({ categories }) {
                                         }}
                                     >
                                         <CardContent sx={{ p: 2 }}>
-                                            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => router.visit(route(routeNameForContext('inventory.index'), { category_id: category.id }))}>
+                                            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => router.visit(route(routeNameForContext('inventory.index'), { category_id: category.id, restaurant_id: selectedRestaurant }))}>
                                                 <div style={{ display: 'flex' }}>
                                                     <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                         <img

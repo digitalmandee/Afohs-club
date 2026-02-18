@@ -109,6 +109,7 @@ Route::prefix('pos')->middleware('web')->group(function () {
         Route::get('api/orders/search-customers', [\App\Http\Controllers\OrderController::class, 'searchCustomers'])->name('pos.api.orders.search-customers');
 
         Route::get('api/users/global-search', [\App\Http\Controllers\UserController::class, 'searchUsers'])->name('pos.api.users.global-search');
+        Route::get('api/employee-logs', [\App\Http\Controllers\EmployeeController::class, 'employeeLog'])->name('pos.api.employee-logs');
         Route::get('api/floors-with-tables', [\App\Http\Controllers\OrderController::class, 'getFloorsWithTables'])->name('pos.api.floors-with-tables');
         Route::get('api/cake-bookings/search', [\App\Http\Controllers\PosCakeBookingController::class, 'search'])->name('pos.api.cake-bookings.search');
         Route::get('api/members/{id}/family', [\App\Http\Controllers\PosCakeBookingController::class, 'getFamilyMembers'])->name('pos.api.members.family');
@@ -192,6 +193,7 @@ Route::prefix('pos')->middleware('web')->group(function () {
         Route::get('floors', [\App\Http\Controllers\FloorController::class, 'index'])->name('pos.floors.index');
         Route::post('floors', [\App\Http\Controllers\FloorController::class, 'store'])->name('pos.floors.store');
         Route::put('floors/{id}/update', [\App\Http\Controllers\FloorController::class, 'update'])->name('pos.floors.update');
+        Route::put('tables/no-floor/update', [\App\Http\Controllers\FloorController::class, 'updateNoFloor'])->name('pos.tables.no-floor.update');
         Route::delete('floors/{floor}', [\App\Http\Controllers\FloorController::class, 'destroy'])->name('pos.floors.destroy');
         Route::get('floors/{id}/edit', [\App\Http\Controllers\FloorController::class, 'edit'])->name('pos.floors.edit');
         Route::put('floors/{id}/status', [\App\Http\Controllers\FloorController::class, 'toggleStatus'])->name('pos.floors.toggleStatus');

@@ -106,6 +106,7 @@ Route::group([
         Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
         Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');
         Route::put('/floors/{id}/update', [FloorController::class, 'update'])->name('floors.update');
+        Route::put('/tables/no-floor/update', [FloorController::class, 'updateNoFloor'])->name('tables.no-floor.update');
         Route::delete('/floors/{floor}', [FloorController::class, 'destroy'])->name('floors.destroy');
 
         Route::get('/floors/{id}/edit', [FloorController::class, 'edit'])->name('floors.edit');

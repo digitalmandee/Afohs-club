@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import POSLayout from "@/components/POSLayout";
-import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Pagination, Dialog, DialogTitle, DialogContent, DialogActions, Backdrop, CircularProgress, DialogContentText } from '@mui/material';
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Pagination, Dialog, DialogTitle, DialogContent, DialogActions, Backdrop, CircularProgress, DialogContentText, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
@@ -10,9 +10,10 @@ import { routeNameForContext } from '@/lib/utils';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const CategoryTrashed = ({ trashedCategories, filters }) => {
+const CategoryTrashed = ({ trashedCategories, filters, allrestaurants, activeTenantId }) => {
     // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
+    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId || filters.restaurant_id || '');
     const [processing, setProcessing] = useState(false);
 
     // Confirm Modals
@@ -22,7 +23,20 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
-        router.get(route(routeNameForContext('category.trashed')), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(
+            route(routeNameForContext('category.trashed')),
+            { search: e.target.value, restaurant_id: selectedRestaurant },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const handleRestaurantChange = (restaurantId) => {
+        setSelectedRestaurant(restaurantId);
+        router.get(
+            route(routeNameForContext('category.trashed')),
+            { search, restaurant_id: restaurantId },
+            { preserveState: true, replace: true },
+        );
     };
 
     // Restore
@@ -35,7 +49,7 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
         if (!selectedItem) return;
         setProcessing(true);
         router.post(
-            route(routeNameForContext('category.restore'), selectedItem.id),
+            route(routeNameForContext('category.restore'), { id: selectedItem.id, restaurant_id: selectedRestaurant }),
             {},
             {
                 onSuccess: () => {
@@ -58,7 +72,7 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
     const handleForceDelete = () => {
         if (!selectedItem) return;
         setProcessing(true);
-        router.delete(route(routeNameForContext('category.force-delete'), selectedItem.id), {
+        router.delete(route(routeNameForContext('category.force-delete'), { id: selectedItem.id, restaurant_id: selectedRestaurant }), {
             onSuccess: () => {
                 enqueueSnackbar('Category permanently deleted!', { variant: 'success' });
                 setDeleteModalOpen(false);
@@ -87,7 +101,7 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Box display="flex" alignItems="center" gap={1}>
-                        <IconButton onClick={() => router.visit(route(routeNameForContext('inventory.category')))}>
+                        <IconButton onClick={() => router.visit(route(routeNameForContext('inventory.category'), { restaurant_id: selectedRestaurant }))}>
                             <ArrowBackIcon />
                         </IconButton>
                         <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
@@ -95,6 +109,22 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
                         </Typography>
                     </Box>
                     <Box display="flex" gap={2}>
+                        <FormControl size="small" sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                            <InputLabel id="trashed-category-restaurant-select-label">Restaurant</InputLabel>
+                            <Select
+                                labelId="trashed-category-restaurant-select-label"
+                                value={selectedRestaurant}
+                                label="Restaurant"
+                                onChange={(e) => handleRestaurantChange(e.target.value)}
+                            >
+                                {Array.isArray(allrestaurants) &&
+                                    allrestaurants.map((r) => (
+                                        <MenuItem key={r.id} value={r.id}>
+                                            {r.name}
+                                        </MenuItem>
+                                    ))}
+                            </Select>
+                        </FormControl>
                         <TextField
                             size="small"
                             placeholder="Search..."
@@ -146,7 +176,7 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
                 </TableContainer>
 
                 <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={trashedCategories.last_page} page={trashedCategories.current_page} onChange={(e, p) => router.get(route(routeNameForContext('category.trashed')), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Pagination count={trashedCategories.last_page} page={trashedCategories.current_page} onChange={(e, p) => router.get(route(routeNameForContext('category.trashed')), { page: p, search, restaurant_id: selectedRestaurant }, { preserveState: true })} color="primary" />
                 </Box>
             </Box>
 
