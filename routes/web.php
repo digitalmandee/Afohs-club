@@ -116,7 +116,7 @@ Route::prefix('pos')->middleware('web')->group(function () {
         Route::get('api/cake-bookings/search', [\App\Http\Controllers\PosCakeBookingController::class, 'search'])->name('pos.api.cake-bookings.search');
         Route::get('api/members/{id}/family', [\App\Http\Controllers\PosCakeBookingController::class, 'getFamilyMembers'])->name('pos.api.members.family');
 
-        Route::resource('customers', \App\Http\Controllers\CustomerController::class)->except(['show'])->names('pos.customers');
+        Route::resource('customers', \App\Http\Controllers\PosCustomerController::class)->except(['show'])->names('pos.customers');
 
         Route::get('setting', [\App\Http\Controllers\SettingController::class, 'index'])->name('pos.setting.index');
         Route::put('setting', [\App\Http\Controllers\SettingController::class, 'update'])->name('pos.setting.update');
