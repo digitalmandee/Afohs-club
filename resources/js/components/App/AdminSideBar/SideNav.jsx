@@ -590,6 +590,11 @@ export default function SideNav({ open, setOpen }) {
                     permission: 'finance.charge-types.view',
                 },
                 {
+                    text: 'Payment Accounts',
+                    path: route('finance.payment-accounts.index'),
+                    permission: 'finance.payment-accounts.view',
+                },
+                {
                     text: 'Vouchers',
                     // icon: <ConfirmationNumberIcon />,
                     path: route('vouchers.dashboard'),

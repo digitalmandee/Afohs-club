@@ -1,15 +1,23 @@
 import AppAuthLayout from '@/layouts/app/app-auth-layout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Box, Button, Typography } from '@mui/material';
+import React, { useState } from 'react';
 
 const SelectRestaurant = ({ restaurants }) => {
-    const { data, setData, post, processing } = useForm({
-        restaurant_id: '',
-    });
+    const [selectedRestaurantId, setSelectedRestaurantId] = useState('');
+    const [processing, setProcessing] = useState(false);
 
     const handleSelect = (restaurantId) => {
-        setData('restaurant_id', restaurantId);
-        post(route('pos.set-restaurant'));
+        if (processing) return;
+        setSelectedRestaurantId(String(restaurantId));
+        router.post(
+            route('pos.set-restaurant'),
+            { restaurant_id: restaurantId },
+            {
+                onStart: () => setProcessing(true),
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
@@ -44,18 +52,18 @@ const SelectRestaurant = ({ restaurants }) => {
                         {(restaurants || []).map((restaurant) => (
                             <Button
                                 key={restaurant.id}
-                                variant={data.restaurant_id === restaurant.id ? 'contained' : 'outlined'}
+                                variant={String(selectedRestaurantId) === String(restaurant.id) ? 'contained' : 'outlined'}
                                 onClick={() => handleSelect(restaurant.id)}
                                 disabled={processing}
                                 sx={{
                                     justifyContent: 'space-between',
                                     borderRadius: 1,
                                     textTransform: 'none',
-                                    bgcolor: data.restaurant_id === restaurant.id ? '#063455' : undefined,
+                                    bgcolor: String(selectedRestaurantId) === String(restaurant.id) ? '#063455' : undefined,
                                     borderColor: '#063455',
-                                    color: data.restaurant_id === restaurant.id ? '#FFFFFF' : '#063455',
+                                    color: String(selectedRestaurantId) === String(restaurant.id) ? '#FFFFFF' : '#063455',
                                     '&:hover': {
-                                        bgcolor: data.restaurant_id === restaurant.id ? '#083654' : 'rgba(6,52,85,0.06)',
+                                        bgcolor: String(selectedRestaurantId) === String(restaurant.id) ? '#083654' : 'rgba(6,52,85,0.06)',
                                         borderColor: '#063455',
                                     },
                                 }}
@@ -72,4 +80,3 @@ const SelectRestaurant = ({ restaurants }) => {
 
 SelectRestaurant.layout = (page) => page;
 export default SelectRestaurant;
-

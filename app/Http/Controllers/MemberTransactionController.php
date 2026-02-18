@@ -251,7 +251,8 @@ class MemberTransactionController extends Controller
                 'items.*.financial_charge_type_id' => 'nullable|integer|exists:financial_charge_types,id',
                 'items.*.amount' => 'required|numeric|min:0',
                 'items.*.extra_percentage' => 'nullable|numeric|min:0',
-                'payment_method' => 'required_if:action,save_receive|in:cash,cheque,online,credit_card,debit_card,bank_transfer',
+                'payment_method' => 'required_if:action,save_receive,pay_existing_invoice|in:cash,cheque,online,credit_card,debit_card,bank_transfer',
+                'payment_account_id' => 'nullable|exists:payment_accounts,id',
             ];
 
             if ($bookingType === 'corporate') {
@@ -559,6 +560,7 @@ class MemberTransactionController extends Controller
                     'payer_id' => $payerId,
                     'amount' => $paidAmount,
                     'payment_method' => $request->payment_method,
+                    'payment_account_id' => $request->payment_account_id,
                     'payment_details' => $request->payment_mode_details,  // Map cheque no/trans ID
                     'receipt_date' => now(),
                     'remarks' => $request->remarks ?? ('Payment for Invoice #' . $invoiceNo),
@@ -1110,6 +1112,7 @@ class MemberTransactionController extends Controller
 
         if ($request->status === 'paid') {
             $rules['payment_method'] = 'required|in:cash,credit_card,cheque,online,bank_transfer';
+            $rules['payment_account_id'] = 'nullable|exists:payment_accounts,id';
             // $rules['credit_card_type'] = 'required_if:payment_method,credit_card|in:mastercard,visa';
             // Receipt validation:
             if ($request->payment_method === 'credit_card' && empty($transaction->receipt)) {
@@ -1172,6 +1175,7 @@ class MemberTransactionController extends Controller
                     'payer_id' => $payerId,
                     'amount' => $transaction->total_price,
                     'payment_method' => $request->payment_method,
+                    'payment_account_id' => $request->payment_account_id,
                     'payment_details' => $request->payment_mode_details ?? null,
                     'receipt_date' => now(),
                     'remarks' => "Payment for Invoice #{$transaction->invoice_no}",
@@ -1450,6 +1454,7 @@ class MemberTransactionController extends Controller
                 'payer_id' => $payerId,
                 'amount' => $totalPayment,
                 'payment_method' => $request->payment_method,
+                'payment_account_id' => $request->payment_account_id,
                 'payment_details' => $request->payment_mode_details,
                 'receipt_date' => now(),
                 'remarks' => $request->remarks ?? ('Partial Payment for Invoice #' . $invoice->invoice_no),
@@ -1485,6 +1490,15 @@ class MemberTransactionController extends Controller
                 $invoice->status = 'paid';
             } else {
                 $invoice->status = 'unpaid';
+            }
+
+            $invoice->payment_method = $request->payment_method;
+            $invoice->payment_date = now();
+
+            $data = $invoice->data ?? [];
+            if ($request->payment_mode_details) {
+                $data['payment_details'] = $request->payment_mode_details;
+                $invoice->data = $data;
             }
             $invoice->save();
 

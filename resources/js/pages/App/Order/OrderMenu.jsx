@@ -40,6 +40,8 @@ const OrderMenu = () => {
     const handleRestaurantChange = (restaurantId) => {
         setSelectedRestaurant(restaurantId);
         setSelectedCategory('');
+        handleOrderDetailChange('tenant_id', restaurantId);
+        handleOrderDetailChange('restaurant_id', restaurantId);
     };
 
     const handleCategoryClick = (categoryId) => {
@@ -264,6 +266,8 @@ const OrderMenu = () => {
     };
 
     useEffect(() => {
+        handleOrderDetailChange('tenant_id', selectedRestaurant);
+        handleOrderDetailChange('restaurant_id', selectedRestaurant);
         setProducts([]);
         axios
             .get(route(routeNameForContext('products.categories')), { params: { restaurant_id: selectedRestaurant } })

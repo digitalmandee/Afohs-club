@@ -277,7 +277,7 @@ const handlePrintReceipt = (invoice) => {
                 <div class="section-title">Details</div>
                 <div class="info-row"><span class="info-label">Invoice #:</span><span class="info-value">${invoiceData.details.invoiceNumber}</span></div>
                 <div class="info-row"><span class="info-label">Issue Date:</span><span class="info-value">${new Date(invoiceData.details.issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span></div>
-                <div class="info-row"><span class="info-label">Payment Method:</span><span class="info-value">${invoiceData.details.paymentMethod ? invoiceData.details.paymentMethod.replace(/_/g, ' ').toUpperCase() : 'CASH'}</span></div>
+                ${invoiceData.details.paymentMethod ? `<div class="info-row"><span class="info-label">Payment Method:</span><span class="info-value">${invoiceData.details.paymentMethod.replace(/_/g, ' ').toUpperCase()}</span></div>` : ''}
                  ${invoiceData.details.validFrom ? `<div class="info-row"><span class="info-label">From:</span><span class="info-value">${new Date(invoiceData.details.validFrom).toLocaleDateString()}</span></div>` : ''}
                  ${invoiceData.details.validTo ? `<div class="info-row"><span class="info-label">To:</span><span class="info-value">${new Date(invoiceData.details.validTo).toLocaleDateString()}</span></div>` : ''}
               </div>
@@ -625,10 +625,12 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                                 day: 'numeric',
                                             })}
                                         </Typography>
-                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                            <span style={{ fontWeight: 'bold' }}>Payment Method: </span>
-                                            {invoice.payment_method ? invoice.payment_method.replace(/_/g, ' ').toUpperCase() : 'Cash'}
-                                        </Typography>
+                                        {!!invoice.payment_method && (
+                                            <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                                <span style={{ fontWeight: 'bold' }}>Payment Method: </span>
+                                                {invoice.payment_method.replace(/_/g, ' ').toUpperCase()}
+                                            </Typography>
+                                        )}
                                         {invoice.payment_date && (
                                             <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                                 <span style={{ fontWeight: 'bold' }}>Payment Date: </span>

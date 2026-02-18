@@ -12,6 +12,7 @@ use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
 use App\Models\FinancialReceipt;
 use App\Models\Member;
+use App\Models\PaymentAccount;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\RoomCategory;
@@ -234,7 +235,9 @@ class BookingController extends Controller
         $request->validate([
             'invoice_no' => 'required|exists:financial_invoices,invoice_no',
             'amount' => 'required|numeric|min:0',
-            'pay_orders' => 'nullable|boolean'
+            'pay_orders' => 'nullable|boolean',
+            'payment_method' => 'required|string',
+            'payment_account_id' => 'nullable|exists:payment_accounts,id',
         ]);
 
         $invoice = FinancialInvoice::where('invoice_no', $request->invoice_no)->first();
@@ -335,6 +338,21 @@ class BookingController extends Controller
             }
             $invoice->receipt = $recieptPath;
 
+            $invoiceData = is_array($invoice->data) ? $invoice->data : [];
+            if ($request->filled('payment_account_id')) {
+                $paymentAccount = PaymentAccount::withTrashed()
+                    ->select('id', 'name')
+                    ->find($request->payment_account_id);
+
+                $invoiceData['payment_account_id'] = (int) $request->payment_account_id;
+                if ($paymentAccount?->name) {
+                    $invoiceData['payment_account'] = $paymentAccount->name;
+                }
+            } elseif ($request->filled('paymentAccount')) {
+                $invoiceData['payment_account'] = (string) $request->paymentAccount;
+            }
+            $invoice->data = $invoiceData;
+
             // Re-calculate status based on NEW total
             $invoice->status = $invoice->paid_amount >= $invoice->total_price ? 'paid' : 'unpaid';
             $invoice->save();
@@ -351,6 +369,7 @@ class BookingController extends Controller
                 'payer_id' => $payerId,
                 'amount' => $request->amount,
                 'payment_method' => $request->payment_method,  // Trust the frontend values (cash, credit_card, etc.)
+                'payment_account_id' => $request->payment_account_id,
                 'payment_details' => $request->paymentAccount ?? null,
                 'receipt_date' => now(),
                 'status' => 'active',

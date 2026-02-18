@@ -6,6 +6,8 @@ use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
 use App\Models\Invoices;
 use App\Models\Order;
+use App\Models\PaymentAccount;
+use App\Models\TransactionRelation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -137,6 +139,76 @@ class TransactionController extends Controller
             );
         }
 
+        $order->payment_meta = null;
+
+        $invoiceId = $order->invoice?->id;
+        if ($invoiceId) {
+            $transactionRelation = TransactionRelation::where('invoice_id', $invoiceId)
+                ->with(['receipt.paymentAccount'])
+                ->latest('id')
+                ->first();
+
+            $receipt = $transactionRelation?->receipt;
+
+            if ($receipt) {
+                $paymentDetails = [];
+                if (!empty($receipt->payment_details) && is_string($receipt->payment_details)) {
+                    $decoded = json_decode($receipt->payment_details, true);
+                    if (is_array($decoded)) {
+                        $paymentDetails = $decoded;
+                    }
+                }
+
+                $splitAccountIdsByMethod = [];
+                if (isset($paymentDetails['split_payment_accounts']) && is_array($paymentDetails['split_payment_accounts'])) {
+                    $splitAccountIdsByMethod = $paymentDetails['split_payment_accounts'];
+                }
+
+                $accountIds = array_values(array_filter(array_merge(
+                    $receipt->payment_account_id ? [$receipt->payment_account_id] : [],
+                    array_values($splitAccountIdsByMethod)
+                )));
+
+                $accountsById = count($accountIds)
+                    ? PaymentAccount::withTrashed()
+                        ->select('id', 'name', 'payment_method')
+                        ->whereIn('id', $accountIds)
+                        ->get()
+                        ->keyBy('id')
+                    : collect();
+
+                $paymentAccount = null;
+                if ($receipt->payment_account_id) {
+                    $account = $accountsById->get($receipt->payment_account_id);
+                    $paymentAccount = [
+                        'id' => $receipt->payment_account_id,
+                        'name' => $account?->name,
+                        'payment_method' => $account?->payment_method,
+                    ];
+                }
+
+                $splitPaymentAccounts = [];
+                foreach (['cash', 'credit_card', 'bank'] as $methodKey) {
+                    $accountId = $splitAccountIdsByMethod[$methodKey] ?? null;
+                    if ($accountId) {
+                        $account = $accountsById->get($accountId);
+                        $splitPaymentAccounts[$methodKey] = [
+                            'id' => $accountId,
+                            'name' => $account?->name,
+                            'payment_method' => $account?->payment_method,
+                        ];
+                    }
+                }
+
+                $order->payment_meta = [
+                    'receipt_id' => $receipt->id,
+                    'payment_account' => $paymentAccount,
+                    'split_payment_accounts' => $splitPaymentAccounts,
+                    'payment_details' => $paymentDetails ?: null,
+                ];
+            }
+        }
+
         return $order;
     }
 
@@ -147,9 +219,15 @@ class TransactionController extends Controller
             'order_id' => 'required|exists:orders,id',
             'paid_amount' => 'required|numeric',
             'payment_method' => 'required|string',  // Relaxed validation to allow 'split_payment' etc regardless of ENT
+            'payment_account_id' => 'nullable|exists:payment_accounts,id',
             // For credit card
             'credit_card_type' => 'nullable|required_if:payment_method,credit_card|string',
             'receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
+            // Split Payment Accounts
+            'split_payment_accounts' => 'nullable|array',
+            'split_payment_accounts.cash' => 'nullable|exists:payment_accounts,id',
+            'split_payment_accounts.credit_card' => 'nullable|exists:payment_accounts,id',
+            'split_payment_accounts.bank' => 'nullable|exists:payment_accounts,id',
             // ENT
             'ent_enabled' => 'nullable|boolean',
             'ent_reason' => 'nullable|string',
@@ -472,6 +550,7 @@ class TransactionController extends Controller
                         'amount' => $paidAmount,
                         'receipt_date' => now(),
                         'payment_method' => $request->payment_method,
+                        'payment_account_id' => $request->payment_method === 'split_payment' ? null : $request->payment_account_id,
                         'payment_details' => json_encode([
                             'credit_card_type' => $request->credit_card_type,
                             'split_payment' => $request->payment_method === 'split_payment' ? [
@@ -479,6 +558,7 @@ class TransactionController extends Controller
                                 'credit_card' => $request->credit_card,
                                 'bank' => $request->bank_transfer
                             ] : null,
+                            'split_payment_accounts' => $request->payment_method === 'split_payment' ? $request->input('split_payment_accounts') : null,
                             'receipt_path' => $receiptPath,
                             'ent_details' => $entDetails ? "ENT Value: $entAmount" : null,
                             'cts_details' => $ctsAmount > 0 ? "CTS Value: $ctsAmount" : null,

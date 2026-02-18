@@ -39,6 +39,7 @@ use App\Http\Controllers\MemberFeeRevenueController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MemberTransactionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentAccountController;
 use App\Http\Controllers\PayrollApiController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\RoleManagementController;
@@ -110,6 +111,7 @@ Route::prefix('pos')->middleware('web')->group(function () {
 
         Route::get('api/users/global-search', [\App\Http\Controllers\UserController::class, 'searchUsers'])->name('pos.api.users.global-search');
         Route::get('api/employee-logs', [\App\Http\Controllers\EmployeeController::class, 'employeeLog'])->name('pos.api.employee-logs');
+        Route::get('api/payment-accounts', [PaymentAccountController::class, 'apiIndex'])->name('pos.api.payment-accounts');
         Route::get('api/floors-with-tables', [\App\Http\Controllers\OrderController::class, 'getFloorsWithTables'])->name('pos.api.floors-with-tables');
         Route::get('api/cake-bookings/search', [\App\Http\Controllers\PosCakeBookingController::class, 'search'])->name('pos.api.cake-bookings.search');
         Route::get('api/members/{id}/family', [\App\Http\Controllers\PosCakeBookingController::class, 'getFamilyMembers'])->name('pos.api.members.family');
@@ -916,6 +918,19 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
         Route::get('transaction-types', [MemberTransactionController::class, 'getTransactionTypes'])->name('finance.transaction.types');
         Route::get('search-invoices', [FinancialController::class, 'searchInvoices'])->name('finance.transaction.search-invoices');
 
+        // Payment Accounts Management (CRUD)
+        Route::get('payment-accounts/trashed', [PaymentAccountController::class, 'trashed'])->name('finance.payment-accounts.trashed')->middleware('permission:finance.payment-accounts.delete');
+        Route::post('payment-accounts/restore/{id}', [PaymentAccountController::class, 'restore'])->name('finance.payment-accounts.restore')->middleware('permission:finance.payment-accounts.delete');
+        Route::delete('payment-accounts/force-delete/{id}', [PaymentAccountController::class, 'forceDelete'])->name('finance.payment-accounts.force-delete')->middleware('permission:finance.payment-accounts.delete');
+        Route::resource('payment-accounts', PaymentAccountController::class)->names('finance.payment-accounts')->middleware([
+            'index' => 'super.admin:finance.payment-accounts.view',
+            'create' => 'super.admin:finance.payment-accounts.create',
+            'store' => 'permission:finance.payment-accounts.create',
+            'edit' => 'super.admin:finance.payment-accounts.edit',
+            'update' => 'permission:finance.payment-accounts.edit',
+            'destroy' => 'permission:finance.payment-accounts.delete',
+        ]);
+
         // Charge Types Management (CRUD)
         Route::get('charge-types/trashed', [FinancialChargeTypeController::class, 'trashed'])->name('finance.charge-types.trashed')->middleware('permission:finance.charge-types.delete');
         Route::post('charge-types/restore/{id}', [FinancialChargeTypeController::class, 'restore'])->name('finance.charge-types.restore')->middleware('permission:finance.charge-types.delete');
@@ -939,6 +954,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
     Route::get('/employees/business-developers', [EmployeeController::class, 'getBusinessDevelopers'])->name('employees.business-developers')->middleware('permission:financial.edit');
 
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
+    Route::get('/api/finance/payment-accounts', [PaymentAccountController::class, 'apiIndex'])->name('api.finance.payment-accounts');
 
     // Payroll API Routes
     Route::prefix('api/payroll')->middleware('permission:employees.payroll.view')->group(function () {

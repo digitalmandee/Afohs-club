@@ -147,6 +147,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
 
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Inv Total</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Paid</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Payment Account</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Balance</TableCell>
 
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Actions</TableCell>
@@ -215,6 +216,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
 
                                                     <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(invoiceTotal)}</TableCell>
                                                     <TableCell sx={{ color: 'green', fontWeight: 600, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(paid)}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.invoice?.payment_account || booking.invoice?.data?.payment_account || '-'}</TableCell>
                                                     <TableCell sx={{ color: 'red', fontWeight: 600, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(balance)}</TableCell>
 
                                                     <TableCell>
@@ -238,7 +240,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         })
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={16} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
+                                            <TableCell colSpan={18} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
                                                 No bookings found
                                             </TableCell>
                                         </TableRow>
@@ -279,6 +281,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                                 }, 0),
                                             )}
                                         </TableCell>
+                                        <TableCell />
                                         {/* Balance Total */}
                                         <TableCell sx={{ fontWeight: 'bold', color: 'red' }}>
                                             {Math.round(

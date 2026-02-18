@@ -832,6 +832,18 @@ class OrderController extends Controller
 
             // Validate Takeaway Payment (only when "Pay Now" flow is used)
             if ($isTakeawayPayNow) {
+                $request->validate([
+                    'payment.payment_method' => 'required|string',
+                    'payment.paid_amount' => 'required|numeric',
+                    'payment.credit_card_type' => 'nullable|required_if:payment.payment_method,credit_card|string',
+                    'receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
+                    'payment.payment_account_id' => 'nullable|exists:payment_accounts,id',
+                    'payment.split_payment_accounts' => 'nullable|array',
+                    'payment.split_payment_accounts.cash' => 'nullable|exists:payment_accounts,id',
+                    'payment.split_payment_accounts.credit_card' => 'nullable|exists:payment_accounts,id',
+                    'payment.split_payment_accounts.bank' => 'nullable|exists:payment_accounts,id',
+                ]);
+
                 $entEnabled = $request->payment['ent_enabled'] ?? false;
                 $ctsEnabled = $request->payment['cts_enabled'] ?? false;
                 $entDeduction = $entEnabled ? ($request->payment['ent_amount'] ?? 0) : 0;
@@ -1419,6 +1431,8 @@ class OrderController extends Controller
                     'payment_method' => ($request->payment['payment_method'] === 'cts' && !empty($request->payment['cts_payment_method']))
                         ? $request->payment['cts_payment_method']
                         : $request->payment['payment_method'],
+                    'payment_account_id' => ($request->payment['payment_method'] ?? null) === 'split_payment' ? null : ($request->payment['payment_account_id'] ?? null),
+                    'payment_details' => !empty($request->payment['split_payment_accounts']) ? json_encode(['split_payment_accounts' => $request->payment['split_payment_accounts']]) : null,
                     'receipt_date' => now(),
                     'status' => 'active',
                     'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],

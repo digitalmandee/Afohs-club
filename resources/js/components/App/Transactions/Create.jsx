@@ -936,6 +936,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     formData.append('payment_mode_details', paymentDetails.payment_mode_details);
                 }
 
+                if (paymentDetails.payment_account_id) {
+                    formData.append('payment_account_id', paymentDetails.payment_account_id);
+                }
+
                 if (paymentDetails.payment_method === 'credit_card' || paymentDetails.payment_method === 'debit_card') {
                     formData.append('credit_card_type', paymentDetails.credit_card_type);
                 }
@@ -1185,6 +1189,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
         if (paymentData.payment_mode_details) {
             formData.append('payment_mode_details', paymentData.payment_mode_details);
+        }
+
+        if (paymentData.payment_account_id) {
+            formData.append('payment_account_id', paymentData.payment_account_id);
         }
 
         if (paymentData.payment_method === 'credit_card' || paymentData.payment_method === 'debit_card') {

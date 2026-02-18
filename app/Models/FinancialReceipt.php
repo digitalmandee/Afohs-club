@@ -17,6 +17,7 @@ class FinancialReceipt extends Model
         'employee_id',
         'amount',
         'payment_method',  // Cash, Cheque, Online, etc.
+        'payment_account_id',
         'payment_details',  // Cheque no, Transaction ID
         'receipt_date',
         'remarks',
@@ -40,6 +41,11 @@ class FinancialReceipt extends Model
     public function links()
     {
         return $this->hasMany(TransactionRelation::class, 'receipt_id');
+    }
+
+    public function paymentAccount()
+    {
+        return $this->belongsTo(PaymentAccount::class, 'payment_account_id');
     }
 
     // Helper to get formatted date
