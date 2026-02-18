@@ -3499,6 +3499,15 @@ class DataMigrationController extends Controller
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         // Truncate tables (DDL causes implicit commit, so must be outside transaction)
+        if (\Illuminate\Support\Facades\Schema::hasTable('user_tenant_access')) {
+            DB::table('user_tenant_access')->truncate();
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('domains')) {
+            DB::table('domains')->truncate();
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('tenants')) {
+            DB::table('tenants')->truncate();
+        }
         \App\Models\Category::truncate();
         \App\Models\PosSubCategory::truncate();
         \App\Models\PosManufacturer::truncate();
@@ -3513,30 +3522,42 @@ class DataMigrationController extends Controller
         try {
             DB::beginTransaction();
 
+            $tenantResult = $this->migrateRestaurantLocations();
+            $tenantMap = $tenantResult['map'];
+            $tenantIds = $tenantResult['tenant_ids'];
+            $fallbackTenantId = $tenantResult['fallback_tenant_id'];
+
             // Migrate Categories and get map
-            $catResult = $this->migrateCategories();
+            $catResult = $this->migrateCategories($tenantMap, $fallbackTenantId);
             $catMap = $catResult['map'];
 
             // Migrate SubCategories (needs catMap)
-            $subResult = $this->migrateSubCategories($catMap);
+            $subResult = $this->migrateSubCategories($catMap, $catResult['category_tenant_map'], $fallbackTenantId);
             $subMap = $subResult['map'];
 
             // Migrate Manufacturers
-            $manResult = $this->migrateManufacturers();
-            $manMap = $manResult['map'];
+            $manResult = $this->migrateManufacturers($tenantIds, $tenantMap, $fallbackTenantId);
 
             // Migrate Units
-            $unitResult = $this->migrateUnits();
-            $unitMap = $unitResult['map'];
+            $unitResult = $this->migrateUnits($tenantIds, $tenantMap, $fallbackTenantId);
 
             // Migrate Products (needs all maps)
-            $prodCount = $this->migrateProducts($catMap, $subMap, $manMap, $unitMap);
+            $prodCount = $this->migrateProducts(
+                $catMap,
+                $subMap,
+                $manResult['map'],
+                $unitResult['map'],
+                $catResult['category_tenant_map'],
+                $tenantMap,
+                $fallbackTenantId
+            );
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'results' => [
+                    'locations' => $tenantResult['count'],
                     'categories' => $catResult['count'],
                     'sub_categories' => $subResult['count'],
                     'manufacturers' => $manResult['count'],
@@ -3554,7 +3575,88 @@ class DataMigrationController extends Controller
         }
     }
 
-    private function migrateUnits()
+    private function migrateRestaurantLocations()
+    {
+        $oldLocations = DB::connection('old_afohs')->table('fnb_restaurant_locations')->get();
+        $count = 0;
+        $map = [];
+        $tenantIds = [];
+
+        if (!\Illuminate\Support\Facades\Schema::hasTable('tenants')) {
+            return [
+                'count' => 0,
+                'map' => [],
+                'tenant_ids' => [],
+                'fallback_tenant_id' => 1,
+            ];
+        }
+
+        $tenantColumns = \Illuminate\Support\Facades\Schema::getColumnListing('tenants');
+        $hasColumn = fn(string $col) => in_array($col, $tenantColumns, true);
+
+        foreach ($oldLocations as $oldLoc) {
+            $oldId = (int) $oldLoc->id;
+            $row = [];
+
+            if ($hasColumn('name')) {
+                $row['name'] = $oldLoc->desc;
+            }
+            if ($hasColumn('branch_id')) {
+                $row['branch_id'] = 1;
+            }
+            if ($hasColumn('status')) {
+                $row['status'] = $oldLoc->status == 1 ? 'active' : 'inactive';
+            }
+            if ($hasColumn('printer_ip')) {
+                $row['printer_ip'] = null;
+            }
+            if ($hasColumn('printer_port')) {
+                $row['printer_port'] = 9100;
+            }
+            if ($hasColumn('expeditor_printer_ip')) {
+                $row['expeditor_printer_ip'] = null;
+            }
+            if ($hasColumn('expeditor_printer_port')) {
+                $row['expeditor_printer_port'] = 9100;
+            }
+            if ($hasColumn('created_by')) {
+                $row['created_by'] = $oldLoc->created_by ?? null;
+            }
+            if ($hasColumn('updated_by')) {
+                $row['updated_by'] = $oldLoc->updated_by ?? null;
+            }
+            if ($hasColumn('deleted_by')) {
+                $row['deleted_by'] = $oldLoc->deleted_by ?? null;
+            }
+            if ($hasColumn('created_at')) {
+                $row['created_at'] = $oldLoc->created_at ?? null;
+            }
+            if ($hasColumn('updated_at')) {
+                $row['updated_at'] = $oldLoc->updated_at ?? null;
+            }
+            if ($hasColumn('deleted_at')) {
+                $row['deleted_at'] = $oldLoc->deleted_at ?? null;
+            }
+            if ($hasColumn('data')) {
+                $row['data'] = null;
+            }
+
+            $newId = (int) DB::table('tenants')->insertGetId($row);
+
+            $map[$oldId] = $newId;
+            $tenantIds[] = $newId;
+            $count++;
+        }
+
+        return [
+            'count' => $count,
+            'map' => $map,
+            'tenant_ids' => $tenantIds,
+            'fallback_tenant_id' => $tenantIds[0] ?? 1,
+        ];
+    }
+
+    private function migrateUnits(array $tenantIds, array $tenantMap, int $fallbackTenantId)
     {
         // Try mapping from 'fnb_measurement_units'
         $oldUnits = DB::connection('old_afohs')->table('fnb_measurement_units')->get();
@@ -3562,31 +3664,69 @@ class DataMigrationController extends Controller
         $map = [];
 
         foreach ($oldUnits as $oldUnit) {
-            $newUnit = \App\Models\PosUnit::create([
-                'name' => $oldUnit->desc,
-                'code' => $oldUnit->code,
-                'status' => $oldUnit->status == 1 ? 'active' : 'inactive',
-                'created_by' => $oldUnit->created_by,
-                'updated_by' => $oldUnit->updated_by,
-                'created_at' => $oldUnit->created_at,
-                'updated_at' => $oldUnit->updated_at,
-            ]);
+            $targets = [];
 
-            $map[$oldUnit->id] = $newUnit->id;
-            $count++;
+            if (isset($oldUnit->pos_location) && $oldUnit->pos_location !== null && $oldUnit->pos_location !== '') {
+                $tenantId = $tenantMap[(int) $oldUnit->pos_location] ?? null;
+                if ($tenantId) {
+                    $targets = [$tenantId];
+                }
+            }
+
+            if (empty($targets)) {
+                $targets = !empty($tenantIds) ? $tenantIds : [$fallbackTenantId];
+            }
+
+            foreach ($targets as $tenantId) {
+                $existingUnit = \App\Models\PosUnit::withTrashed()
+                    ->where('tenant_id', $tenantId)
+                    ->where('name', $oldUnit->desc)
+                    ->first();
+
+                if ($existingUnit) {
+                    if ($existingUnit->trashed()) {
+                        $existingUnit->restore();
+                    }
+                    $map[$tenantId][$oldUnit->id] = $existingUnit->id;
+                    continue;
+                }
+
+                $newUnit = \App\Models\PosUnit::create([
+                    'tenant_id' => $tenantId,
+                    'name' => $oldUnit->desc,
+                    'code' => $oldUnit->code,
+                    'status' => $oldUnit->status == 1 ? 'active' : 'inactive',
+                    'created_by' => $oldUnit->created_by,
+                    'updated_by' => $oldUnit->updated_by,
+                    'created_at' => $oldUnit->created_at,
+                    'updated_at' => $oldUnit->updated_at,
+                ]);
+
+                $map[$tenantId][$oldUnit->id] = $newUnit->id;
+                $count++;
+            }
         }
         return ['count' => $count, 'map' => $map];
     }
 
-    private function migrateCategories()
+    private function migrateCategories(array $tenantMap, int $fallbackTenantId)
     {
         $oldCategories = DB::connection('old_afohs')->table('fnb_item_categories')->get();
         $count = 0;
         $map = [];
+        $categoryTenantMap = [];
 
         foreach ($oldCategories as $oldCat) {
+            $tenantId = null;
+            if (isset($oldCat->pos_location) && $oldCat->pos_location !== null && $oldCat->pos_location !== '') {
+                $tenantId = $tenantMap[(int) $oldCat->pos_location] ?? null;
+            }
+            $tenantId = $tenantId ?? $fallbackTenantId;
+
             $newCat = \App\Models\Category::create([
                 'name' => $oldCat->desc,
+                'tenant_id' => $tenantId,
+                'location_id' => $tenantId,
                 'status' => $oldCat->status == 1 ? 'active' : 'inactive',  // Map to enum
                 'created_by' => $oldCat->created_by,
                 'updated_by' => $oldCat->updated_by,
@@ -3595,12 +3735,13 @@ class DataMigrationController extends Controller
             ]);
 
             $map[$oldCat->id] = $newCat->id;
+            $categoryTenantMap[$oldCat->id] = $tenantId;
             $count++;
         }
-        return ['count' => $count, 'map' => $map];
+        return ['count' => $count, 'map' => $map, 'category_tenant_map' => $categoryTenantMap];
     }
 
-    private function migrateSubCategories($catMap)
+    private function migrateSubCategories(array $catMap, array $categoryTenantMap, int $fallbackTenantId)
     {
         $oldSubCats = DB::connection('old_afohs')->table('fnb_item_sub_categories')->get();
         $count = 0;
@@ -3613,9 +3754,11 @@ class DataMigrationController extends Controller
         foreach ($oldSubCats as $oldSub) {
             // Find new Category ID
             $newCatId = $catMap[$oldSub->item_category] ?? null;
+            $tenantId = $categoryTenantMap[$oldSub->item_category] ?? $fallbackTenantId;
 
             if ($newCatId) {
                 $newSub = \App\Models\PosSubCategory::create([
+                    'tenant_id' => $tenantId,
                     'category_id' => $newCatId,
                     'name' => $oldSub->desc,
                     'status' => $oldSub->status == 1 ? 'active' : 'inactive',  // Map to enum
@@ -3632,29 +3775,58 @@ class DataMigrationController extends Controller
         return ['count' => $count, 'map' => $map];
     }
 
-    private function migrateManufacturers()
+    private function migrateManufacturers(array $tenantIds, array $tenantMap, int $fallbackTenantId)
     {
         $oldMans = DB::connection('old_afohs')->table('fnb_item_manufacturers')->get();
         $count = 0;
         $map = [];
 
         foreach ($oldMans as $oldMan) {
-            $newMan = \App\Models\PosManufacturer::create([
-                'name' => $oldMan->desc,
-                'status' => $oldMan->status == 1 ? 'active' : 'inactive',  // Map to enum
-                'created_by' => $oldMan->created_by,
-                'updated_by' => $oldMan->updated_by,
-                'created_at' => $oldMan->created_at,
-                'updated_at' => $oldMan->updated_at,
-            ]);
+            $targets = [];
 
-            $map[$oldMan->id] = $newMan->id;
-            $count++;
+            if (isset($oldMan->pos_location) && $oldMan->pos_location !== null && $oldMan->pos_location !== '') {
+                $tenantId = $tenantMap[(int) $oldMan->pos_location] ?? null;
+                if ($tenantId) {
+                    $targets = [$tenantId];
+                }
+            }
+
+            if (empty($targets)) {
+                $targets = !empty($tenantIds) ? $tenantIds : [$fallbackTenantId];
+            }
+
+            foreach ($targets as $tenantId) {
+                $existingMan = \App\Models\PosManufacturer::withTrashed()
+                    ->where('tenant_id', $tenantId)
+                    ->where('name', $oldMan->desc)
+                    ->first();
+
+                if ($existingMan) {
+                    if ($existingMan->trashed()) {
+                        $existingMan->restore();
+                    }
+                    $map[$tenantId][$oldMan->id] = $existingMan->id;
+                    continue;
+                }
+
+                $newMan = \App\Models\PosManufacturer::create([
+                    'tenant_id' => $tenantId,
+                    'name' => $oldMan->desc,
+                    'status' => $oldMan->status == 1 ? 'active' : 'inactive',  // Map to enum
+                    'created_by' => $oldMan->created_by,
+                    'updated_by' => $oldMan->updated_by,
+                    'created_at' => $oldMan->created_at,
+                    'updated_at' => $oldMan->updated_at,
+                ]);
+
+                $map[$tenantId][$oldMan->id] = $newMan->id;
+                $count++;
+            }
         }
         return ['count' => $count, 'map' => $map];
     }
 
-    private function migrateProducts($catMap, $subMap, $manMap, $unitMap)
+    private function migrateProducts(array $catMap, array $subMap, array $manMap, array $unitMap, array $categoryTenantMap, array $tenantMap, int $fallbackTenantId)
     {
         $oldProducts = DB::connection('old_afohs')->table('fnb_item_definitions')->get();
         $count = 0;
@@ -3669,11 +3841,17 @@ class DataMigrationController extends Controller
                 }
             }
 
+            $tenantId = null;
+            if (isset($oldProd->pos_location) && $oldProd->pos_location !== null && $oldProd->pos_location !== '') {
+                $tenantId = $tenantMap[(int) $oldProd->pos_location] ?? null;
+            }
+            $tenantId = $tenantId ?? ($categoryTenantMap[$oldProd->category] ?? $fallbackTenantId);
+
             // Map keys
             $newCatId = $catMap[$oldProd->category] ?? null;
             $newSubId = $subMap[$oldProd->sub_category] ?? null;
-            $newManId = $manMap[$oldProd->manufacturer] ?? null;
-            $newUnitId = $unitMap[$oldProd->unit] ?? null;  // Added unit mapping
+            $newManId = $manMap[$tenantId][$oldProd->manufacturer] ?? ($manMap[$fallbackTenantId][$oldProd->manufacturer] ?? null);
+            $newUnitId = $unitMap[$tenantId][$oldProd->unit] ?? ($unitMap[$fallbackTenantId][$oldProd->unit] ?? null);  // Added unit mapping
 
             $maxDiscount = 0;
             $maxDiscountType = 'percentage';
@@ -3712,6 +3890,7 @@ class DataMigrationController extends Controller
                 'is_returnable' => $oldProd->returnable ?? 1,
                 'status' => $oldProd->status == 1 ? 'active' : 'inactive',
                 'item_type' => $itemType,
+                'tenant_id' => $tenantId,
                 'created_by' => $oldProd->created_by,
                 'updated_by' => $oldProd->updated_by,
                 'created_at' => $oldProd->created_at,
