@@ -8,9 +8,6 @@ import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 import { routeNameForContext } from '@/lib/utils';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
-
 export default function CategoryIndex({ categories, allrestaurants, activeTenantId, filters }) {
     // Note: Converted categoriesList to categories (paginated object) from controller
     // If controller sends 'categories' variable as pagination object: { data: [...], ... }
