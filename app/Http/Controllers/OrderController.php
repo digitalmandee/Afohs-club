@@ -45,6 +45,28 @@ use Mike42\Escpos\Printer;
 
 class OrderController extends Controller
 {
+    private function activeTenantId(Request $request = null)
+    {
+        $request = $request ?? request();
+        return $request->session()->get('active_restaurant_id') ?? $request->route('tenant') ?? tenant('id');
+    }
+
+    private function selectedRestaurantId(Request $request = null)
+    {
+        $request = $request ?? request();
+        $requestedId = $request->query('restaurant_id');
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $tenants = $user ? $user->getAccessibleTenants() : collect();
+
+        if ($requestedId !== null && $requestedId !== '') {
+            if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
+                return $requestedId;
+            }
+        }
+
+        return $this->activeTenantId($request);
+    }
+
     // Show new order page
     public function index(Request $request)
     {
@@ -52,7 +74,7 @@ class OrderController extends Controller
         $guestTypes = GuestType::where('status', 1)->select('id', 'name')->get();
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
-        $activeTenantId = session('active_restaurant_id') ?? tenant('id');
+        $activeTenantId = $this->selectedRestaurantId($request);
 
         $floorData = null;
         $tableData = null;
@@ -64,13 +86,15 @@ class OrderController extends Controller
 
             $floorQuery = Floor::select('id', 'name')
                 ->where('status', 1)
-                ->where('id', $floorId);
+                ->where('id', $floorId)
+                ->when($activeTenantId, fn($q) => $q->where('location_id', $activeTenantId));
 
             if ($tableId) {
                 // Directly fetch the single table instead of returning an array
                 $tableData = Table::select('id', 'floor_id', 'table_no', 'capacity')
                     ->where('floor_id', $floorId)
                     ->where('id', $tableId)
+                    ->when($activeTenantId, fn($q) => $q->where('location_id', $activeTenantId))
                     ->first();
             }
 
@@ -565,12 +589,15 @@ class OrderController extends Controller
 
     public function orderMenu(Request $request)
     {
-        $totalSavedOrders = Order::where('status', 'saved')->count();
+        $restaurantId = $this->selectedRestaurantId($request);
+        $totalSavedOrders = Order::where('status', 'saved')
+            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
+            ->count();
 
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
-        $activeTenantId = tenant()->id;
-        $latestCategory = Category::where('location_id', $activeTenantId)->latest()->first();
+        $activeTenantId = $restaurantId;
+        $latestCategory = Category::where('location_id', $restaurantId)->latest()->first();
         $firstCategoryId = $latestCategory->id ?? null;
 
         $orderContext = null;
@@ -673,20 +700,19 @@ class OrderController extends Controller
         // 🔎 Case 2: Direct order flow (via query params)
         // If reservation flow is active, ignore order_type query param to avoid overriding reservation context.
         if (!$orderContext && !$reservation && $request->has('order_type')) {
+            $orderContext = [];
+
             if ($request->filled('order_type')) {
-                $orderContext = [
-                    'order_type' => $request->get('order_type'),
-                ];
+                $orderContext['order_type'] = $request->get('order_type');
             }
+
             if ($request->filled('person_count')) {
-                $orderContext = [
-                    'person_count' => $request->get('person_count'),
-                ];
+                $orderContext['person_count'] = $request->get('person_count');
             }
 
             // Member
             if ($request->filled('member_id') && $request->filled('member_type')) {
-                if ($request->member_type == 1) {
+                if ($request->member_type == 0 || $request->member_type == 1) {
                     $member = Member::select('id', 'full_name', 'membership_no', 'personal_email', 'current_address')
                         ->where('id', $request->member_id)
                         ->first();
@@ -867,7 +893,6 @@ class OrderController extends Controller
                 // ✅ Use Persistent Shift Date and Tenant
                 'start_date' => $activeShift->start_date,  // Force usage of shift date
                 'tenant_id' => $activeShift->tenant_id,  // Force usage of shift tenant
-                'location_id' => $activeShift->tenant_id,
                 'start_time' => $request->time,
                 'down_payment' => $request->down_payment,
                 'amount' => $request->price,
@@ -1128,7 +1153,6 @@ class OrderController extends Controller
                     OrderItem::create([
                         'order_id' => $order->id,
                         'tenant_id' => $safeKitchenId,
-                        'location_id' => $safeKitchenId,
                         'order_item' => $item,
                         'status' => 'in_progress',
                     ]);
@@ -1178,7 +1202,6 @@ class OrderController extends Controller
                         OrderItem::create([
                             'order_id' => $order->id,
                             'tenant_id' => $safeKitchenId,
-                            'location_id' => $safeKitchenId,
                             'order_item' => $item,
                             'status' => 'cancelled',  // Explicitly marked
                             'remark' => $item['remark'] ?? null,
@@ -2177,7 +2200,7 @@ class OrderController extends Controller
         }
 
         // Search products across all restaurants by ID or name
-        $products = Product::with(['variants:id,product_id,name', 'variants.values', 'category', 'tenant:id,name'])
+        $productsQuery = Product::with(['variants:id,product_id,name', 'variants.values', 'category', 'tenant:id,name'])
             ->where(function ($query) use ($searchTerm) {
                 $query
                     ->where('id', 'like', "%{$searchTerm}%")
@@ -2191,8 +2214,18 @@ class OrderController extends Controller
                     ->orWhere('manage_stock', false);
             })
             ->where('is_salable', true)  // Only show salable products
-            ->limit(20)  // Limit results for performance
-            ->get();
+            ->limit(20);  // Limit results for performance
+
+        $requestedId = $request->query('restaurant_id');
+        if ($requestedId !== null && $requestedId !== '') {
+            $user = Auth::guard('tenant')->user() ?? Auth::user();
+            $tenants = $user ? $user->getAccessibleTenants() : collect();
+            if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
+                $productsQuery->where('tenant_id', $requestedId);
+            }
+        }
+
+        $products = $productsQuery->get();
 
         return response()->json(['success' => true, 'products' => $products], 200);
     }

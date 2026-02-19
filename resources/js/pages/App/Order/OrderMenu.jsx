@@ -75,7 +75,7 @@ const OrderMenu = () => {
                 searchMode === 'booking'
                     ? route(routeNameForContext('api.cake-bookings.search'))
                     : route(routeNameForContext('order.search.products'));
-            const params = searchMode === 'booking' ? { query: value.trim() } : { search: value.trim() };
+            const params = searchMode === 'booking' ? { query: value.trim() } : { search: value.trim(), restaurant_id: selectedRestaurant };
 
             const response = await axios.get(url, { params });
 
@@ -101,9 +101,7 @@ const OrderMenu = () => {
     const handleSearchProductClick = (product) => {
         // If product is from different restaurant, switch restaurant first
         if (product.tenant_id !== selectedRestaurant) {
-            setSelectedRestaurant(product.tenant_id);
-            // Clear current category selection since we're switching restaurants
-            setSelectedCategory('');
+            handleRestaurantChange(product.tenant_id);
         }
 
         // Add product to order

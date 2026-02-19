@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0 }) => {
+const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, selectedRestaurant }) => {
     // Get from props if available (for table-based navigation)
     const { selectedTable: propsTable, tenant } = usePage().props;
 
@@ -219,7 +219,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0 }
                 ...orderDetails,
                 table: selectedTableId,
             };
-            const response = await axios.post(route(routeNameForContext('order.reservation')), payload);
+            const response = await axios.post(route(routeNameForContext('order.reservation'), { restaurant_id: selectedRestaurant || undefined }), payload);
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
 
@@ -243,6 +243,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0 }
                 handleOrderDetailChange('table', selectedTableId);
                 router.visit(
                     route(routeNameForContext('order.menu'), {
+                        restaurant_id: selectedRestaurant || undefined,
                         reservation_id: response.data.order.id,
                         order_type: 'reservation',
                         is_new_order: true,

@@ -9,7 +9,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, CircularProgress, FormControl, FormControlLabel, Grid, IconButton, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-const RoomDialog = ({ guestTypes, roomTypes, loading }) => {
+const RoomDialog = ({ guestTypes, roomTypes, loading, selectedRestaurant }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [filterOption, setFilterOption] = useState('occupied');
@@ -424,6 +424,7 @@ const RoomDialog = ({ guestTypes, roomTypes, loading }) => {
 
                         router.visit(
                             route(routeNameForContext('order.menu'), {
+                                restaurant_id: selectedRestaurant || undefined,
                                 room_id: room.id,
                                 room_booking_id: booking ? booking.id : null,
                                 member_id: orderDetails.member ? orderDetails.member.id : null,

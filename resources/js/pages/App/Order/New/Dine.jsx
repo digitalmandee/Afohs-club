@@ -10,9 +10,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Autocomplete, Box, Button, CircularProgress, FormControl, FormControlLabel, Grid, IconButton, InputAdornment, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-const DineDialog = ({ guestTypes, floorTables }) => {
+const DineDialog = ({ guestTypes, floorTables, selectedRestaurant }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [filterOption, setFilterOption] = useState('all');
@@ -60,17 +60,32 @@ const DineDialog = ({ guestTypes, floorTables }) => {
 
     const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0 || !orderDetails.waiter || typeof orderDetails.waiter !== 'object' || !orderDetails.waiter.id || !orderDetails.table;
 
+    const goToMenu = useCallback(() => {
+        router.visit(
+            route(routeNameForContext('order.menu'), {
+                restaurant_id: selectedRestaurant || undefined,
+                table_id: orderDetails.table.id,
+                member_id: orderDetails.member.id,
+                member_type: orderDetails.member_type,
+                waiter_id: orderDetails.waiter.id,
+                person_count: orderDetails.person_count,
+                floor_id: orderDetails.table?.floor_id ?? orderDetails.floor,
+                order_type: 'dineIn',
+            }),
+        );
+    }, [orderDetails.floor, orderDetails.member, orderDetails.member_type, orderDetails.person_count, orderDetails.table, orderDetails.waiter, selectedRestaurant]);
+
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'F10' && !isDisabled) {
                 e.preventDefault();
-                router.visit(route(routeNameForContext('order.menu')));
+                goToMenu();
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isDisabled, router]);
+    }, [isDisabled, goToMenu]);
 
     return (
         <Box>
@@ -374,19 +389,7 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                         textTransform: 'none',
                     }}
                     disabled={isDisabled}
-                    onClick={() =>
-                        router.visit(
-                            route(routeNameForContext('order.menu'), {
-                                table_id: orderDetails.table.id,
-                                member_id: orderDetails.member.id,
-                                member_type: orderDetails.member_type,
-                                waiter_id: orderDetails.waiter.id,
-                                person_count: orderDetails.person_count,
-                                floor_id: orderDetails.table?.floor_id ?? orderDetails.floor,
-                                order_type: 'dineIn',
-                            }),
-                        )
-                    }
+                    onClick={goToMenu}
                 >
                     Choose Menu
                 </Button>

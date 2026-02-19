@@ -77,6 +77,7 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
         router.visit(route(routeNameForContext('order.menu')), {
             method: 'get',
             data: {
+                restaurant_id: selectedRestaurant || undefined,
                 cake_booking_id: bookingSearchResult.id,
                 order_type: 'takeaway',
             },
@@ -587,10 +588,10 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
                             </Box>
 
                             {/* =====  */}
-                            {orderDetails.order_type === 'dineIn' && <DineDialog guestTypes={guestTypes} floorTables={floorTables} />}
-                            {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog guestTypes={guestTypes} />}
-                            {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} floorTables={floorTables} tablesReloadKey={tablesReloadKey} />}
-                            {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} />}
+                            {orderDetails.order_type === 'dineIn' && <DineDialog guestTypes={guestTypes} floorTables={floorTables} selectedRestaurant={selectedRestaurant} />}
+                            {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog guestTypes={guestTypes} selectedRestaurant={selectedRestaurant} />}
+                            {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} floorTables={floorTables} tablesReloadKey={tablesReloadKey} selectedRestaurant={selectedRestaurant} />}
+                            {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} selectedRestaurant={selectedRestaurant} />}
 
                             {orderDetails.order_type === 'load_booking' && (
                                 <Box sx={{ mt: 3, px: 2 }}>
