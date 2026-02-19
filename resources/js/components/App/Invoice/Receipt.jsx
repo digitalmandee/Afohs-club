@@ -5,17 +5,24 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 // Receipt component for reuse
-const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, showButtons = true, closeModal, invoiceRoute }) => {
+const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, showButtons = true, closeModal, invoiceRoute, layout = 'side', containerSx }) => {
+    const isModalLayout = layout === 'modal';
     const styles = {
         receiptContainer: {
-            width: invoiceRoute ? '100%' : '40%',
-            backgroundColor: '#f5f5f5',
-            padding: '20px',
-            borderRight: '1px solid #ddd',
+            width: invoiceRoute || isModalLayout ? '100%' : '40%',
+            backgroundColor: isModalLayout ? '#fff' : '#f5f5f5',
+            padding: isModalLayout ? '16px' : '20px',
+            borderRight: isModalLayout ? 'none' : '1px solid #ddd',
+            border: isModalLayout ? '1px solid #e0e0e0' : undefined,
+            borderRadius: isModalLayout ? '12px' : undefined,
+            boxShadow: isModalLayout ? '0 1px 2px rgba(0,0,0,0.06)' : undefined,
             fontFamily: 'monospace',
             fontSize: '12px',
-            overflowY: 'auto',
-            height: '100vh',
+            overflowY: isModalLayout ? 'visible' : 'auto',
+            height: isModalLayout ? 'auto' : '100vh',
+            maxWidth: isModalLayout ? 420 : undefined,
+            marginLeft: isModalLayout ? 'auto' : undefined,
+            marginRight: isModalLayout ? 'auto' : undefined,
         },
         receiptHeader: {
             textAlign: 'center',
@@ -114,7 +121,15 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '40%' }}>
+            <Box
+                sx={{
+                    ...styles.receiptContainer,
+                    ...(containerSx || {}),
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
+            >
                 <CircularProgress />
             </Box>
         ); // Display loading state until data is fetched
@@ -307,7 +322,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
     };
 
     return (
-        <Box sx={styles.receiptContainer}>
+        <Box sx={{ ...styles.receiptContainer, ...(containerSx || {}) }}>
             <Box sx={styles.receiptHeader}>
                 <img src={'/assets/Logo.png'} style={styles.receiptLogo} />
             </Box>
