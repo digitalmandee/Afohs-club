@@ -298,6 +298,10 @@ const TableManagement = ({ floorsdata, tablesData, allrestaurants, activeTenantI
                                         onChange={(e) => {
                                             const restaurantId = e.target.value;
                                             setSelectedRestaurant(restaurantId);
+                                            setSelectedFloor('no_floor');
+                                            setActiveFloor(null);
+                                            setAvailableCapacity(0);
+                                            setSelectedTable(null);
                                             router.get(
                                                 route(routeNameForContext('table.management')),
                                                 { restaurant_id: restaurantId },

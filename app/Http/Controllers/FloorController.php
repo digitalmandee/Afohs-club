@@ -15,7 +15,13 @@ use Inertia\Inertia;
 
 class FloorController extends Controller
 {
-    private function restaurantId(Request $request = null)
+    private function activeTenantId(Request $request = null)
+    {
+        $request = $request ?? request();
+        return $request->session()->get('active_restaurant_id') ?? tenant('id');
+    }
+
+    private function selectedRestaurantId(Request $request = null)
     {
         $request = $request ?? request();
         $requestedId = $request->query('restaurant_id') ?? $request->input('restaurant_id');
@@ -29,7 +35,7 @@ class FloorController extends Controller
             }
         }
 
-        return $request->session()->get('active_restaurant_id') ?? tenant('id');
+        return $this->activeTenantId($request);
     }
 
     private function tableManagementRouteName(Request $request = null): string
@@ -38,9 +44,9 @@ class FloorController extends Controller
         return $request->routeIs('pos.*') ? 'pos.table.management' : 'table.management';
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $restaurantId = $this->restaurantId();
+        $restaurantId = $this->selectedRestaurantId($request);
 
         $floors = Floor::where('location_id', $restaurantId)->get();
         $tables = Table::with('floor')
@@ -57,9 +63,9 @@ class FloorController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $restaurantId = $this->restaurantId();
+        $restaurantId = $this->selectedRestaurantId($request);
 
         return Inertia::render('App/Table/Newfloor', [
             'allrestaurants' => (Auth::guard('tenant')->user() ?? Auth::user())
@@ -72,7 +78,8 @@ class FloorController extends Controller
 
     public function store(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
+        $tenantId = $this->activeTenantId($request);
+        $locationId = $this->selectedRestaurantId($request);
 
         $request->validate([
             'floor.name' => 'nullable|string|max:255',
@@ -94,8 +101,8 @@ class FloorController extends Controller
             $floor = Floor::create([
                 'name' => $floorName,
                 'area' => 'N/A',
-                'tenant_id' => $restaurantId,
-                'location_id' => $restaurantId,
+                'tenant_id' => $tenantId,
+                'location_id' => $locationId,
             ]);
         }
 
@@ -104,26 +111,28 @@ class FloorController extends Controller
                 $floor->tables()->create([
                     'table_no' => $tableData['table_no'],
                     'capacity' => $tableData['capacity'],
-                    'tenant_id' => $restaurantId,
-                    'location_id' => $restaurantId,
+                    'tenant_id' => $tenantId,
+                    'location_id' => $locationId,
                 ]);
             } else {
                 Table::create([
                     'floor_id' => null,
                     'table_no' => $tableData['table_no'],
                     'capacity' => $tableData['capacity'],
-                    'tenant_id' => $restaurantId,
-                    'location_id' => $restaurantId,
+                    'tenant_id' => $tenantId,
+                    'location_id' => $locationId,
                 ]);
             }
         }
 
-        return redirect()->route($this->tableManagementRouteName($request))->with('success', 'Floors and Tables added!');
+        return redirect()
+            ->route($this->tableManagementRouteName($request), ['restaurant_id' => $locationId])
+            ->with('success', 'Floors and Tables added!');
     }
 
-    public function floorTable()
+    public function floorTable(Request $request)
     {
-        $restaurantId = $this->restaurantId();
+        $restaurantId = $this->selectedRestaurantId($request);
 
         $floors = Floor::where('location_id', $restaurantId)->get();
         $tables = Table::with('floor')
@@ -143,7 +152,7 @@ class FloorController extends Controller
 
     public function toggleStatus(Request $request, $id)
     {
-        $restaurantId = $this->restaurantId($request);
+        $restaurantId = $this->selectedRestaurantId($request);
         $floor = Floor::where('location_id', $restaurantId)->findOrFail($id);
         $floor->status = $request->status;
         $floor->save();
@@ -151,9 +160,9 @@ class FloorController extends Controller
         return redirect()->back();
     }
 
-    public function createOrEdit($id = null)
+    public function createOrEdit(Request $request, $id = null)
     {
-        $restaurantId = $this->restaurantId();
+        $restaurantId = $this->selectedRestaurantId($request);
         $floor = null;
         if ($id === 'no_floor' || $id === 'no-floor') {
             $tables = Table::where('location_id', $restaurantId)
@@ -183,7 +192,8 @@ class FloorController extends Controller
 
     public function updateNoFloor(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
+        $tenantId = $this->activeTenantId($request);
+        $restaurantId = $this->selectedRestaurantId($request);
 
         $request->validate([
             'tables' => 'required|array|min:1',
@@ -211,7 +221,7 @@ class FloorController extends Controller
                     'floor_id' => null,
                     'table_no' => $tableData['table_no'],
                     'capacity' => $tableData['capacity'],
-                    'tenant_id' => $restaurantId,
+                    'tenant_id' => $tenantId,
                     'location_id' => $restaurantId,
                 ]);
                 continue;
@@ -244,12 +254,14 @@ class FloorController extends Controller
                 ->delete();
         }
 
-        return redirect()->route($this->tableManagementRouteName($request))->with('success', 'Tables updated successfully!');
+        return redirect()
+            ->route($this->tableManagementRouteName($request), ['restaurant_id' => $restaurantId])
+            ->with('success', 'Tables updated successfully!');
     }
 
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
-        $restaurantId = $this->restaurantId();
+        $restaurantId = $this->selectedRestaurantId($request);
 
         $floor = Floor::where('location_id', $restaurantId)->with('tables')->findOrFail($id);
         $floors = Floor::where('location_id', $restaurantId)->get();
@@ -271,7 +283,8 @@ class FloorController extends Controller
 
     public function update(Request $request, $id)
     {
-        $restaurantId = $this->restaurantId($request);
+        $tenantId = $this->activeTenantId($request);
+        $restaurantId = $this->selectedRestaurantId($request);
 
         $request->validate([
             'floor.name' => 'required|string|max:255',
@@ -298,7 +311,7 @@ class FloorController extends Controller
                 $floor->tables()->create([
                     'table_no' => $tableData['table_no'],
                     'capacity' => $tableData['capacity'],
-                    'tenant_id' => $restaurantId,
+                    'tenant_id' => $tenantId,
                     'location_id' => $restaurantId,
                 ]);
             } elseif ($tableId && str_starts_with($tableId, 'update-')) {
@@ -322,12 +335,14 @@ class FloorController extends Controller
             $floor->tables()->whereIn('id', $toDelete)->delete();
         }
 
-        return redirect()->route($this->tableManagementRouteName($request))->with('success', 'Floor and tables updated successfully!');
+        return redirect()
+            ->route($this->tableManagementRouteName($request), ['restaurant_id' => $restaurantId])
+            ->with('success', 'Floor and tables updated successfully!');
     }
 
     public function getFloors(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
+        $restaurantId = $this->selectedRestaurantId($request);
 
         $date = $request->date;
         $floorId = $request->floor;
