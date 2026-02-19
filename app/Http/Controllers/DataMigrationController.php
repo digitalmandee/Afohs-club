@@ -3619,15 +3619,6 @@ class DataMigrationController extends Controller
             if ($hasColumn('expeditor_printer_port')) {
                 $row['expeditor_printer_port'] = 9100;
             }
-            if ($hasColumn('created_by')) {
-                $row['created_by'] = $oldLoc->created_by ?? null;
-            }
-            if ($hasColumn('updated_by')) {
-                $row['updated_by'] = $oldLoc->updated_by ?? null;
-            }
-            if ($hasColumn('deleted_by')) {
-                $row['deleted_by'] = $oldLoc->deleted_by ?? null;
-            }
             if ($hasColumn('created_at')) {
                 $row['created_at'] = $oldLoc->created_at ?? null;
             }
