@@ -112,9 +112,7 @@ class PosManufacturerController extends Controller
 
     public function getManufacturers()
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
         $manufacturers = PosManufacturer::select('id', 'name')
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->get();
 
         return response()->json(['manufacturers' => $manufacturers]);

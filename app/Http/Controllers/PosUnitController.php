@@ -30,7 +30,7 @@ class PosUnitController extends Controller
 
     public function getUnits()
     {
-        $units = PosUnit::where('tenant_id', tenant()->id)->where('status', 'active')->select('id', 'name')->get();
+        $units = PosUnit::where('status', 'active')->select('id', 'name')->get();
         return response()->json(['units' => $units]);
     }
 

@@ -21,6 +21,7 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId || '');
+    const [formRestaurantId, setFormRestaurantId] = useState(activeTenantId || '');
     const [reassignCategoryId, setReassignCategoryId] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
@@ -45,7 +46,8 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
         setOpenAddMenu(true);
         reset();
         setEditingCategoryId(null);
-    }, [reset]);
+        setFormRestaurantId(selectedRestaurant || activeTenantId || '');
+    }, [reset, selectedRestaurant, activeTenantId]);
 
     const handleAddMenuClose = useCallback(() => {
         setOpenAddMenu(false);
@@ -109,12 +111,14 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                 });
                 setSnackbar({ open: true, message: 'Category updated successfully!', severity: 'success' });
             } else {
-                post(route(routeNameForContext('inventory.category.store'), { restaurant_id: selectedRestaurant }), {
+                const targetRestaurantId = formRestaurantId || selectedRestaurant;
+                post(route(routeNameForContext('inventory.category.store'), { restaurant_id: targetRestaurantId }), {
                     data: formData,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit(route(routeNameForContext('inventory.category'), { restaurant_id: selectedRestaurant }));
+                        setSelectedRestaurant(targetRestaurantId);
+                        router.visit(route(routeNameForContext('inventory.category'), { restaurant_id: targetRestaurantId }));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || errors.message || 'An error occurred while creating the category.');
@@ -123,7 +127,7 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                 });
             }
         },
-        [data, editingCategoryId, post, handleAddMenuClose, selectedRestaurant],
+        [data, editingCategoryId, post, handleAddMenuClose, selectedRestaurant, formRestaurantId],
     );
 
     const handleEdit = useCallback(
@@ -135,9 +139,10 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                 existingImage: category.image,
             });
             setEditingCategoryId(category.id);
+            setFormRestaurantId(category.tenant_id || selectedRestaurant || activeTenantId || '');
             setOpenAddMenu(true);
         },
-        [setData],
+        [setData, selectedRestaurant, activeTenantId],
     );
 
     const handleDeleteClick = useCallback((category) => {
@@ -191,6 +196,9 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
 
     const handleRestaurantChange = (restaurantId) => {
         setSelectedRestaurant(restaurantId);
+        if (!editingCategoryId) {
+            setFormRestaurantId(restaurantId);
+        }
         router.get(
             route(routeNameForContext('inventory.category')),
             { search: searchTerm, restaurant_id: restaurantId },
@@ -397,6 +405,28 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                 <DialogContent sx={{ p: 0 }}>
                     <Box sx={{ px: 3, pb: 3 }}>
                         <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <Typography variant="body1" sx={{ mb: 1 }}>
+                                    Restaurant
+                                </Typography>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel id="category-modal-restaurant-select-label">Restaurant</InputLabel>
+                                    <Select
+                                        labelId="category-modal-restaurant-select-label"
+                                        value={formRestaurantId}
+                                        label="Restaurant"
+                                        onChange={(e) => setFormRestaurantId(e.target.value)}
+                                        disabled={!!editingCategoryId}
+                                    >
+                                        {Array.isArray(allrestaurants) &&
+                                            allrestaurants.map((r) => (
+                                                <MenuItem key={r.id} value={r.id}>
+                                                    {r.name}
+                                                </MenuItem>
+                                            ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
                             <Grid item xs={12}>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
                                     Category Name
