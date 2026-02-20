@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, selectedRestaurant }) => {
+const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, allrestaurants, selectedRestaurant, onRestaurantChange }) => {
     // Get from props if available (for table-based navigation)
     const { selectedTable: propsTable, tenant } = usePage().props;
 
@@ -489,6 +489,29 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
                     {/* Table Selection */}
                     <Grid container spacing={2} sx={{ mb: 2 }}>
                         <Grid item xs={12}>
+                            {Array.isArray(allrestaurants) && allrestaurants.length > 1 && (
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="#121212" sx={{ mb: 1 }}>
+                                        Restaurant
+                                    </Typography>
+                                    <FormControl fullWidth size="small">
+                                        <InputLabel id="restaurant-label">Restaurant</InputLabel>
+                                        <Select
+                                            labelId="restaurant-label"
+                                            value={selectedRestaurant || ''}
+                                            label="Restaurant"
+                                            onChange={(e) => onRestaurantChange?.(e.target.value)}
+                                            sx={{ borderRadius: 1 }}
+                                        >
+                                            {allrestaurants.map((item) => (
+                                                <MenuItem value={item.id} key={item.id}>
+                                                    {item.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            )}
                             <Typography variant="body2" color="#121212" sx={{ mb: 1 }}>
                                 Select Table
                             </Typography>

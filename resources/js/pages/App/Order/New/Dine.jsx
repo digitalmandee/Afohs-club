@@ -12,7 +12,7 @@ import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 
-const DineDialog = ({ guestTypes, floorTables, selectedRestaurant }) => {
+const DineDialog = ({ guestTypes, floorTables, allrestaurants, selectedRestaurant, onRestaurantChange }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [filterOption, setFilterOption] = useState('all');
@@ -239,6 +239,29 @@ const DineDialog = ({ guestTypes, floorTables, selectedRestaurant }) => {
                     }}
                 />
             </Box>
+
+            {Array.isArray(allrestaurants) && allrestaurants.length > 1 && (
+                <Box sx={{ px: 2, mb: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        Restaurant
+                    </Typography>
+                    <FormControl fullWidth size="small">
+                        <InputLabel id="restaurant-label">Restaurant</InputLabel>
+                        <Select
+                            labelId="restaurant-label"
+                            value={selectedRestaurant || ''}
+                            label="Restaurant"
+                            onChange={(e) => onRestaurantChange?.(e.target.value)}
+                        >
+                            {allrestaurants.map((item) => (
+                                <MenuItem value={item.id} key={item.id}>
+                                    {item.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Box>
+            )}
 
             {/* Search and Filter */}
             <Box sx={{ px: 2, mb: 2, display: 'flex' }}>
