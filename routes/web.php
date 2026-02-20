@@ -1296,6 +1296,9 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
     // User Management Routes (Super Admin only - Web Guard)
     Route::group(['prefix' => 'admin/users', 'middleware' => ['auth:web', 'super.admin:users.view']], function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('admin.users.index');
+        Route::get('/trashed', [UserManagementController::class, 'trashed'])->name('admin.users.trashed')->middleware('super.admin:users.delete');
+        Route::post('/{id}/restore', [UserManagementController::class, 'restore'])->name('admin.users.restore')->middleware('super.admin:users.delete');
+        Route::delete('/{id}/force-delete', [UserManagementController::class, 'forceDelete'])->name('admin.users.force-delete')->middleware('super.admin:users.delete');
         Route::post('/create-super-admin', [UserManagementController::class, 'createSuperAdminUser'])->name('admin.users.create-super-admin')->middleware('super.admin:users.create');
         Route::post('/create-employee-user', [UserManagementController::class, 'createEmployeeUser'])->name('admin.users.create-employee')->middleware('super.admin:users.create');
         Route::post('/update/{id}', [UserManagementController::class, 'updateUser'])->name('admin.users.update')->middleware('super.admin:users.edit');

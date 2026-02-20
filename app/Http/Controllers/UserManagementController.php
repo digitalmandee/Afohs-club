@@ -41,6 +41,37 @@ class UserManagementController extends Controller
             'roles' => $roles,
             'tenants' => $tenants,
             'filters' => $request->only(['search']),
+            'showTrashed' => false,
+            'can' => [
+                'create' => Auth::guard('web')->user()->can('users.create'),
+                'edit' => Auth::guard('web')->user()->can('users.edit'),
+                'delete' => Auth::guard('web')->user()->can('users.delete'),
+            ]
+        ]);
+    }
+
+    public function trashed(Request $request)
+    {
+        $query = User::onlyTrashed()->with(['roles', 'employee', 'allowedTenants']);
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q
+                    ->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $users = $query->orderByDesc('deleted_at')->paginate(10)->withQueryString();
+        $roles = Role::all();
+        $tenants = Tenant::select('id', 'name')->get();
+
+        return Inertia::render('App/Admin/Settings/UserManagement', [
+            'users' => $users,
+            'roles' => $roles,
+            'tenants' => $tenants,
+            'filters' => $request->only(['search']),
+            'showTrashed' => true,
             'can' => [
                 'create' => Auth::guard('web')->user()->can('users.create'),
                 'edit' => Auth::guard('web')->user()->can('users.edit'),
@@ -268,5 +299,43 @@ class UserManagementController extends Controller
         return redirect()
             ->back()
             ->with('success', 'User deleted successfully!');
+    }
+
+    public function restore(Request $request, $id)
+    {
+        $user = User::withTrashed()->findOrFail($id);
+        $user->restore();
+
+        return redirect()
+            ->back()
+            ->with('success', 'User restored successfully!');
+    }
+
+    public function forceDelete(Request $request, $id)
+    {
+        $user = User::withTrashed()->with('employee')->findOrFail($id);
+
+        $currentUserId = Auth::guard('web')->id();
+        if ($currentUserId && (int) $user->id === (int) $currentUserId) {
+            throw ValidationException::withMessages([
+                'delete' => 'You cannot delete your own account.',
+            ]);
+        }
+
+        DB::transaction(function () use ($user) {
+            if ($user->employee) {
+                $user->employee->update(['user_id' => null]);
+            }
+
+            $user->allowedTenants()->detach();
+            $user->syncRoles([]);
+            $user->forceDelete();
+        });
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return redirect()
+            ->back()
+            ->with('success', 'User permanently deleted successfully!');
     }
 }
