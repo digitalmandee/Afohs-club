@@ -154,7 +154,7 @@ class FloorController extends Controller
     {
         $restaurantId = $this->selectedRestaurantId($request);
         $floor = Floor::where('location_id', $restaurantId)->findOrFail($id);
-        $floor->status = $request->status;
+        $floor->status = $request->boolean('status');
         $floor->save();
 
         return redirect()->back();

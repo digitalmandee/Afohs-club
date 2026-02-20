@@ -433,7 +433,7 @@ const TableManagement = ({ floorsdata, tablesData, allrestaurants, activeTenantI
                                 overflowY: 'hidden', // Enables scrolling if content overflows
                             }}
                         >
-                            <TableSetting floorsdata={floorsdata} tablesData={tablesData} onClose={handleCloseSettings} />
+                            <TableSetting floorsdata={floorsdata} tablesData={tablesData} selectedRestaurant={selectedRestaurant} onClose={handleCloseSettings} />
                         </Box>
                     </Modal>
                 </Box>

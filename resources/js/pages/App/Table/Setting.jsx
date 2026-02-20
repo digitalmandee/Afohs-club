@@ -4,14 +4,14 @@ import { Box, Button, CircularProgress, IconButton, Paper, Switch, Typography } 
 import { useState } from 'react';
 import { routeNameForContext } from '@/lib/utils';
 
-const TableSetting = ({ floorsdata, tablesData, onClose }) => {
+const TableSetting = ({ floorsdata, tablesData, selectedRestaurant, onClose }) => {
     const [processingId, setProcessingId] = useState(null);
 
     const handleToggle = (id, newStatus) => {
         setProcessingId(id);
 
         router.put(
-            route(routeNameForContext('floors.toggleStatus'), { id: id }),
+            route(routeNameForContext('floors.toggleStatus'), { id: id, restaurant_id: selectedRestaurant || undefined }),
             {
                 status: newStatus,
             },
@@ -81,7 +81,7 @@ const TableSetting = ({ floorsdata, tablesData, onClose }) => {
                     variant="outlined"
                     fullWidth
                     startIcon={<Add />}
-                    onClick={() => router.visit(route(routeNameForContext('floors.createOrEdit')))}
+                    onClick={() => router.visit(route(routeNameForContext('floors.createOrEdit'), { restaurant_id: selectedRestaurant || undefined }))}
                     sx={{
                         mb: 2,
                         py: 1.5,
@@ -142,7 +142,7 @@ const TableSetting = ({ floorsdata, tablesData, onClose }) => {
                         src="/assets/edit.png"
                         alt="Edit"
                         style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }}
-                        onClick={() => router.visit(route(routeNameForContext('floors.createOrEdit'), { id: 'no_floor' }))}
+                        onClick={() => router.visit(route(routeNameForContext('floors.createOrEdit'), { id: 'no_floor', restaurant_id: selectedRestaurant || undefined }))}
                     />
                 </Paper>
 
@@ -186,7 +186,12 @@ const TableSetting = ({ floorsdata, tablesData, onClose }) => {
 
                         {processingId === floor.id ? <CircularProgress size={18} thickness={5} sx={{ mx: 1 }} /> : <Switch checked={floor.status} onChange={(e) => handleToggle(floor.id, e.target.checked)} size="small" disabled={processingId !== null} />}
 
-                        <img src="/assets/edit.png" alt="Edit" style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }} onClick={() => router.visit(route(routeNameForContext('floors.edit'), { id: floor.id }))} />
+                        <img
+                            src="/assets/edit.png"
+                            alt="Edit"
+                            style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }}
+                            onClick={() => router.visit(route(routeNameForContext('floors.edit'), { id: floor.id, restaurant_id: selectedRestaurant || undefined }))}
+                        />
                     </Paper>
                 ))}
             </Box>
