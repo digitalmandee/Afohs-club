@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $guard_name = 'web';  // Default guard for super admin
 
@@ -32,6 +33,9 @@ class User extends Authenticatable
         'parent_user_id',
         'tenant_id',
         'profile_photo',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     /**
@@ -53,6 +57,27 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (auth()->check() && !$model->created_by) {
+                $model->created_by = auth()->id();
+            }
+        });
+
+        static::updating(function ($model) {
+            if (auth()->check()) {
+                $model->updated_by = auth()->id();
+            }
+        });
+
+        static::deleting(function ($model) {
+            if (auth()->check()) {
+                $model->deleted_by = auth()->id();
+            }
+        });
+    }
 
     /**
      * Get the member type associated with the user.

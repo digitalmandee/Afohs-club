@@ -1298,7 +1298,9 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
         Route::get('/', [UserManagementController::class, 'index'])->name('admin.users.index');
         Route::post('/create-super-admin', [UserManagementController::class, 'createSuperAdminUser'])->name('admin.users.create-super-admin')->middleware('super.admin:users.create');
         Route::post('/create-employee-user', [UserManagementController::class, 'createEmployeeUser'])->name('admin.users.create-employee')->middleware('super.admin:users.create');
+        Route::post('/update/{id}', [UserManagementController::class, 'updateUser'])->name('admin.users.update')->middleware('super.admin:users.edit');
         Route::post('/update-employee-user/{id}', [UserManagementController::class, 'updateEmployeeUser'])->name('admin.users.update-employee')->middleware('super.admin:users.edit');
+        Route::delete('/{id}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy')->middleware('super.admin:users.delete');
         Route::post('/assign-role', [UserManagementController::class, 'assignRole'])->name('admin.users.assign-role')->middleware('super.admin:users.edit');
         Route::post('/remove-role', [UserManagementController::class, 'removeRole'])->name('admin.users.remove-role')->middleware('super.admin:users.edit');
     });
