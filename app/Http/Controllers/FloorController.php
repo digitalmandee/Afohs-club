@@ -600,11 +600,23 @@ class FloorController extends Controller
         return response()->json(['success' => false, 'message' => 'Not found'], 404);
     }
 
-    public function destroy(Floor $floor)
+    public function destroy(Request $request, Floor $floor)
     {
+        $restaurantId = $this->selectedRestaurantId($request);
+
+        if ((string) $floor->location_id !== (string) $restaurantId) {
+            abort(404);
+        }
+
+        Table::where('location_id', $restaurantId)
+            ->where('floor_id', $floor->id)
+            ->update(['floor_id' => null]);
+
         $floor->delete();
 
-        return redirect()->route($this->tableManagementRouteName())->with('success', 'Floor deleted!');
+        return redirect()
+            ->route($this->tableManagementRouteName($request), ['restaurant_id' => $restaurantId])
+            ->with('success', 'Floor deleted!');
     }
 
     public function floorAll()

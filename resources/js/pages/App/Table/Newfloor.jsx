@@ -2,7 +2,7 @@ import { useState } from 'react';
 import SideNav from '@/components/App/SideBar/SideNav';
 import { router, useForm } from '@inertiajs/react';
 import { Add, ArrowBack, Delete, ExpandMore } from '@mui/icons-material';
-import { Alert, Box, Button, Container, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Snackbar, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Snackbar, TextField, Typography } from '@mui/material';
 import Table2Icon from '@/components/App/Icons/Table2';
 import { routeNameForContext } from '@/lib/utils';
 
@@ -16,6 +16,7 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
     const [isTableExpanded, setIsTableExpanded] = useState(true);
     const [duplicateError, setDuplicateError] = useState(false);
     const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId || '');
+    const [confirmDeleteTable, setConfirmDeleteTable] = useState({ open: false, index: null });
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
@@ -29,6 +30,7 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
                 ? floorInfo.tables.map((t) => ({
                       id: t.id,
                       original_table_no: t.table_no,
+                      original_capacity: Number(t.capacity) || 2,
                       table_no: t.table_no || '',
                       capacity: Number(t.capacity) || 2,
                   }))
@@ -52,12 +54,15 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
         setData('tables', updatedTables);
     };
 
-    // Remove table
-    const removeTable = (index) => {
-        if (window.confirm('Are you sure you want to delete this table?')) {
-            const updatedTables = data.tables.filter((_, i) => i !== index);
-            setData('tables', updatedTables);
-        }
+    const openDeleteTableDialog = (index) => setConfirmDeleteTable({ open: true, index });
+    const closeDeleteTableDialog = () => setConfirmDeleteTable({ open: false, index: null });
+
+    const confirmRemoveTable = () => {
+        if (confirmDeleteTable.index === null) return;
+        const updatedTables = data.tables.filter((_, i) => i !== confirmDeleteTable.index);
+        setData('tables', updatedTables);
+        closeDeleteTableDialog();
+        setSnackbar({ open: true, message: 'Table removed. Click Save to apply changes.', severity: 'success' });
     };
 
     const addNewTable = () => {
@@ -66,6 +71,7 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
             {
                 id: `new`,
                 original_table_no: '',
+                original_capacity: 2,
                 table_no: '',
                 capacity: 2,
             },
@@ -78,7 +84,6 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
     };
 
     const processTableData = () => {
-        let updateCounter = 1;
         return data.tables.map((table) => {
             const idStr = String(table.id || ''); // ensure it's a string
 
@@ -86,7 +91,7 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
                 return table; // Newly added table; already tagged
             }
 
-            if (table.table_no !== table.original_table_no) {
+            if (table.table_no !== table.original_table_no || Number(table.capacity) !== Number(table.original_capacity)) {
                 return {
                     ...table,
                     id: `update-${idStr}`,
@@ -132,7 +137,6 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
                 },
                 onError: (err) => {
                     setSnackbar({ open: true, message: 'Failed to update tables.', severity: 'error' });
-                    console.error('Update error:', err);
                 },
             });
         } else if (floorInfo && floorInfo.id) {
@@ -141,7 +145,6 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
                 tables: processTableData(),
                 restaurant_id: selectedRestaurant,
             };
-            console.log(updatedData);
 
             // Update existing floor
             router.put(route(routeNameForContext('floors.update'), floorInfo.id), updatedData, {
@@ -153,7 +156,6 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
                 },
                 onError: (err) => {
                     setSnackbar({ open: true, message: 'Failed to update floor.', severity: 'error' });
-                    console.error('Update error:', err);
                 },
             });
         } else {
@@ -167,11 +169,12 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
                 },
                 onError: (err) => {
                     setSnackbar({ open: true, message: 'Failed to create floor.', severity: 'error' });
-                    console.error('Create error:', err);
                 },
             });
         }
     };
+
+    const tablePendingDelete = confirmDeleteTable.index !== null ? data.tables[confirmDeleteTable.index] : null;
 
     return (
         <>
@@ -439,7 +442,7 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
                                                         </FormControl>
                                                     </Grid>
                                                     <Grid item xs={2} sx={{ textAlign: 'center' }}>
-                                                        <IconButton size="small" onClick={() => removeTable(index)}>
+                                                        <IconButton size="small" onClick={() => openDeleteTableDialog(index)}>
                                                             <Delete fontSize="small" sx={{ color: '#d32f2f' }} />
                                                         </IconButton>
                                                     </Grid>
@@ -456,6 +459,23 @@ const NewFloor = ({ floorInfo, allrestaurants, activeTenantId }) => {
                     </Box>
                 </Container>
             </div>
+
+            <Dialog open={confirmDeleteTable.open} onClose={closeDeleteTableDialog}>
+                <DialogTitle>Delete Table?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Delete {tablePendingDelete?.table_no ? `table "${tablePendingDelete.table_no}"` : 'this table'}? This will be applied after you click Save.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeDeleteTableDialog} disabled={processing}>
+                        Cancel
+                    </Button>
+                    <Button onClick={confirmRemoveTable} disabled={processing} sx={{ color: '#c62828' }}>
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
                 <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">

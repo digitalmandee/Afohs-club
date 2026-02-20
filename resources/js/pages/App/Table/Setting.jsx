@@ -1,11 +1,13 @@
 import { router } from '@inertiajs/react';
-import { Add, ArrowBack } from '@mui/icons-material';
-import { Box, Button, CircularProgress, IconButton, Paper, Switch, Typography } from '@mui/material';
+import { Add, ArrowBack, DeleteOutline } from '@mui/icons-material';
+import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Paper, Switch, Typography } from '@mui/material';
 import { useState } from 'react';
 import { routeNameForContext } from '@/lib/utils';
+import { enqueueSnackbar } from 'notistack';
 
 const TableSetting = ({ floorsdata, tablesData, selectedRestaurant, onClose }) => {
     const [processingId, setProcessingId] = useState(null);
+    const [confirmDelete, setConfirmDelete] = useState({ open: false, floor: null });
 
     const handleToggle = (id, newStatus) => {
         setProcessingId(id);
@@ -21,6 +23,28 @@ const TableSetting = ({ floorsdata, tablesData, selectedRestaurant, onClose }) =
                 onFinish: () => setProcessingId(null),
             },
         );
+    };
+
+    const openDeleteDialog = (floor) => setConfirmDelete({ open: true, floor });
+    const closeDeleteDialog = () => setConfirmDelete({ open: false, floor: null });
+
+    const confirmDeleteFloor = () => {
+        const floor = confirmDelete.floor;
+        if (!floor?.id) return;
+
+        setProcessingId(floor.id);
+        router.delete(route(routeNameForContext('floors.destroy'), { floor: floor.id, restaurant_id: selectedRestaurant || undefined }), {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                enqueueSnackbar('Floor deleted', { variant: 'success' });
+                closeDeleteDialog();
+            },
+            onError: () => {
+                enqueueSnackbar('Failed to delete floor', { variant: 'error' });
+            },
+            onFinish: () => setProcessingId(null),
+        });
     };
 
     // Sort floorsdata in descending order by id
@@ -54,7 +78,7 @@ const TableSetting = ({ floorsdata, tablesData, selectedRestaurant, onClose }) =
                             onClose();
                             return;
                         }
-                        window.history.back();
+                        router.visit(route(routeNameForContext('table.management'), { restaurant_id: selectedRestaurant || undefined }));
                     }}
                 >
                     <ArrowBack fontSize="small" />
@@ -184,7 +208,11 @@ const TableSetting = ({ floorsdata, tablesData, selectedRestaurant, onClose }) =
                             </Typography>
                         </Box>
 
-                        {processingId === floor.id ? <CircularProgress size={18} thickness={5} sx={{ mx: 1 }} /> : <Switch checked={floor.status} onChange={(e) => handleToggle(floor.id, e.target.checked)} size="small" disabled={processingId !== null} />}
+                        {processingId === floor.id ? (
+                            <CircularProgress size={18} thickness={5} sx={{ mx: 1 }} />
+                        ) : (
+                            <Switch checked={floor.status} onChange={(e) => handleToggle(floor.id, e.target.checked)} size="small" disabled={processingId !== null} />
+                        )}
 
                         <img
                             src="/assets/edit.png"
@@ -192,9 +220,34 @@ const TableSetting = ({ floorsdata, tablesData, selectedRestaurant, onClose }) =
                             style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }}
                             onClick={() => router.visit(route(routeNameForContext('floors.edit'), { id: floor.id, restaurant_id: selectedRestaurant || undefined }))}
                         />
+                        <IconButton
+                            size="small"
+                            onClick={() => openDeleteDialog(floor)}
+                            disabled={processingId !== null}
+                            sx={{ ml: 0.5 }}
+                        >
+                            <DeleteOutline fontSize="small" />
+                        </IconButton>
                     </Paper>
                 ))}
             </Box>
+
+            <Dialog open={confirmDelete.open} onClose={closeDeleteDialog}>
+                <DialogTitle>Delete Floor?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Delete "{confirmDelete.floor?.name || ''}"? Tables will be moved to "Without Floor".
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeDeleteDialog} disabled={processingId !== null}>
+                        Cancel
+                    </Button>
+                    <Button onClick={confirmDeleteFloor} disabled={processingId !== null} sx={{ color: '#c62828' }}>
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };
