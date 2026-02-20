@@ -1,4 +1,5 @@
 import UserAutocomplete from '@/components/UserAutocomplete';
+import GuestCreateModal from '@/components/GuestCreateModal';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router, usePage } from '@inertiajs/react';
 import { routeNameForContext } from '@/lib/utils';
@@ -29,6 +30,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
     const { orderDetails, weeks, selectedWeek, monthYear, setMonthYear, handleOrderDetailChange } = useOrderStore();
     const [availableSlots, setAvailableSlots] = useState([]);
     const [slotsLoading, setSlotsLoading] = useState(false);
+    const [showGuestModal, setShowGuestModal] = useState(false);
     const advanceAmount = Number(orderDetails.down_payment || 0);
 
     // Read URL params for floor, table, and date
@@ -102,6 +104,18 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
     const handleMemberType = (value) => {
         handleOrderDetailChange('member_type', value);
         handleOrderDetailChange('member', {});
+    };
+
+    const handleGuestCreated = (newGuest) => {
+        const formattedGuest = {
+            ...newGuest,
+            label: `${newGuest.name} (Guest - ${newGuest.customer_no})`,
+            booking_type: 'guest',
+        };
+
+        handleOrderDetailChange('member_type', `guest-${newGuest.guest_type_id}`);
+        handleOrderDetailChange('member', formattedGuest);
+        setShowGuestModal(false);
     };
 
     const openCalendar = Boolean(anchorEl); // Renamed to avoid conflict with Autocomplete 'open' state
@@ -540,7 +554,14 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '14px', color: '#121212' }}>
                             Customer Name or Scan Member Card
                         </Typography>
-                        <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <Box sx={{ flexGrow: 1 }}>
+                                <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                            </Box>
+                            <Button variant="contained" onClick={() => setShowGuestModal(true)} sx={{ backgroundColor: '#063455', color: '#fff', height: '40px' }}>
+                                + Add
+                            </Button>
+                        </Box>
                     </Box>
 
                     {/* Customer Qty and Down Payment */}
@@ -1028,6 +1049,8 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
                     </Box>
                 </Box>
             </Box>
+
+            <GuestCreateModal open={showGuestModal} onClose={() => setShowGuestModal(false)} onSuccess={handleGuestCreated} guestTypes={guestTypes} storeRouteName={routeNameForContext('customers.store')} memberSearchRouteName={routeNameForContext('api.users.global-search')} memberSearchParams={{ type: '0' }} />
         </>
     );
 };
