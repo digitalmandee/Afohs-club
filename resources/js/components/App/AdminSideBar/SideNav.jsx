@@ -33,6 +33,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StorageIcon from '@mui/icons-material/Storage';
+import PlaceIcon from '@mui/icons-material/Place';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
@@ -590,6 +591,11 @@ export default function SideNav({ open, setOpen }) {
                     permission: 'finance.charge-types.view',
                 },
                 {
+                    text: 'Payment Accounts',
+                    path: route('finance.payment-accounts.index'),
+                    permission: 'finance.payment-accounts.view',
+                },
+                {
                     text: 'Vouchers',
                     // icon: <ConfirmationNumberIcon />,
                     path: route('vouchers.dashboard'),
@@ -647,6 +653,12 @@ export default function SideNav({ open, setOpen }) {
                     permission: 'restaurant.locations.create|kitchen.locations.create',
                 },
             ],
+        },
+        {
+            text: 'POS Locations',
+            icon: <PlaceIcon />,
+            path: route('pos-locations.index'),
+            permission: 'admin.access',
         },
         {
             text: 'Data Migration',

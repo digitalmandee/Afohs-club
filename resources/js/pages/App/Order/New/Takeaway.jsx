@@ -1,15 +1,30 @@
 import UserAutocomplete from '@/components/UserAutocomplete';
+import GuestCreateModal from '@/components/GuestCreateModal';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { routeNameForContext } from '@/lib/utils';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Box, Button, FormControl, FormControlLabel, Grid, Radio, RadioGroup, TextField, Typography, Autocomplete } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 
-const TakeAwayDialog = ({ guestTypes }) => {
+const TakeAwayDialog = ({ guestTypes, selectedRestaurant }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
     const [riders, setRiders] = useState([]);
+    const [showGuestModal, setShowGuestModal] = useState(false);
+
+    const handleGuestCreated = (newGuest) => {
+        const formattedGuest = {
+            ...newGuest,
+            label: `${newGuest.name} (Guest - ${newGuest.customer_no})`,
+            booking_type: 'guest',
+        };
+
+        handleOrderDetailChange('member_type', `guest-${newGuest.guest_type_id}`);
+        handleOrderDetailChange('member', formattedGuest);
+        handleOrderDetailChange('address', formattedGuest?.address || '');
+        setShowGuestModal(false);
+    };
 
     useEffect(() => {
         if (orderDetails.order_type === 'delivery') {
@@ -25,6 +40,19 @@ const TakeAwayDialog = ({ guestTypes }) => {
     const requiresAddress = orderDetails.order_type === 'delivery';
     const isDisabled = !isMemberSelected || (requiresAddress && !orderDetails.address);
 
+    const goToMenu = useCallback(() => {
+        router.visit(
+            route(routeNameForContext('order.menu'), {
+                restaurant_id: selectedRestaurant || undefined,
+                member_id: orderDetails.member.id,
+                member_type: orderDetails.member_type,
+                order_type: orderDetails.order_type,
+                address: orderDetails.address || null,
+                rider_id: orderDetails.rider_id || null,
+            }),
+        );
+    }, [orderDetails.address, orderDetails.member, orderDetails.member_type, orderDetails.order_type, orderDetails.rider_id, selectedRestaurant]);
+
     const handleMemberType = (value) => {
         handleOrderDetailChange('member_type', value);
         handleOrderDetailChange('member', {});
@@ -39,16 +67,17 @@ const TakeAwayDialog = ({ guestTypes }) => {
         const handleKeyDown = (e) => {
             if (e.key === 'F10' && !isDisabled) {
                 e.preventDefault();
-                router.visit(route(routeNameForContext('order.menu')));
+                goToMenu();
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isDisabled]);
+    }, [goToMenu, isDisabled]);
 
     return (
-        <Box>
+        <>
+            <Box>
             {/* Order Header */}
             <Box sx={{ px: 2, mb: 2 }}>
                 <Box
@@ -86,7 +115,6 @@ const TakeAwayDialog = ({ guestTypes }) => {
                                 onChange={(e) => {
                                     handleOrderDetailChange('member_type', e.target.value);
                                     handleOrderDetailChange('member', {});
-                                    setOptions([]);
                                 }}
                                 sx={{ gap: 1 }}
                             >
@@ -111,7 +139,14 @@ const TakeAwayDialog = ({ guestTypes }) => {
                             </RadioGroup>
                         </Grid>
                         <Grid item xs={12}>
-                            <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <Box sx={{ flexGrow: 1 }}>
+                                    <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                                </Box>
+                                <Button variant="contained" onClick={() => setShowGuestModal(true)} sx={{ backgroundColor: '#063455', color: '#fff', height: '40px' }}>
+                                    + Add
+                                </Button>
+                            </Box>
                         </Grid>
 
                         {/* Delivery Address */}
@@ -205,22 +240,15 @@ const TakeAwayDialog = ({ guestTypes }) => {
                         textTransform: 'none',
                     }}
                     disabled={isDisabled}
-                    onClick={() =>
-                        router.visit(
-                            route(routeNameForContext('order.menu'), {
-                                member_id: orderDetails.member.id,
-                                member_type: orderDetails.member_type,
-                                order_type: orderDetails.order_type,
-                                address: orderDetails.address || null,
-                                rider_id: orderDetails.rider_id || null, // Pass rider_id
-                            }),
-                        )
-                    }
+                    onClick={goToMenu}
                 >
                     Choose Menu
                 </Button>
             </Box>
-        </Box>
+            </Box>
+
+            <GuestCreateModal open={showGuestModal} onClose={() => setShowGuestModal(false)} onSuccess={handleGuestCreated} guestTypes={guestTypes} storeRouteName={routeNameForContext('customers.store')} memberSearchRouteName={routeNameForContext('api.users.global-search')} memberSearchParams={{ type: '0' }} />
+        </>
     );
 };
 TakeAwayDialog.layout = (page) => page;

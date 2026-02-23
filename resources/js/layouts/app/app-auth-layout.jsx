@@ -1,14 +1,16 @@
-import { Box, Paper, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 
 export default function AppAuthLayout({ children }) {
     return (
         <Box
             sx={{
                 display: 'flex',
-                height: '100vh',
+                minHeight: '100dvh',
+                height: '100dvh',
                 width: '100%',
                 position: 'relative',
-                overflow: 'hidden',
+                overflowX: 'hidden',
+                overflowY: 'auto',
                 backgroundImage: `url(/assets/bgimage.webp)`,
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',
@@ -45,7 +47,9 @@ export default function AppAuthLayout({ children }) {
                         borderRadius: 1,
                         boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
                         border: '1px solid #e0e0e0',
-                        overflow: 'hidden'
+                        maxHeight: { xs: 'calc(100dvh - 16px)', md: 'calc(100dvh - 32px)' },
+                        overflowX: 'hidden',
+                        overflowY: 'auto',
                     }}
                 >
                     {children}

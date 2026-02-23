@@ -75,11 +75,6 @@ class Product extends BaseModel
         return $this->belongsTo(User::class, 'kitchen_id', 'id');
     }
 
-    public function restaurant()
-    {
-        return $this->belongsTo(Restaurant::class);
-    }
-
     /**
      * Relationship with ingredients through pivot table
      */

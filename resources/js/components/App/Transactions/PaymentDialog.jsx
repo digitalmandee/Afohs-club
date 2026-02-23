@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Grid, Typography, Box, FormControl, Select, InputLabel, FormHelperText, CircularProgress } from '@mui/material';
 import { Payment, CloudUpload, Close } from '@mui/icons-material';
+import axios from 'axios';
 
 const PaymentDialog = ({ open, onClose, transaction, onConfirm, submitting }) => {
     const [data, setData] = useState({
         payment_method: 'cash',
         credit_card_type: '',
         receipt_file: null,
+        payment_account_id: '',
     });
     const [errors, setErrors] = useState({});
+    const [paymentAccounts, setPaymentAccounts] = useState([]);
+    const [paymentAccountsLoading, setPaymentAccountsLoading] = useState(false);
 
     // Reset state when dialog opens
     useEffect(() => {
@@ -17,13 +21,29 @@ const PaymentDialog = ({ open, onClose, transaction, onConfirm, submitting }) =>
                 payment_method: 'cash',
                 credit_card_type: '',
                 receipt_file: null,
+                payment_account_id: '',
             });
             setErrors({});
         }
     }, [open, transaction]);
 
+    useEffect(() => {
+        if (!open) return;
+
+        setPaymentAccountsLoading(true);
+        axios
+            .get(route('api.finance.payment-accounts'), { params: { payment_method: data.payment_method } })
+            .then((res) => setPaymentAccounts(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setPaymentAccounts([]))
+            .finally(() => setPaymentAccountsLoading(false));
+    }, [open, data.payment_method]);
+
     const handleChange = (field, value) => {
-        setData((prev) => ({ ...prev, [field]: value }));
+        setData((prev) => ({
+            ...prev,
+            [field]: value,
+            ...(field === 'payment_method' ? { payment_account_id: '' } : {}),
+        }));
         // Clear error for this field
         if (errors[field]) {
             setErrors((prev) => ({ ...prev, [field]: null }));
@@ -140,6 +160,27 @@ const PaymentDialog = ({ open, onClose, transaction, onConfirm, submitting }) =>
                                 <MenuItem value="online">Online Transfer</MenuItem>
                             </Select>
                             {errors.payment_method && <FormHelperText>{errors.payment_method}</FormHelperText>}
+                        </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        <FormControl fullWidth size="small">
+                            <InputLabel>Payment Account</InputLabel>
+                            <Select
+                                value={data.payment_account_id}
+                                label="Payment Account"
+                                onChange={(e) => handleChange('payment_account_id', e.target.value)}
+                                disabled={paymentAccountsLoading}
+                            >
+                                <MenuItem value="">
+                                    {paymentAccountsLoading ? 'Loading...' : paymentAccounts.length > 0 ? 'Select Payment Account' : 'No Accounts Found'}
+                                </MenuItem>
+                                {paymentAccounts.map((a) => (
+                                    <MenuItem key={a.id} value={String(a.id)}>
+                                        {a.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
                         </FormControl>
                     </Grid>
 

@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\Category;
 use App\Models\Ingredient;
+use App\Models\PosManufacturer;
+use App\Models\PosSubCategory;
+use App\Models\PosUnit;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantValue;
@@ -54,11 +57,55 @@ class InventoryController extends Controller
         }
 
         $productLists = $query->paginate(15);
-        $categoriesList = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
+        $categoriesList = Category::when($restaurantId, fn($q) => $q->where('location_id', $restaurantId))
             ->select('id', 'name')
             ->get();
 
         return Inertia::render('App/Inventory/Dashboard', compact('productLists', 'categoriesList'));
+    }
+
+    public function getCategories(Request $request)
+    {
+        $restaurantId = $this->restaurantId($request);
+
+        $categories = Category::when($restaurantId, fn($q) => $q->where('location_id', $restaurantId))
+            ->latest()
+            ->get();
+
+        return response()->json(['categories' => $categories]);
+    }
+
+    public function getSubCategoriesByCategory(Request $request, $category_id)
+    {
+        $restaurantId = $this->restaurantId($request);
+
+        $subCategories = PosSubCategory::where('category_id', $category_id)
+            ->when($restaurantId, fn($q) => $q->where('location_id', $restaurantId))
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json(['subCategories' => $subCategories]);
+    }
+
+    public function getManufacturerList(Request $request)
+    {
+        $manufacturers = PosManufacturer::select('id', 'name')
+            ->get();
+
+        return response()->json(['manufacturers' => $manufacturers]);
+    }
+
+    public function getUnitList(Request $request)
+    {
+        $units = PosUnit::select('id', 'name', 'code')
+            ->get();
+
+        return response()->json(['units' => $units]);
+    }
+
+    public function filterProducts(Request $request)
+    {
+        return $this->filter($request);
     }
 
     /**

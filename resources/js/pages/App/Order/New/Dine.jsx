@@ -1,6 +1,7 @@
 'use client';
 
 import UserAutocomplete from '@/components/UserAutocomplete';
+import GuestCreateModal from '@/components/GuestCreateModal';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { routeNameForContext } from '@/lib/utils';
@@ -10,15 +11,28 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Autocomplete, Box, Button, CircularProgress, FormControl, FormControlLabel, Grid, IconButton, InputAdornment, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-const DineDialog = ({ guestTypes, floorTables }) => {
+const DineDialog = ({ guestTypes, floorTables, allrestaurants, selectedRestaurant, onRestaurantChange }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [filterOption, setFilterOption] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [waiters, setWaiters] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [showGuestModal, setShowGuestModal] = useState(false);
+
+    const handleGuestCreated = (newGuest) => {
+        const formattedGuest = {
+            ...newGuest,
+            label: `${newGuest.name} (Guest - ${newGuest.customer_no})`,
+            booking_type: 'guest',
+        };
+
+        handleOrderDetailChange('member_type', `guest-${newGuest.guest_type_id}`);
+        handleOrderDetailChange('member', formattedGuest);
+        setShowGuestModal(false);
+    };
 
     const handleAutocompleteChange = (event, value, field) => {
         handleOrderDetailChange(field, value);
@@ -60,20 +74,36 @@ const DineDialog = ({ guestTypes, floorTables }) => {
 
     const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0 || !orderDetails.waiter || typeof orderDetails.waiter !== 'object' || !orderDetails.waiter.id || !orderDetails.table;
 
+    const goToMenu = useCallback(() => {
+        router.visit(
+            route(routeNameForContext('order.menu'), {
+                restaurant_id: selectedRestaurant || undefined,
+                table_id: orderDetails.table.id,
+                member_id: orderDetails.member.id,
+                member_type: orderDetails.member_type,
+                waiter_id: orderDetails.waiter.id,
+                person_count: orderDetails.person_count,
+                floor_id: orderDetails.table?.floor_id ?? orderDetails.floor,
+                order_type: 'dineIn',
+            }),
+        );
+    }, [orderDetails.floor, orderDetails.member, orderDetails.member_type, orderDetails.person_count, orderDetails.table, orderDetails.waiter, selectedRestaurant]);
+
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'F10' && !isDisabled) {
                 e.preventDefault();
-                router.visit(route(routeNameForContext('order.menu')));
+                goToMenu();
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isDisabled, router]);
+    }, [isDisabled, goToMenu]);
 
     return (
-        <Box>
+        <>
+            <Box>
             <Box sx={{ px: 2, mb: 2 }}>
                 <Box
                     sx={{
@@ -109,7 +139,6 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                             onChange={(e) => {
                                 handleOrderDetailChange('member_type', e.target.value);
                                 handleOrderDetailChange('member', {}); // Clear member on type change
-                                setOptions([]); // Clear options
                             }}
                             sx={{ gap: 1 }}
                         >
@@ -142,7 +171,14 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
                         Customer Name
                     </Typography>
-                    <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <Box sx={{ flexGrow: 1 }}>
+                            <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                        </Box>
+                        <Button variant="contained" onClick={() => setShowGuestModal(true)} sx={{ backgroundColor: '#063455', color: '#fff', height: '40px' }}>
+                            + Add
+                        </Button>
+                    </Box>
                 </Grid>
                 <Grid item xs={4}>
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
@@ -224,6 +260,29 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                     }}
                 />
             </Box>
+
+            {Array.isArray(allrestaurants) && allrestaurants.length > 1 && (
+                <Box sx={{ px: 2, mb: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        Restaurant
+                    </Typography>
+                    <FormControl fullWidth size="small">
+                        <InputLabel id="restaurant-label">Restaurant</InputLabel>
+                        <Select
+                            labelId="restaurant-label"
+                            value={selectedRestaurant || ''}
+                            label="Restaurant"
+                            onChange={(e) => onRestaurantChange?.(e.target.value)}
+                        >
+                            {allrestaurants.map((item) => (
+                                <MenuItem value={item.id} key={item.id}>
+                                    {item.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Box>
+            )}
 
             {/* Search and Filter */}
             <Box sx={{ px: 2, mb: 2, display: 'flex' }}>
@@ -374,24 +433,15 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                         textTransform: 'none',
                     }}
                     disabled={isDisabled}
-                    onClick={() =>
-                        router.visit(
-                            route(routeNameForContext('order.menu'), {
-                                table_id: orderDetails.table.id,
-                                member_id: orderDetails.member.id,
-                                member_type: orderDetails.member_type,
-                                waiter_id: orderDetails.waiter.id,
-                                person_count: orderDetails.person_count,
-                                floor_id: orderDetails.table?.floor_id ?? orderDetails.floor,
-                                order_type: 'dineIn',
-                            }),
-                        )
-                    }
+                    onClick={goToMenu}
                 >
                     Choose Menu
                 </Button>
             </Box>
-        </Box>
+            </Box>
+
+            <GuestCreateModal open={showGuestModal} onClose={() => setShowGuestModal(false)} onSuccess={handleGuestCreated} guestTypes={guestTypes} storeRouteName={routeNameForContext('customers.store')} memberSearchRouteName={routeNameForContext('api.users.global-search')} memberSearchParams={{ type: '0' }} />
+        </>
     );
 };
 DineDialog.layout = (page) => page;

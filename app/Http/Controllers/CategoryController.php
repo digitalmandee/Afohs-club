@@ -12,7 +12,13 @@ use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
-    private function restaurantId(Request $request = null)
+    private function activeTenantId(Request $request = null)
+    {
+        $request = $request ?? request();
+        return $request->session()->get('active_restaurant_id') ?? $request->route('tenant');
+    }
+
+    private function selectedRestaurantId(Request $request = null)
     {
         $request = $request ?? request();
         $requestedId = $request->query('restaurant_id');
@@ -25,18 +31,18 @@ class CategoryController extends Controller
             }
         }
 
-        return $request->session()->get('active_restaurant_id') ?? $request->route('tenant');
+        return $this->activeTenantId($request);
     }
 
     public function index(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
+        $restaurantId = $this->selectedRestaurantId($request);
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
 
         $query = Category::query();
         if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
+            $query->where('location_id', $restaurantId);
         }
 
         $categoriesList = $query
@@ -58,11 +64,11 @@ class CategoryController extends Controller
 
     public function getCategories(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
+        $restaurantId = $this->selectedRestaurantId($request);
 
         $query = Category::query();
         if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
+            $query->where('location_id', $restaurantId);
         }
 
         $categories = $query->latest()->get();
@@ -72,8 +78,9 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
-        if (!$restaurantId) {
+        $tenantId = $this->activeTenantId($request);
+        $locationId = $this->selectedRestaurantId($request);
+        if (!$locationId) {
             abort(403);
         }
 
@@ -88,8 +95,8 @@ class CategoryController extends Controller
             $validated['image'] = $path;
         }
 
-        $validated['tenant_id'] = $restaurantId;
-        $validated['location_id'] = $restaurantId;
+        $validated['tenant_id'] = $tenantId;
+        $validated['location_id'] = $locationId;
         $validated['created_by'] = Auth::id();
 
         Category::create($validated);
@@ -99,8 +106,8 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-        $restaurantId = $this->restaurantId($request);
-        if ($restaurantId && $category->tenant_id !== $restaurantId) {
+        $restaurantId = $this->selectedRestaurantId($request);
+        if ($restaurantId && (string) $category->location_id !== (string) $restaurantId) {
             abort(404);
         }
 
@@ -135,8 +142,8 @@ class CategoryController extends Controller
 
     public function destroy(Request $request, Category $category)
     {
-        $restaurantId = $this->restaurantId($request);
-        if ($restaurantId && $category->tenant_id !== $restaurantId) {
+        $restaurantId = $this->selectedRestaurantId($request);
+        if ($restaurantId && (string) $category->location_id !== (string) $restaurantId) {
             abort(404);
         }
 
@@ -169,13 +176,13 @@ class CategoryController extends Controller
 
     public function trashed(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
+        $restaurantId = $this->selectedRestaurantId($request);
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
 
         $query = Category::onlyTrashed();
         if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
+            $query->where('location_id', $restaurantId);
         }
 
         $trashedCategories = $query
@@ -196,11 +203,11 @@ class CategoryController extends Controller
 
     public function restore($id)
     {
-        $restaurantId = $this->restaurantId();
+        $restaurantId = $this->selectedRestaurantId();
 
         $query = Category::withTrashed();
         if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
+            $query->where('location_id', $restaurantId);
         }
 
         $category = $query->findOrFail($id);
@@ -211,11 +218,11 @@ class CategoryController extends Controller
 
     public function forceDelete($id)
     {
-        $restaurantId = $this->restaurantId();
+        $restaurantId = $this->selectedRestaurantId();
 
         $query = Category::withTrashed();
         if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
+            $query->where('location_id', $restaurantId);
         }
 
         $category = $query->findOrFail($id);

@@ -40,6 +40,8 @@ const OrderMenu = () => {
     const handleRestaurantChange = (restaurantId) => {
         setSelectedRestaurant(restaurantId);
         setSelectedCategory('');
+        handleOrderDetailChange('tenant_id', restaurantId);
+        handleOrderDetailChange('restaurant_id', restaurantId);
     };
 
     const handleCategoryClick = (categoryId) => {
@@ -73,7 +75,7 @@ const OrderMenu = () => {
                 searchMode === 'booking'
                     ? route(routeNameForContext('api.cake-bookings.search'))
                     : route(routeNameForContext('order.search.products'));
-            const params = searchMode === 'booking' ? { query: value.trim() } : { search: value.trim() };
+            const params = searchMode === 'booking' ? { query: value.trim() } : { search: value.trim(), restaurant_id: selectedRestaurant };
 
             const response = await axios.get(url, { params });
 
@@ -99,9 +101,7 @@ const OrderMenu = () => {
     const handleSearchProductClick = (product) => {
         // If product is from different restaurant, switch restaurant first
         if (product.tenant_id !== selectedRestaurant) {
-            setSelectedRestaurant(product.tenant_id);
-            // Clear current category selection since we're switching restaurants
-            setSelectedCategory('');
+            handleRestaurantChange(product.tenant_id);
         }
 
         // Add product to order
@@ -264,6 +264,8 @@ const OrderMenu = () => {
     };
 
     useEffect(() => {
+        handleOrderDetailChange('tenant_id', selectedRestaurant);
+        handleOrderDetailChange('restaurant_id', selectedRestaurant);
         setProducts([]);
         axios
             .get(route(routeNameForContext('products.categories')), { params: { restaurant_id: selectedRestaurant } })

@@ -5,7 +5,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import PrintIcon from '@mui/icons-material/Print';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import debounce from 'lodash.debounce';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -13,6 +13,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { routeNameForContext } from '@/lib/utils';
+import axios from 'axios';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -33,6 +34,8 @@ const Dashboard = ({ orders, filters, totals }) => {
     // Modal state
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+    const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
 
     const applyFilters = debounce(() => {
         setIsLoading(true);
@@ -97,13 +100,27 @@ const Dashboard = ({ orders, filters, totals }) => {
 
     const handleViewOrder = (order) => {
         setSelectedOrder(order);
+        setSelectedOrderDetails(null);
         setViewModalOpen(true);
     };
 
     const handleCloseModal = () => {
         setViewModalOpen(false);
         setSelectedOrder(null);
+        setSelectedOrderDetails(null);
     };
+
+    useEffect(() => {
+        if (!viewModalOpen || !selectedOrder?.id) return;
+
+        setLoadingOrderDetails(true);
+        axios
+            .get(route(routeNameForContext('transaction.invoice'), { invoiceId: selectedOrder.id }))
+            .then((response) => {
+                setSelectedOrderDetails(response.data);
+            })
+            .finally(() => setLoadingOrderDetails(false));
+    }, [viewModalOpen, selectedOrder?.id]);
 
     // Transform order data for Receipt component
     const getReceiptData = (order) => {
@@ -737,6 +754,7 @@ const Dashboard = ({ orders, filters, totals }) => {
                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                     Transaction Information
                                 </Typography>
+                                {loadingOrderDetails && <CircularProgress size={18} sx={{ mb: 2 }} />}
 
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
                                     <Box>
@@ -756,9 +774,50 @@ const Dashboard = ({ orders, filters, totals }) => {
                                             Payment Method
                                         </Typography>
                                         <Box>
-                                            <Chip label={formatPaymentMethod(selectedOrder.payment_method)} size="small" color="primary" variant="outlined" />
+                                            <Chip
+                                                label={formatPaymentMethod(selectedOrderDetails?.payment_method || selectedOrder.payment_method)}
+                                                size="small"
+                                                color="primary"
+                                                variant="outlined"
+                                            />
                                         </Box>
                                     </Box>
+                                    {(selectedOrderDetails?.payment_meta?.payment_account?.name ||
+                                        Object.keys(selectedOrderDetails?.payment_meta?.split_payment_accounts || {}).length > 0) && (
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Payment Account
+                                            </Typography>
+                                            {selectedOrderDetails?.payment_method === 'split_payment' ? (
+                                                <Box>
+                                                    {['cash', 'credit_card', 'bank'].map((methodKey) => {
+                                                        const account = selectedOrderDetails?.payment_meta?.split_payment_accounts?.[methodKey];
+                                                        const amountFromReceipt = selectedOrderDetails?.payment_meta?.payment_details?.split_payment?.[methodKey];
+                                                        const amountFromOrder =
+                                                            methodKey === 'cash'
+                                                                ? selectedOrderDetails?.cash_amount
+                                                                : methodKey === 'credit_card'
+                                                                  ? selectedOrderDetails?.credit_card_amount
+                                                                  : selectedOrderDetails?.bank_amount;
+                                                        const amount = Number(amountFromReceipt ?? amountFromOrder ?? 0);
+
+                                                        if (!account?.name && !amount) return null;
+
+                                                        const label = methodKey === 'cash' ? 'Cash' : methodKey === 'credit_card' ? 'Credit Card' : 'Bank Transfer';
+
+                                                        return (
+                                                            <Typography key={methodKey} variant="body2" sx={{ fontWeight: 500 }}>
+                                                                {label}: {amount ? `Rs ${amount}` : 'N/A'}
+                                                                {account?.name ? ` (${account.name})` : ''}
+                                                            </Typography>
+                                                        );
+                                                    })}
+                                                </Box>
+                                            ) : (
+                                                <Typography variant="body1">{selectedOrderDetails?.payment_meta?.payment_account?.name}</Typography>
+                                            )}
+                                        </Box>
+                                    )}
                                     <Box>
                                         <Typography variant="caption" color="text.secondary">
                                             Total Amount

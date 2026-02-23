@@ -54,11 +54,29 @@ const BookingPayment = ({ invoice, roomOrders }) => {
         totalPayment: '0.00',
         credit_card_type: '',
         paymentAccount: '',
+        payment_account_id: '',
     });
+
+    const [paymentAccounts, setPaymentAccounts] = useState([]);
+
+    useEffect(() => {
+        const tenantId = invoice?.invoiceable?.tenant_id ?? invoice?.invoiceable?.location_id ?? invoice?.tenant_id ?? null;
+
+        axios
+            .get(route('api.finance.payment-accounts'), {
+                params: {
+                    payment_method: paymentMethod,
+                    ...(tenantId ? { restaurant_id: tenantId } : {}),
+                },
+            })
+            .then((res) => setPaymentAccounts(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setPaymentAccounts([]));
+    }, [paymentMethod, invoice]);
 
     // Handle payment method selection
     const handlePaymentMethodSelect = (method) => {
         setPaymentMethod(method);
+        setInvoiceForm((prev) => ({ ...prev, payment_account_id: '' }));
     };
 
     // Handle form input changes
@@ -139,7 +157,7 @@ const BookingPayment = ({ invoice, roomOrders }) => {
 
         const data = new FormData();
         data.append('user_id', invoiceForm.user_id);
-        data.append('amount', invoice.amount); // or any other base you need
+        data.append('amount', inputAmount);
         data.append('total_amount', inputAmount);
         data.append('advance_payment', advancePayment);
         data.append('remaining_amount', remainingAmount);
@@ -148,6 +166,9 @@ const BookingPayment = ({ invoice, roomOrders }) => {
         data.append('booking_status', invoiceForm.bookingStatus);
         data.append('payment_method', paymentMethod);
         data.append('pay_orders', includeOrders ? 1 : 0);
+        if (invoiceForm.payment_account_id) {
+            data.append('payment_account_id', invoiceForm.payment_account_id);
+        }
 
         if (paymentMethod === 'credit_card' || paymentMethod === 'debit_card') {
             // data.append('credit_card_type', invoiceForm.credit_card_type || '');
@@ -382,6 +403,23 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                                 <Form.Control type="text" name="paymentAccount" placeholder={paymentMethod === 'cheque' ? 'Enter Cheque details' : 'Enter Transaction ID'} value={invoiceForm.paymentAccount || ''} onChange={(e) => setInvoiceForm({ ...invoiceForm, paymentAccount: e.target.value })} className="border" />
                             </Form.Group>
                         )}
+
+                        <Form.Group className="mb-3">
+                            <Form.Label className="small">Payment Account</Form.Label>
+                            <Form.Select
+                                name="payment_account_id"
+                                value={invoiceForm.payment_account_id || ''}
+                                onChange={(e) => setInvoiceForm({ ...invoiceForm, payment_account_id: e.target.value })}
+                                className="border"
+                            >
+                                <option value="">Select Payment Account</option>
+                                {paymentAccounts.map((account) => (
+                                    <option key={account.id} value={account.id}>
+                                        {account.name}
+                                    </option>
+                                ))}
+                            </Form.Select>
+                        </Form.Group>
 
                         <Form.Group className="mb-3">
                             <Form.Label className="small">Notes</Form.Label>

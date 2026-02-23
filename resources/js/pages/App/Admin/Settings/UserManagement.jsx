@@ -2,33 +2,37 @@ import React, { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import UserAutocomplete from '@/components/UserAutocomplete';
 import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Grid, Pagination, Avatar, Tooltip, Tabs, Tab } from '@mui/material';
-import { Edit as EditIcon, Search as SearchIcon, Person as PersonIcon, AdminPanelSettings as AdminIcon, Work as WorkIcon } from '@mui/icons-material';
+import { ArrowBack, Delete as DeleteIcon, DeleteForever, Edit as EditIcon, RestoreFromTrash, Search as SearchIcon, Person as PersonIcon, AdminPanelSettings as AdminIcon, Work as WorkIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
 const UserManagement = () => {
-    const { users, roles, tenants, filters, can } = usePage().props;
+    const { users, roles, tenants, filters, can, showTrashed } = usePage().props;
     const { enqueueSnackbar } = useSnackbar();
     // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [createUserOpen, setCreateUserOpen] = useState(false);
     const [createUserTab, setCreateUserTab] = useState(0);
     const [editEmployeeUserOpen, setEditEmployeeUserOpen] = useState(false);
+    const [editUserOpen, setEditUserOpen] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: '' });
-    const [employeeUser, setEmployeeUser] = useState({ employee_id: '', password: '', role: 'cashier' });
+    const [employeeUser, setEmployeeUser] = useState({ employee_id: '', password: '', role: 'pos' });
     const [employeeLookup, setEmployeeLookup] = useState(null);
     const [editingUser, setEditingUser] = useState({ id: null, name: '', employee_id: '', password: '' });
     const [editingUserAllowedTenants, setEditingUserAllowedTenants] = useState([]);
+    const [editingGeneralUser, setEditingGeneralUser] = useState({ id: null, name: '', email: '', employee_id: '', password: '' });
+    const [deleteUserConfirm, setDeleteUserConfirm] = useState({ open: false, user: null });
+    const [forceDeleteUserConfirm, setForceDeleteUserConfirm] = useState({ open: false, user: null });
 
     const handleSearch = (e) => {
         e.preventDefault();
-        router.get(route('admin.users.index'), { search }, { preserveState: true });
+        router.get(route(showTrashed ? 'admin.users.trashed' : 'admin.users.index'), { search }, { preserveState: true });
     };
 
     const resetCreateUserDialog = () => {
         setCreateUserOpen(false);
         setCreateUserTab(0);
         setNewUser({ name: '', email: '', password: '', role: '' });
-        setEmployeeUser({ employee_id: '', password: '', role: 'cashier' });
+        setEmployeeUser({ employee_id: '', password: '', role: 'pos' });
         setEmployeeLookup(null);
     };
 
@@ -52,7 +56,15 @@ const UserManagement = () => {
     };
 
     const handleCreateEmployeeUser = () => {
-        router.post(route('admin.users.create-employee'), employeeUser, {
+        const employeeId = employeeLookup?.employee_id || employeeUser.employee_id;
+        router.post(
+            route('admin.users.create-employee'),
+            {
+                employee_id: employeeId,
+                password: employeeUser.password,
+                role: employeeUser.role,
+            },
+            {
             onSuccess: () => {
                 resetCreateUserDialog();
                 enqueueSnackbar('Employee user created successfully!', { variant: 'success' });
@@ -67,7 +79,8 @@ const UserManagement = () => {
                     enqueueSnackbar('Error creating employee user', { variant: 'error' });
                 }
             },
-        });
+            },
+        );
     };
 
     const handleEditEmployeeUserClick = (user) => {
@@ -79,6 +92,14 @@ const UserManagement = () => {
         });
         setEditingUserAllowedTenants(user.allowed_tenants || []);
         setEditEmployeeUserOpen(true);
+    };
+
+    const handleEditClick = (user) => {
+        if (user?.employee) {
+            handleEditEmployeeUserClick(user);
+            return;
+        }
+        handleEditUserClick(user);
     };
 
     const handleUpdateEmployeeUser = () => {
@@ -105,6 +126,124 @@ const UserManagement = () => {
                 },
             },
         );
+    };
+
+    const handleEditUserClick = (user) => {
+        setEditingGeneralUser({
+            id: user.id,
+            name: user.name || '',
+            email: user.email || '',
+            employee_id: user.employee?.employee_id || '',
+            password: '',
+        });
+        setEditUserOpen(true);
+    };
+
+    const handleUpdateUser = () => {
+        router.post(
+            route('admin.users.update', editingGeneralUser.id),
+            {
+                name: editingGeneralUser.name,
+                email: editingGeneralUser.email,
+                password: editingGeneralUser.password,
+            },
+            {
+                onSuccess: () => {
+                    setEditUserOpen(false);
+                    setEditingGeneralUser({ id: null, name: '', email: '', employee_id: '', password: '' });
+                    enqueueSnackbar('User updated successfully!', { variant: 'success' });
+                },
+                onError: (errors) => {
+                    if (typeof errors === 'object' && errors !== null) {
+                        Object.values(errors).forEach((error) => {
+                            enqueueSnackbar(error, { variant: 'error' });
+                        });
+                    } else {
+                        enqueueSnackbar('Error updating user', { variant: 'error' });
+                    }
+                },
+            },
+        );
+    };
+
+    const openDeleteUserConfirm = (user) => {
+        setDeleteUserConfirm({ open: true, user });
+    };
+
+    const closeDeleteUserConfirm = () => {
+        setDeleteUserConfirm({ open: false, user: null });
+    };
+
+    const openForceDeleteUserConfirm = (user) => {
+        setForceDeleteUserConfirm({ open: true, user });
+    };
+
+    const closeForceDeleteUserConfirm = () => {
+        setForceDeleteUserConfirm({ open: false, user: null });
+    };
+
+    const handleDeleteUser = () => {
+        const userId = deleteUserConfirm.user?.id;
+        if (!userId) return;
+        router.delete(route('admin.users.destroy', userId), {
+            onSuccess: () => {
+                closeDeleteUserConfirm();
+                enqueueSnackbar('User deleted successfully!', { variant: 'success' });
+            },
+            onError: (errors) => {
+                closeDeleteUserConfirm();
+                if (typeof errors === 'object' && errors !== null) {
+                    Object.values(errors).forEach((error) => {
+                        enqueueSnackbar(error, { variant: 'error' });
+                    });
+                } else {
+                    enqueueSnackbar('Error deleting user', { variant: 'error' });
+                }
+            },
+        });
+    };
+
+    const handleRestoreUser = (user) => {
+        if (!user?.id) return;
+        router.post(
+            route('admin.users.restore', user.id),
+            {},
+            {
+                onSuccess: () => {
+                    enqueueSnackbar('User restored successfully!', { variant: 'success' });
+                },
+                onError: (errors) => {
+                    if (typeof errors === 'object' && errors !== null) {
+                        Object.values(errors).forEach((error) => {
+                            enqueueSnackbar(error, { variant: 'error' });
+                        });
+                    } else {
+                        enqueueSnackbar('Error restoring user', { variant: 'error' });
+                    }
+                },
+            },
+        );
+    };
+
+    const handleForceDeleteUser = () => {
+        const userId = forceDeleteUserConfirm.user?.id;
+        if (!userId) return;
+        router.delete(route('admin.users.force-delete', userId), {
+            onSuccess: () => {
+                closeForceDeleteUserConfirm();
+                enqueueSnackbar('User permanently deleted successfully!', { variant: 'success' });
+            },
+            onError: (errors) => {
+                closeForceDeleteUserConfirm();
+                if (typeof errors === 'object' && errors !== null) {
+                    Object.values(errors).forEach((error) => {
+                        enqueueSnackbar(error, { variant: 'error' });
+                    });
+                } else {
+                    enqueueSnackbar('Error deleting user', { variant: 'error' });
+                }
+            },
+        });
     };
 
     const handleAssignRole = (userId, roleName) => {
@@ -164,11 +303,18 @@ const UserManagement = () => {
         return <PersonIcon sx={{ color: '#757575' }} />;
     };
 
+    const formatDateTime = (value) => {
+        if (!value) return '';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return value;
+        return d.toLocaleString();
+    };
+
     const capitalizeFirstLetter = (text = '') => text.charAt(0).toUpperCase() + text.slice(1);
 
     return (
         <>
-            <Head title="User Management" />
+            <Head title={showTrashed ? 'Trashed Users' : 'User Management'} />
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
@@ -180,14 +326,48 @@ const UserManagement = () => {
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>User Management</Typography>
+                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>{showTrashed ? 'Trashed Users' : 'User Management'}</Typography>
                     </Box>
-                    {can.create && (
+                    {(can.create || can.delete) && (
                         <Box sx={{ display: 'flex', gap: 2 }}>
+                            {showTrashed ? (
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<ArrowBack />}
+                                    onClick={() => router.get(route('admin.users.index'))}
+                                    sx={{
+                                        color: '#063455',
+                                        borderColor: '#063455',
+                                        textTransform: 'none',
+                                        borderRadius: '16px',
+                                        '&:hover': { borderColor: '#063455' },
+                                    }}
+                                >
+                                    Back
+                                </Button>
+                            ) : (
+                                can.delete && (
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<RestoreFromTrash />}
+                                        onClick={() => router.get(route('admin.users.trashed'))}
+                                        sx={{
+                                            color: '#063455',
+                                            borderColor: '#063455',
+                                            textTransform: 'none',
+                                            borderRadius: '16px',
+                                            '&:hover': { borderColor: '#063455' },
+                                        }}
+                                    >
+                                        Trashed
+                                    </Button>
+                                )
+                            )}
                             <Button
                                 variant="contained"
                                 startIcon={<AdminIcon />}
                                 onClick={() => setCreateUserOpen(true)}
+                                disabled={showTrashed || !can.create}
                                 sx={{
                                     backgroundColor: '#063455',
                                     textTransform: 'none',
@@ -248,7 +428,7 @@ const UserManagement = () => {
                                 <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Type</TableCell>
                                 <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Email</TableCell>
                                 <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Roles</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Employee Info</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>{showTrashed ? 'Deleted At' : 'Employee Info'}</TableCell>
                                 <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -323,7 +503,11 @@ const UserManagement = () => {
                                         </Box>
                                     </TableCell>
                                     <TableCell>
-                                        {user.employee ? (
+                                        {showTrashed ? (
+                                            <Typography variant="body2" color="textSecondary">
+                                                {formatDateTime(user.deleted_at)}
+                                            </Typography>
+                                        ) : user.employee ? (
                                             <Box>
                                                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                                     {user.employee.designation}
@@ -339,29 +523,54 @@ const UserManagement = () => {
                                         )}
                                     </TableCell>
                                     <TableCell>
-                                        {can.edit && (
+                                        {showTrashed ? (
+                                            can.delete && (
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Tooltip title="Restore User">
+                                                        <IconButton size="small" onClick={() => handleRestoreUser(user)} sx={{ color: '#2e7d32' }}>
+                                                            <RestoreFromTrash fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Force Delete">
+                                                        <IconButton size="small" onClick={() => openForceDeleteUserConfirm(user)} sx={{ color: '#c62828' }}>
+                                                            <DeleteForever fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            )
+                                        ) : (
+                                        (can.edit || can.delete) && (
                                             <Box sx={{ display: 'flex', gap: 1 }}>
-                                                {user.employee && (
-                                                    <Tooltip title="Edit Employee Access">
-                                                        <IconButton size="small" onClick={() => handleEditEmployeeUserClick(user)} sx={{ color: '#1976d2' }}>
-                                                            <EditIcon fontSize="small" />
+                                                {can.edit && (
+                                                    <>
+                                                        <Tooltip title="Edit User">
+                                                            <IconButton size="small" onClick={() => handleEditClick(user)} sx={{ color: '#1976d2' }}>
+                                                                <EditIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                                                            <InputLabel>Assign Role</InputLabel>
+                                                            <Select label="Assign Role" onChange={(e) => handleAssignRole(user.id, e.target.value)} displayEmpty>
+                                                                {roles
+                                                                    .filter((role) => !user.roles.some((userRole) => userRole.name === role.name))
+                                                                    .map((role) => (
+                                                                        <MenuItem key={role.id} value={role.name}>
+                                                                            {role.name}
+                                                                        </MenuItem>
+                                                                    ))}
+                                                            </Select>
+                                                        </FormControl>
+                                                    </>
+                                                )}
+                                                {can.delete && (
+                                                    <Tooltip title="Delete User">
+                                                        <IconButton size="small" onClick={() => openDeleteUserConfirm(user)} sx={{ color: '#c62828' }}>
+                                                            <DeleteIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
-                                                <FormControl size="small" sx={{ minWidth: 120 }}>
-                                                    <InputLabel>Assign Role</InputLabel>
-                                                    <Select label="Assign Role" onChange={(e) => handleAssignRole(user.id, e.target.value)} displayEmpty>
-                                                        {roles
-                                                            .filter((role) => !user.roles.some((userRole) => userRole.name === role.name))
-                                                            .map((role) => (
-                                                                <MenuItem key={role.id} value={role.name}>
-                                                                    {role.name}
-                                                                </MenuItem>
-                                                            ))}
-                                                    </Select>
-                                                </FormControl>
                                             </Box>
-                                        )}
+                                        ))}
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -376,7 +585,7 @@ const UserManagement = () => {
                             count={users.last_page}
                             page={users.current_page}
                             onChange={(e, page) => {
-                                router.get(route('admin.users.index'), { ...filters, page });
+                                router.get(route(showTrashed ? 'admin.users.trashed' : 'admin.users.index'), { ...filters, page });
                             }}
                             color="primary"
                         />
@@ -394,9 +603,8 @@ const UserManagement = () => {
                             value={createUserTab}
                             onChange={(e, value) => {
                                 setCreateUserTab(value);
-                                if (value !== 1) {
-                                    setEmployeeLookup(null);
-                                }
+                                setEmployeeLookup(null);
+                                setEmployeeUser({ employee_id: '', password: '', role: 'pos' });
                             }}
                             sx={{ borderBottom: 1, borderColor: 'divider' }}
                         >
@@ -413,7 +621,20 @@ const UserManagement = () => {
                                     <TextField fullWidth label="Email" type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField fullWidth label="Password" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
+                                    <TextField
+                                        fullWidth
+                                        label="Password"
+                                        type="password"
+                                        value={newUser.password}
+                                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                        autoComplete="new-password"
+                                        inputProps={{
+                                            autoComplete: 'new-password',
+                                            form: {
+                                                autoComplete: 'off',
+                                            },
+                                        }}
+                                    />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <FormControl fullWidth>
@@ -445,10 +666,10 @@ const UserManagement = () => {
                                             value={employeeLookup}
                                             onChange={(employee) => {
                                                 setEmployeeLookup(employee);
-                                                setEmployeeUser({
-                                                    ...employeeUser,
+                                                setEmployeeUser((prev) => ({
+                                                    ...prev,
                                                     employee_id: employee?.employee_id || '',
-                                                });
+                                                }));
                                             }}
                                         />
                                     </Grid>
@@ -465,7 +686,20 @@ const UserManagement = () => {
                                     )}
 
                                     <Grid item xs={12}>
-                                        <TextField fullWidth label="Password" type="password" value={employeeUser.password} onChange={(e) => setEmployeeUser({ ...employeeUser, password: e.target.value })} />
+                                        <TextField
+                                            fullWidth
+                                            label="Password"
+                                            type="password"
+                                            value={employeeUser.password}
+                                            onChange={(e) => setEmployeeUser({ ...employeeUser, password: e.target.value })}
+                                            autoComplete="new-password"
+                                            inputProps={{
+                                                autoComplete: 'new-password',
+                                                form: {
+                                                    autoComplete: 'off',
+                                                },
+                                            }}
+                                        />
                                     </Grid>
                                     <Grid item xs={12}>
                                         <FormControl fullWidth>
@@ -550,6 +784,89 @@ const UserManagement = () => {
                         </Button>
                         <Button onClick={handleUpdateEmployeeUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }}>
                             Update User
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Edit User Dialog */}
+                <Dialog open={editUserOpen} onClose={() => setEditUserOpen(false)} maxWidth="sm" fullWidth>
+                    <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+                        <EditIcon sx={{ mr: 1, color: '#063455' }} />
+                        Edit User
+                    </DialogTitle>
+                    <DialogContent>
+                        <Grid container spacing={2} sx={{ mt: 1 }}>
+                            <Grid item xs={12}>
+                                <TextField fullWidth label="Full Name" value={editingGeneralUser.name} onChange={(e) => setEditingGeneralUser({ ...editingGeneralUser, name: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField fullWidth label="Email" type="email" value={editingGeneralUser.email} onChange={(e) => setEditingGeneralUser({ ...editingGeneralUser, email: e.target.value })} />
+                            </Grid>
+                            {editingGeneralUser.employee_id && (
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Employee ID" value={editingGeneralUser.employee_id} InputProps={{ readOnly: true }} />
+                                </Grid>
+                            )}
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="New Password"
+                                    type="password"
+                                    value={editingGeneralUser.password}
+                                    onChange={(e) => setEditingGeneralUser({ ...editingGeneralUser, password: e.target.value })}
+                                    helperText="Leave empty to keep current password"
+                                    autoComplete="new-password"
+                                    inputProps={{
+                                        autoComplete: 'new-password',
+                                        form: {
+                                            autoComplete: 'off',
+                                        },
+                                    }}
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setEditUserOpen(false)} autoFocus sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUpdateUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }} disabled={!editingGeneralUser.name || !editingGeneralUser.email}>
+                            Update User
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Delete User Confirm */}
+                <Dialog open={deleteUserConfirm.open} onClose={closeDeleteUserConfirm} maxWidth="xs" fullWidth>
+                    <DialogTitle>Delete user?</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body2">
+                            Are you sure you want to delete <strong>{deleteUserConfirm.user?.name}</strong>?
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={closeDeleteUserConfirm} sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleDeleteUser} variant="contained" sx={{ bgcolor: '#c62828', textTransform: 'none' }}>
+                            Delete
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                <Dialog open={forceDeleteUserConfirm.open} onClose={closeForceDeleteUserConfirm} maxWidth="xs" fullWidth>
+                    <DialogTitle>Permanently delete user?</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body2">
+                            This will permanently delete <strong>{forceDeleteUserConfirm.user?.name}</strong> and cannot be undone.
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={closeForceDeleteUserConfirm} sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleForceDeleteUser} variant="contained" sx={{ bgcolor: '#c62828', textTransform: 'none' }}>
+                            Delete Forever
                         </Button>
                     </DialogActions>
                 </Dialog>

@@ -36,7 +36,7 @@ const renderMemberWithStatus = (option) => (
 
 const genderOptions = ['male', 'female', 'other'];
 
-const GuestCreateModal = ({ open, onClose, onSuccess, guestTypes = [] }) => {
+const GuestCreateModal = ({ open, onClose, onSuccess, guestTypes = [], storeRouteName = 'guests.store', memberSearchRouteName = 'admin.api.search-users', memberSearchParams = { type: '0' } }) => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -79,7 +79,7 @@ const GuestCreateModal = ({ open, onClose, onSuccess, guestTypes = [] }) => {
         setErrors({});
 
         try {
-            const response = await axios.post(route('guests.store'), formData, {
+            const response = await axios.post(route(storeRouteName), formData, {
                 headers: {
                     Accept: 'application/json',
                 },
@@ -127,13 +127,13 @@ const GuestCreateModal = ({ open, onClose, onSuccess, guestTypes = [] }) => {
                 <Box component="form" noValidate autoComplete="off">
                     <Grid container spacing={2} sx={{ mt: 1 }}>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Name*" name="name" value={formData.name} onChange={handleChange} error={!!errors.name} helperText={errors.name && errors.name[0]} />
+                            <TextField size='small' fullWidth label="Name*" name="name" value={formData.name} onChange={handleChange} error={!!errors.name} helperText={errors.name && errors.name[0]} />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Contact*" name="contact" placeholder="03XXXXXXXX" value={formData.contact} onChange={(e) => handleChange({ target: { name: 'contact', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} error={!!errors.contact} helperText={errors.contact && errors.contact[0]} />
+                            <TextField size='small' fullWidth label="Contact*" name="contact" placeholder="03XXXXXXXX" value={formData.contact} onChange={(e) => handleChange({ target: { name: 'contact', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} error={!!errors.contact} helperText={errors.contact && errors.contact[0]} />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth select label="Gender*" name="gender" value={formData.gender} onChange={handleChange} error={!!errors.gender} helperText={errors.gender && errors.gender[0]}>
+                            <TextField size='small' fullWidth select label="Gender*" name="gender" value={formData.gender} onChange={handleChange} error={!!errors.gender} helperText={errors.gender && errors.gender[0]}>
                                 {genderOptions.map((option) => (
                                     <MenuItem key={option} value={option}>
                                         {option}
@@ -142,10 +142,10 @@ const GuestCreateModal = ({ open, onClose, onSuccess, guestTypes = [] }) => {
                             </TextField>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Email" name="email" value={formData.email} onChange={handleChange} error={!!errors.email} helperText={errors.email && errors.email[0]} />
+                            <TextField size='small' fullWidth label="Email" name="email" value={formData.email} onChange={handleChange} error={!!errors.email} helperText={errors.email && errors.email[0]} />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField
+                            <TextField size='small'
                                 fullWidth
                                 label="CNIC"
                                 name="cnic"
@@ -163,10 +163,10 @@ const GuestCreateModal = ({ open, onClose, onSuccess, guestTypes = [] }) => {
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Address" name="address" value={formData.address} onChange={handleChange} error={!!errors.address} helperText={errors.address && errors.address[0]} />
+                            <TextField size='small' fullWidth label="Address" name="address" value={formData.address} onChange={handleChange} error={!!errors.address} helperText={errors.address && errors.address[0]} />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth select label="Guest Type*" name="guest_type_id" value={formData.guest_type_id} onChange={handleChange} error={!!errors.guest_type_id} helperText={errors.guest_type_id && errors.guest_type_id[0]}>
+                            <TextField size='small' fullWidth select label="Guest Type*" name="guest_type_id" value={formData.guest_type_id} onChange={handleChange} error={!!errors.guest_type_id} helperText={errors.guest_type_id && errors.guest_type_id[0]}>
                                 {guestTypes.map((type) => (
                                     <MenuItem key={type.id} value={type.id}>
                                         {type.name}
@@ -176,12 +176,12 @@ const GuestCreateModal = ({ open, onClose, onSuccess, guestTypes = [] }) => {
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <Box sx={{ width: '100%' }}>
-                                <AsyncSearchTextField label="Member Name" name="guest" value={formData.guest} onChange={handleMemberSelect} endpoint="admin.api.search-users" params={{ type: '0' }} placeholder="Search members..." fullWidth renderItem={renderMemberWithStatus} />
+                                <AsyncSearchTextField size='small' label="Member Name" name="guest" value={formData.guest} onChange={handleMemberSelect} endpoint={memberSearchRouteName} params={memberSearchParams} placeholder="Search members..." fullWidth renderItem={renderMemberWithStatus} />
                             </Box>
                         </Grid>
 
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Member No" name="member_no" value={formData.member_no} disabled />
+                            <TextField size='small' fullWidth label="Member No" name="member_no" value={formData.member_no} disabled />
                         </Grid>
 
                         <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

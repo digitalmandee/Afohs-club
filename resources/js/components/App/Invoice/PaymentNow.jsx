@@ -15,6 +15,10 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const [customerChanges, setCustomerChanges] = useState('0');
     const [activePaymentMethod, setActivePaymentMethod] = useState('cash');
     const [selectedBank, setSelectedBank] = useState('mcb');
+    const [paymentAccounts, setPaymentAccounts] = useState([]);
+    const [paymentAccountId, setPaymentAccountId] = useState('');
+    const [splitPaymentAccounts, setSplitPaymentAccounts] = useState({ cash: [], credit_card: [], bank: [] });
+    const [splitPaymentAccountIds, setSplitPaymentAccountIds] = useState({ cash: '', credit_card: '', bank: '' });
     // Bank transfer form state
     const [accountNumber, setAccountNumber] = useState('');
     const [cardHolderName, setCardHolderName] = useState('');
@@ -59,6 +63,42 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                 console.error('Failed to load financial settings:', error);
             });
     }, []);
+
+    useEffect(() => {
+        const restaurantId = invoiceData?.tenant_id ?? invoiceData?.restaurant_id ?? invoiceData?.location_id ?? invoiceData?.invoice?.tenant_id ?? null;
+        setPaymentAccountId('');
+
+        if (activePaymentMethod === 'split_payment') {
+            setSplitPaymentAccountIds({ cash: '', credit_card: '', bank: '' });
+
+            const fetchFor = (paymentMethod) =>
+                axios
+                    .get(route(routeNameForContext('api.payment-accounts')), {
+                        params: {
+                            payment_method: paymentMethod,
+                            ...(restaurantId ? { restaurant_id: restaurantId } : {}),
+                        },
+                    })
+                    .then((res) => (Array.isArray(res.data) ? res.data : []))
+                    .catch(() => []);
+
+            Promise.all([fetchFor('cash'), fetchFor('credit_card'), fetchFor('bank_transfer')]).then(([cash, credit_card, bank]) => {
+                setSplitPaymentAccounts({ cash, credit_card, bank });
+            });
+
+            return;
+        }
+
+        axios
+            .get(route(routeNameForContext('api.payment-accounts')), {
+                params: {
+                    payment_method: activePaymentMethod,
+                    ...(restaurantId ? { restaurant_id: restaurantId } : {}),
+                },
+            })
+            .then((res) => setPaymentAccounts(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setPaymentAccounts([]));
+    }, [activePaymentMethod, invoiceData?.tenant_id, invoiceData?.restaurant_id, invoiceData?.location_id, invoiceData?.invoice?.tenant_id]);
 
     // Calculate Bank Charges Amount
     useEffect(() => {
@@ -255,11 +295,6 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             return;
         }
 
-        if (activePaymentMethod === 'credit_card' && !receiptFile) {
-            enqueueSnackbar('Please upload the receipt', { variant: 'warning' });
-            return;
-        }
-
         let payload = {};
 
         // Prepare form data for credit card (with file)
@@ -269,8 +304,9 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     paid_amount: inputAmount,
                     payment_method: 'credit_card',
                     credit_card_type: creditCardType,
+                    ...(paymentAccountId ? { payment_account_id: paymentAccountId } : {}),
                 },
-                receipt: receiptFile,
+                ...(receiptFile ? { receipt: receiptFile } : {}),
             };
         } else {
             // For other payment methods (cash, bank) use regular payload
@@ -285,7 +321,13 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                         cash: cashAmount,
                         credit_card: creditCardAmount,
                         bank_transfer: bankTransferAmount,
+                        ...(Object.values(splitPaymentAccountIds).some(Boolean)
+                            ? {
+                                  split_payment_accounts: Object.fromEntries(Object.entries(splitPaymentAccountIds).filter(([, v]) => v)),
+                              }
+                            : {}),
                     }),
+                    ...(activePaymentMethod !== 'split_payment' && paymentAccountId ? { payment_account_id: paymentAccountId } : {}),
                 },
             };
         }
@@ -332,11 +374,6 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             return;
         }
 
-        if (activePaymentMethod === 'credit_card' && !receiptFile) {
-            enqueueSnackbar('Please upload the receipt', { variant: 'warning' });
-            return;
-        }
-
         // Prepare form data for credit card (with file)
         if (activePaymentMethod === 'credit_card') {
             const formData = new FormData();
@@ -344,7 +381,12 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             formData.append('paid_amount', inputAmount);
             formData.append('payment_method', 'credit_card');
             formData.append('credit_card_type', creditCardType);
-            formData.append('receipt', receiptFile);
+            if (receiptFile) {
+                formData.append('receipt', receiptFile);
+            }
+            if (paymentAccountId) {
+                formData.append('payment_account_id', paymentAccountId);
+            }
 
             // Add ENT/CTS data to FormData
             if (entEnabled) {
@@ -402,7 +444,13 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     cash: cashAmount,
                     credit_card: creditCardAmount,
                     bank_transfer: bankTransferAmount,
+                    ...(Object.values(splitPaymentAccountIds).some(Boolean)
+                        ? {
+                              split_payment_accounts: Object.fromEntries(Object.entries(splitPaymentAccountIds).filter(([, v]) => v)),
+                          }
+                        : {}),
                 }),
+                ...(activePaymentMethod !== 'split_payment' && paymentAccountId ? { payment_account_id: paymentAccountId } : {}),
             };
 
             // Add ENT data if enabled
@@ -552,15 +600,15 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                             </Typography>
                         </Box>
 
-                        <Box sx={activePaymentMethod === 'bank' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('bank')}>
+                        <Box sx={activePaymentMethod === 'bank_transfer' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('bank_transfer')}>
                             <AccountBalanceIcon
                                 sx={{
                                     fontSize: 24,
                                     mb: 1,
-                                    color: activePaymentMethod === 'bank' ? '#0a3d62' : '#666',
+                                    color: activePaymentMethod === 'bank_transfer' ? '#0a3d62' : '#666',
                                 }}
                             />
-                            <Typography variant="body1" fontWeight={activePaymentMethod === 'bank' ? 'medium' : 'normal'}>
+                            <Typography variant="body1" fontWeight={activePaymentMethod === 'bank_transfer' ? 'medium' : 'normal'}>
                                 Bank Transfer
                             </Typography>
                         </Box>
@@ -830,6 +878,18 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 </Typography>
                                 <WholeNumberInput value={inputAmount} onChange={handleQuickAmountClick} />
 
+                                <Typography variant="subtitle1" mb={1} sx={{ mt: 2 }}>
+                                    Payment Account
+                                </Typography>
+                                <Select fullWidth value={paymentAccountId} onChange={(e) => setPaymentAccountId(e.target.value)} sx={{ mb: 3 }}>
+                                    <MenuItem value="">Select Payment Account</MenuItem>
+                                    {paymentAccounts.map((account) => (
+                                        <MenuItem key={account.id} value={account.id}>
+                                            {account.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+
                                 <Typography variant="subtitle1" mb={1}>
                                     Customer Changes
                                 </Typography>
@@ -961,9 +1021,21 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     )}
 
                     {/* Bank Transfer Form */}
-                    {activePaymentMethod === 'bank' && (
+                    {activePaymentMethod === 'bank_transfer' && (
                         <Grid container spacing={3}>
                             <Grid item xs={12}>
+                                <Typography variant="subtitle1" mb={1}>
+                                    Payment Account
+                                </Typography>
+                                <Select fullWidth value={paymentAccountId} onChange={(e) => setPaymentAccountId(e.target.value)} sx={{ mb: 3 }}>
+                                    <MenuItem value="">Select Payment Account</MenuItem>
+                                    {paymentAccounts.map((account) => (
+                                        <MenuItem key={account.id} value={account.id}>
+                                            {account.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+
                                 <Typography variant="subtitle1" mb={2}>
                                     Choose Bank
                                 </Typography>
@@ -1013,6 +1085,18 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 </Typography>
                                 <WholeNumberInput value={inputAmount} onChange={setInputAmount} />
 
+                                <Typography variant="subtitle1" mb={1} sx={{ mt: 2 }}>
+                                    Payment Account
+                                </Typography>
+                                <Select fullWidth value={paymentAccountId} onChange={(e) => setPaymentAccountId(e.target.value)} sx={{ mb: 3 }}>
+                                    <MenuItem value="">Select Payment Account</MenuItem>
+                                    {paymentAccounts.map((account) => (
+                                        <MenuItem key={account.id} value={account.id}>
+                                            {account.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+
                                 <Typography variant="subtitle1" mb={1}>
                                     Credit Card Type
                                 </Typography>
@@ -1037,16 +1121,55 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     Cash
                                 </Typography>
                                 <WholeNumberInput value={cashAmount} onChange={setCashAmount} />
+                                <Select
+                                    fullWidth
+                                    value={splitPaymentAccountIds.cash}
+                                    onChange={(e) => setSplitPaymentAccountIds((prev) => ({ ...prev, cash: e.target.value }))}
+                                    sx={{ mb: 3, mt: 1 }}
+                                >
+                                    <MenuItem value="">Select Cash Account</MenuItem>
+                                    {splitPaymentAccounts.cash.map((account) => (
+                                        <MenuItem key={account.id} value={account.id}>
+                                            {account.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
 
                                 <Typography variant="subtitle1" mb={1}>
                                     Credit Card
                                 </Typography>
                                 <WholeNumberInput value={creditCardAmount} onChange={setCreditCardAmount} />
+                                <Select
+                                    fullWidth
+                                    value={splitPaymentAccountIds.credit_card}
+                                    onChange={(e) => setSplitPaymentAccountIds((prev) => ({ ...prev, credit_card: e.target.value }))}
+                                    sx={{ mb: 3, mt: 1 }}
+                                >
+                                    <MenuItem value="">Select Card Account</MenuItem>
+                                    {splitPaymentAccounts.credit_card.map((account) => (
+                                        <MenuItem key={account.id} value={account.id}>
+                                            {account.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
 
                                 <Typography variant="subtitle1" mb={1}>
                                     Bank Transfer
                                 </Typography>
                                 <WholeNumberInput value={bankTransferAmount} onChange={setBankTransferAmount} />
+                                <Select
+                                    fullWidth
+                                    value={splitPaymentAccountIds.bank}
+                                    onChange={(e) => setSplitPaymentAccountIds((prev) => ({ ...prev, bank: e.target.value }))}
+                                    sx={{ mb: 3, mt: 1 }}
+                                >
+                                    <MenuItem value="">Select Bank Account</MenuItem>
+                                    {splitPaymentAccounts.bank.map((account) => (
+                                        <MenuItem key={account.id} value={account.id}>
+                                            {account.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
                                 <Typography variant="subtitle1" mb={1}>
                                     Customer Changes
                                 </Typography>

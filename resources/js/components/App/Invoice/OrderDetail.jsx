@@ -10,6 +10,7 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
     const [loading, setLoading] = useState(true);
 
     const [paymentData, setPaymentData] = useState(null);
+    const splitPaymentLabels = { cash: 'Cash', credit_card: 'Credit Card', bank: 'Bank Transfer' };
 
     useEffect(() => {
         if (openModal && invoiceId) {
@@ -351,6 +352,50 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                             </Typography>
                         </Box>
                     </Box>
+
+                    {(paymentData?.payment_meta?.payment_account?.name || Object.keys(paymentData?.payment_meta?.split_payment_accounts || {}).length > 0) && (
+                        <Box
+                            sx={{
+                                p: 2,
+                                bgcolor: '#f9f9f9',
+                                borderRadius: 1,
+                                mb: 3,
+                            }}
+                        >
+                            <Typography variant="caption" color="text.secondary">
+                                Payment Account
+                            </Typography>
+
+                            {paymentData?.payment_method === 'split_payment' ? (
+                                <Box sx={{ mt: 0.5 }}>
+                                    {['cash', 'credit_card', 'bank'].map((methodKey) => {
+                                        const account = paymentData?.payment_meta?.split_payment_accounts?.[methodKey];
+                                        const amountFromReceipt = paymentData?.payment_meta?.payment_details?.split_payment?.[methodKey];
+                                        const amountFromOrder =
+                                            methodKey === 'cash'
+                                                ? paymentData?.cash_amount
+                                                : methodKey === 'credit_card'
+                                                  ? paymentData?.credit_card_amount
+                                                  : paymentData?.bank_amount;
+                                        const amount = Number(amountFromReceipt ?? amountFromOrder ?? 0);
+
+                                        if (!account?.name && !amount) return null;
+
+                                        return (
+                                            <Typography key={methodKey} variant="body2" fontWeight="medium" sx={{ mt: 0.25 }}>
+                                                {splitPaymentLabels[methodKey]}: {amount ? `Rs ${amount}` : 'N/A'}
+                                                {account?.name ? ` (${account.name})` : ''}
+                                            </Typography>
+                                        );
+                                    })}
+                                </Box>
+                            ) : (
+                                <Typography variant="body2" fontWeight="medium" sx={{ mt: 0.5 }}>
+                                    {paymentData?.payment_meta?.payment_account?.name}
+                                </Typography>
+                            )}
+                        </Box>
+                    )}
 
                     {/* Action Buttons */}
                     <Box display="flex" justifyContent="space-between" mt={3}>

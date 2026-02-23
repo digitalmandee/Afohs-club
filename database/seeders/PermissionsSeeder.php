@@ -250,6 +250,10 @@ class PermissionsSeeder extends Seeder
             'finance.vouchers.create',
             'finance.vouchers.edit',
             'finance.vouchers.delete',
+            'finance.payment-accounts.view',
+            'finance.payment-accounts.create',
+            'finance.payment-accounts.edit',
+            'finance.payment-accounts.delete',
             // Cards
             'cards.view',
             'cards.create',

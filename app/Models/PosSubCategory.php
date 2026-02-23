@@ -9,7 +9,7 @@ class PosSubCategory extends BaseModel
 {
     use SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'category_id', 'name', 'status', 'created_by', 'updated_by', 'deleted_by'];
+    protected $fillable = ['tenant_id', 'location_id', 'category_id', 'name', 'status', 'created_by', 'updated_by', 'deleted_by'];
 
     public function category()
     {

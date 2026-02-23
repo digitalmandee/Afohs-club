@@ -77,6 +77,7 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
         router.visit(route(routeNameForContext('order.menu')), {
             method: 'get',
             data: {
+                restaurant_id: selectedRestaurant || undefined,
                 cake_booking_id: bookingSearchResult.id,
                 order_type: 'takeaway',
             },
@@ -178,25 +179,28 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
                         padding:'20px'
                     }}
                 >
-                    {Array.isArray(allrestaurants) && allrestaurants.length > 1 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                            <FormControl size="small" sx={{ minWidth: 260 }}>
-                                <InputLabel id="restaurant-label">Restaurant</InputLabel>
-                                <Select
-                                    labelId="restaurant-label"
-                                    value={selectedRestaurant || ''}
-                                    label="Restaurant"
-                                    onChange={(e) => handleRestaurantChange(e.target.value)}
-                                >
-                                    {allrestaurants.map((item) => (
-                                        <MenuItem value={item.id} key={item.id}>
-                                            {item.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Box>
-                    )}
+                    {Array.isArray(allrestaurants) &&
+                        allrestaurants.length > 1 &&
+                        orderDetails.order_type !== 'dineIn' &&
+                        orderDetails.order_type !== 'reservation' && (
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                                <FormControl size="small" sx={{ minWidth: 260 }}>
+                                    <InputLabel id="restaurant-label">Restaurant</InputLabel>
+                                    <Select
+                                        labelId="restaurant-label"
+                                        value={selectedRestaurant || ''}
+                                        label="Restaurant"
+                                        onChange={(e) => handleRestaurantChange(e.target.value)}
+                                    >
+                                        {allrestaurants.map((item) => (
+                                            <MenuItem value={item.id} key={item.id}>
+                                                {item.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        )}
                     {/* Active Shift Info */}
                     {shiftInfo && (
                         <Paper
@@ -587,10 +591,27 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
                             </Box>
 
                             {/* =====  */}
-                            {orderDetails.order_type === 'dineIn' && <DineDialog guestTypes={guestTypes} floorTables={floorTables} />}
-                            {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog guestTypes={guestTypes} />}
-                            {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} floorTables={floorTables} tablesReloadKey={tablesReloadKey} />}
-                            {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} />}
+                            {orderDetails.order_type === 'dineIn' && (
+                                <DineDialog
+                                    guestTypes={guestTypes}
+                                    floorTables={floorTables}
+                                    allrestaurants={allrestaurants}
+                                    selectedRestaurant={selectedRestaurant}
+                                    onRestaurantChange={handleRestaurantChange}
+                                />
+                            )}
+                            {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog guestTypes={guestTypes} selectedRestaurant={selectedRestaurant} />}
+                            {orderDetails.order_type === 'reservation' && (
+                                <ReservationDialog
+                                    guestTypes={guestTypes}
+                                    floorTables={floorTables}
+                                    tablesReloadKey={tablesReloadKey}
+                                    allrestaurants={allrestaurants}
+                                    selectedRestaurant={selectedRestaurant}
+                                    onRestaurantChange={handleRestaurantChange}
+                                />
+                            )}
+                            {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} selectedRestaurant={selectedRestaurant} />}
 
                             {orderDetails.order_type === 'load_booking' && (
                                 <Box sx={{ mt: 3, px: 2 }}>

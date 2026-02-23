@@ -39,6 +39,7 @@ use App\Http\Controllers\MemberFeeRevenueController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MemberTransactionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentAccountController;
 use App\Http\Controllers\PayrollApiController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\RoleManagementController;
@@ -53,6 +54,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SubscriptionCategoryController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\PosLocationController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserManagementController;
@@ -110,11 +112,12 @@ Route::prefix('pos')->middleware('web')->group(function () {
 
         Route::get('api/users/global-search', [\App\Http\Controllers\UserController::class, 'searchUsers'])->name('pos.api.users.global-search');
         Route::get('api/employee-logs', [\App\Http\Controllers\EmployeeController::class, 'employeeLog'])->name('pos.api.employee-logs');
+        Route::get('api/payment-accounts', [PaymentAccountController::class, 'apiIndex'])->name('pos.api.payment-accounts');
         Route::get('api/floors-with-tables', [\App\Http\Controllers\OrderController::class, 'getFloorsWithTables'])->name('pos.api.floors-with-tables');
         Route::get('api/cake-bookings/search', [\App\Http\Controllers\PosCakeBookingController::class, 'search'])->name('pos.api.cake-bookings.search');
         Route::get('api/members/{id}/family', [\App\Http\Controllers\PosCakeBookingController::class, 'getFamilyMembers'])->name('pos.api.members.family');
 
-        Route::resource('customers', \App\Http\Controllers\CustomerController::class)->except(['show'])->names('pos.customers');
+        Route::resource('customers', \App\Http\Controllers\PosCustomerController::class)->except(['show'])->names('pos.customers');
 
         Route::get('setting', [\App\Http\Controllers\SettingController::class, 'index'])->name('pos.setting.index');
         Route::put('setting', [\App\Http\Controllers\SettingController::class, 'update'])->name('pos.setting.update');
@@ -916,6 +919,19 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
         Route::get('transaction-types', [MemberTransactionController::class, 'getTransactionTypes'])->name('finance.transaction.types');
         Route::get('search-invoices', [FinancialController::class, 'searchInvoices'])->name('finance.transaction.search-invoices');
 
+        // Payment Accounts Management (CRUD)
+        Route::get('payment-accounts/trashed', [PaymentAccountController::class, 'trashed'])->name('finance.payment-accounts.trashed')->middleware('permission:finance.payment-accounts.delete');
+        Route::post('payment-accounts/restore/{id}', [PaymentAccountController::class, 'restore'])->name('finance.payment-accounts.restore')->middleware('permission:finance.payment-accounts.delete');
+        Route::delete('payment-accounts/force-delete/{id}', [PaymentAccountController::class, 'forceDelete'])->name('finance.payment-accounts.force-delete')->middleware('permission:finance.payment-accounts.delete');
+        Route::resource('payment-accounts', PaymentAccountController::class)->names('finance.payment-accounts')->middleware([
+            'index' => 'super.admin:finance.payment-accounts.view',
+            'create' => 'super.admin:finance.payment-accounts.create',
+            'store' => 'permission:finance.payment-accounts.create',
+            'edit' => 'super.admin:finance.payment-accounts.edit',
+            'update' => 'permission:finance.payment-accounts.edit',
+            'destroy' => 'permission:finance.payment-accounts.delete',
+        ]);
+
         // Charge Types Management (CRUD)
         Route::get('charge-types/trashed', [FinancialChargeTypeController::class, 'trashed'])->name('finance.charge-types.trashed')->middleware('permission:finance.charge-types.delete');
         Route::post('charge-types/restore/{id}', [FinancialChargeTypeController::class, 'restore'])->name('finance.charge-types.restore')->middleware('permission:finance.charge-types.delete');
@@ -939,6 +955,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
     Route::get('/employees/business-developers', [EmployeeController::class, 'getBusinessDevelopers'])->name('employees.business-developers')->middleware('permission:financial.edit');
 
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
+    Route::get('/api/finance/payment-accounts', [PaymentAccountController::class, 'apiIndex'])->name('api.finance.payment-accounts');
 
     // Payroll API Routes
     Route::prefix('api/payroll')->middleware('permission:employees.payroll.view')->group(function () {
@@ -1280,9 +1297,14 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
     // User Management Routes (Super Admin only - Web Guard)
     Route::group(['prefix' => 'admin/users', 'middleware' => ['auth:web', 'super.admin:users.view']], function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('admin.users.index');
+        Route::get('/trashed', [UserManagementController::class, 'trashed'])->name('admin.users.trashed')->middleware('super.admin:users.delete');
+        Route::post('/{id}/restore', [UserManagementController::class, 'restore'])->name('admin.users.restore')->middleware('super.admin:users.delete');
+        Route::delete('/{id}/force-delete', [UserManagementController::class, 'forceDelete'])->name('admin.users.force-delete')->middleware('super.admin:users.delete');
         Route::post('/create-super-admin', [UserManagementController::class, 'createSuperAdminUser'])->name('admin.users.create-super-admin')->middleware('super.admin:users.create');
         Route::post('/create-employee-user', [UserManagementController::class, 'createEmployeeUser'])->name('admin.users.create-employee')->middleware('super.admin:users.create');
+        Route::post('/update/{id}', [UserManagementController::class, 'updateUser'])->name('admin.users.update')->middleware('super.admin:users.edit');
         Route::post('/update-employee-user/{id}', [UserManagementController::class, 'updateEmployeeUser'])->name('admin.users.update-employee')->middleware('super.admin:users.edit');
+        Route::delete('/{id}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy')->middleware('super.admin:users.delete');
         Route::post('/assign-role', [UserManagementController::class, 'assignRole'])->name('admin.users.assign-role')->middleware('super.admin:users.edit');
         Route::post('/remove-role', [UserManagementController::class, 'removeRole'])->name('admin.users.remove-role')->middleware('super.admin:users.edit');
     });
@@ -1298,6 +1320,17 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
         Route::put('{tenant}/status', [TenantController::class, 'toggleStatus'])->name('locations.status')->middleware('permission:restaurant.locations.edit|kitchen.locations.edit');
         Route::put('{tenant}', [TenantController::class, 'update'])->name('locations.update')->middleware('permission:restaurant.locations.edit|kitchen.locations.edit');
         Route::delete('{tenant}', [TenantController::class, 'destroy'])->name('locations.destroy')->middleware('permission:restaurant.locations.delete|kitchen.locations.delete');
+    });
+
+    Route::prefix('admin/pos-locations')->group(function () {
+        Route::get('/', [PosLocationController::class, 'index'])->name('pos-locations.index');
+        Route::post('/', [PosLocationController::class, 'store'])->name('pos-locations.store');
+        Route::put('/{id}', [PosLocationController::class, 'update'])->name('pos-locations.update');
+        Route::delete('/{id}', [PosLocationController::class, 'destroy'])->name('pos-locations.destroy');
+
+        Route::get('/trashed', [PosLocationController::class, 'trashed'])->name('pos-locations.trashed');
+        Route::post('/restore/{id}', [PosLocationController::class, 'restore'])->name('pos-locations.restore');
+        Route::delete('/force-delete/{id}', [PosLocationController::class, 'forceDelete'])->name('pos-locations.force-delete');
     });
 
     // Admin POS Reports Routes

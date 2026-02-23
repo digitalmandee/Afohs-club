@@ -7,6 +7,7 @@ use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
 use App\Models\FinancialReceipt;
+use App\Models\PaymentAccount;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\RoomCategory;
@@ -87,7 +88,10 @@ class RoomBookingController extends Controller
         $bookings = $query->paginate(50)->withQueryString();
 
         // ✅ Transform invoice data for frontend
-        $bookings->getCollection()->transform(function ($booking) {
+        $paymentAccountsByInvoiceId = $this->paymentAccountsByInvoiceId($bookings->getCollection());
+        $bookings->getCollection()->transform(function ($booking) use ($paymentAccountsByInvoiceId) {
+            $invoiceData = $booking->invoice?->data;
+            $fallbackPaymentAccount = is_array($invoiceData) ? ($invoiceData['payment_account'] ?? null) : null;
             $booking->invoice = $booking->invoice ? [
                 'id' => $booking->invoice->id,
                 'status' => $booking->invoice->status,
@@ -95,6 +99,7 @@ class RoomBookingController extends Controller
                 'total_price' => $booking->invoice->total_price,
                 'advance_payment' => $booking->invoice->advance_payment,
                 'payment_method' => $booking->invoice->payment_method,
+                'payment_account' => $paymentAccountsByInvoiceId[$booking->invoice->id] ?? $fallbackPaymentAccount,
                 'data' => $booking->invoice->data,
             ] : null;
             return $booking;
@@ -147,7 +152,10 @@ class RoomBookingController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        $bookings->getCollection()->transform(function ($booking) {
+        $paymentAccountsByInvoiceId = $this->paymentAccountsByInvoiceId($bookings->getCollection());
+        $bookings->getCollection()->transform(function ($booking) use ($paymentAccountsByInvoiceId) {
+            $invoiceData = $booking->invoice?->data;
+            $fallbackPaymentAccount = is_array($invoiceData) ? ($invoiceData['payment_account'] ?? null) : null;
             $booking->invoice = $booking->invoice ? [
                 'id' => $booking->invoice->id,
                 'status' => $booking->invoice->status,
@@ -155,6 +163,7 @@ class RoomBookingController extends Controller
                 'total_price' => $booking->invoice->total_price,
                 'advance_payment' => $booking->invoice->advance_payment,
                 'payment_method' => $booking->invoice->payment_method,
+                'payment_account' => $paymentAccountsByInvoiceId[$booking->invoice->id] ?? $fallbackPaymentAccount,
                 'data' => $booking->invoice->data,
             ] : null;
             return $booking;
@@ -194,7 +203,10 @@ class RoomBookingController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $bookings->getCollection()->transform(function ($booking) {
+        $paymentAccountsByInvoiceId = $this->paymentAccountsByInvoiceId($bookings->getCollection());
+        $bookings->getCollection()->transform(function ($booking) use ($paymentAccountsByInvoiceId) {
+            $invoiceData = $booking->invoice?->data;
+            $fallbackPaymentAccount = is_array($invoiceData) ? ($invoiceData['payment_account'] ?? null) : null;
             $booking->invoice = $booking->invoice ? [
                 'id' => $booking->invoice->id,
                 'status' => $booking->invoice->status,
@@ -202,6 +214,7 @@ class RoomBookingController extends Controller
                 'total_price' => $booking->invoice->total_price,
                 'advance_payment' => $booking->invoice->advance_payment,
                 'payment_method' => $booking->invoice->payment_method,
+                'payment_account' => $paymentAccountsByInvoiceId[$booking->invoice->id] ?? $fallbackPaymentAccount,
                 'data' => $booking->invoice->data,
             ] : null;
             return $booking;
@@ -213,6 +226,102 @@ class RoomBookingController extends Controller
             'roomTypes' => RoomType::select('id', 'name')->get(),
             'rooms' => Room::select('id', 'name')->get(),
         ]);
+    }
+
+    private function paymentAccountsByInvoiceId($bookingsCollection): array
+    {
+        $invoiceIds = collect($bookingsCollection)
+            ->pluck('invoice.id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($invoiceIds->isEmpty()) {
+            return [];
+        }
+
+        $relations = TransactionRelation::query()
+            ->select('id', 'invoice_id', 'receipt_id')
+            ->whereIn('invoice_id', $invoiceIds)
+            ->with(['receipt:id,payment_account_id,payment_details,payment_method'])
+            ->orderByDesc('id')
+            ->get();
+
+        $receiptByInvoiceId = [];
+        $accountIds = [];
+        $paymentDetailsByInvoiceId = [];
+
+        foreach ($relations as $relation) {
+            if (isset($receiptByInvoiceId[$relation->invoice_id])) {
+                continue;
+            }
+
+            $receipt = $relation->receipt;
+            if (!$receipt) {
+                continue;
+            }
+
+            $receiptByInvoiceId[$relation->invoice_id] = $receipt;
+
+            if (!empty($receipt->payment_account_id)) {
+                $accountIds[] = $receipt->payment_account_id;
+            }
+
+            $details = [];
+            if (!empty($receipt->payment_details) && is_string($receipt->payment_details)) {
+                $decoded = json_decode($receipt->payment_details, true);
+                if (is_array($decoded)) {
+                    $details = $decoded;
+                }
+            }
+            $paymentDetailsByInvoiceId[$relation->invoice_id] = $details;
+
+            if (isset($details['split_payment_accounts']) && is_array($details['split_payment_accounts'])) {
+                foreach ($details['split_payment_accounts'] as $accountId) {
+                    if ($accountId) {
+                        $accountIds[] = $accountId;
+                    }
+                }
+            }
+        }
+
+        $accountIds = array_values(array_unique(array_filter($accountIds)));
+        $accountsById = count($accountIds)
+            ? PaymentAccount::withTrashed()
+                ->select('id', 'name')
+                ->whereIn('id', $accountIds)
+                ->get()
+                ->keyBy('id')
+            : collect();
+
+        $result = [];
+        foreach ($receiptByInvoiceId as $invoiceId => $receipt) {
+            $label = null;
+
+            if (!empty($receipt->payment_account_id)) {
+                $label = $accountsById->get($receipt->payment_account_id)?->name;
+            } else {
+                $details = $paymentDetailsByInvoiceId[$invoiceId] ?? [];
+                if (isset($details['split_payment_accounts']) && is_array($details['split_payment_accounts'])) {
+                    $parts = [];
+                    foreach ($details['split_payment_accounts'] as $methodKey => $accountId) {
+                        $name = $accountId ? ($accountsById->get($accountId)?->name) : null;
+                        if ($name) {
+                            $parts[] = str_replace('_', ' ', (string) $methodKey) . ': ' . $name;
+                        }
+                    }
+                    if (count($parts)) {
+                        $label = implode(' | ', $parts);
+                    }
+                }
+            }
+
+            if ($label) {
+                $result[$invoiceId] = $label;
+            }
+        }
+
+        return $result;
     }
 
     private function applyFilters($query, $filters)
