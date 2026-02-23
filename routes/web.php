@@ -54,6 +54,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SubscriptionCategoryController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
+use App\Http\Controllers\PosLocationController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserManagementController;
@@ -1319,6 +1320,17 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
         Route::put('{tenant}/status', [TenantController::class, 'toggleStatus'])->name('locations.status')->middleware('permission:restaurant.locations.edit|kitchen.locations.edit');
         Route::put('{tenant}', [TenantController::class, 'update'])->name('locations.update')->middleware('permission:restaurant.locations.edit|kitchen.locations.edit');
         Route::delete('{tenant}', [TenantController::class, 'destroy'])->name('locations.destroy')->middleware('permission:restaurant.locations.delete|kitchen.locations.delete');
+    });
+
+    Route::prefix('admin/pos-locations')->group(function () {
+        Route::get('/', [PosLocationController::class, 'index'])->name('pos-locations.index');
+        Route::post('/', [PosLocationController::class, 'store'])->name('pos-locations.store');
+        Route::put('/{id}', [PosLocationController::class, 'update'])->name('pos-locations.update');
+        Route::delete('/{id}', [PosLocationController::class, 'destroy'])->name('pos-locations.destroy');
+
+        Route::get('/trashed', [PosLocationController::class, 'trashed'])->name('pos-locations.trashed');
+        Route::post('/restore/{id}', [PosLocationController::class, 'restore'])->name('pos-locations.restore');
+        Route::delete('/force-delete/{id}', [PosLocationController::class, 'forceDelete'])->name('pos-locations.force-delete');
     });
 
     // Admin POS Reports Routes
