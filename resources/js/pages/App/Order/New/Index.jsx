@@ -23,7 +23,7 @@ import { routeNameForContext } from '@/lib/utils';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
+const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId, activePosLocation }) => {
     const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [open, setOpen] = useState(true);
@@ -31,8 +31,20 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
     const [roomTypes, setRoomTypes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [shiftInfo, setShiftInfo] = useState(null);
-    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId);
+    const [selectedRestaurant, setSelectedRestaurant] = useState(() => {
+        if (Array.isArray(allrestaurants) && allrestaurants.length > 0) {
+            return allrestaurants[0].id;
+        }
+
+        return activeTenantId || '';
+    });
     const [tablesReloadKey, setTablesReloadKey] = useState(0);
+
+    useEffect(() => {
+        if (!selectedRestaurant && Array.isArray(allrestaurants) && allrestaurants.length > 0) {
+            setSelectedRestaurant(allrestaurants[0].id);
+        }
+    }, [allrestaurants, selectedRestaurant]);
 
     // Booking Search State
     const [bookingSearchTerm, setBookingSearchTerm] = useState('');
@@ -229,7 +241,7 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId }) => {
                                         POS Location
                                     </Typography>
                                     <Typography variant="h6" color="primary.main" fontWeight="bold">
-                                        {shiftInfo.tenant?.name || 'Unknown Location'}
+                                        {shiftInfo.posLocation?.name || activePosLocation?.name || 'Unknown Location'}
                                     </Typography>
                                 </Box>
                             </Box>

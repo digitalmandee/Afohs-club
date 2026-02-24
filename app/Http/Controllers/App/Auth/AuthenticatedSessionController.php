@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App\Auth;
 use App\Helpers\TenantLogout;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\TenantLoginRequest;
+use App\Models\PosLocation;
 use App\Models\UserLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,18 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
+    private function safeRedirectTo(?string $redirectTo): ?string
+    {
+        $redirectTo = $redirectTo !== null ? trim($redirectTo) : null;
+
+        return $redirectTo
+            && Str::startsWith($redirectTo, '/')
+            && !Str::startsWith($redirectTo, '//')
+            && !Str::contains($redirectTo, ['://', "\n", "\r"])
+            ? $redirectTo
+            : null;
+    }
+
     /**
      * Show the login page.
      */
@@ -36,11 +49,11 @@ class AuthenticatedSessionController extends Controller
     public function createPos(Request $request)
     {
         if (Auth::guard('tenant')->check()) {
-            if ($request->session()->has('active_restaurant_id')) {
+            if ($request->session()->has('active_pos_location_id')) {
                 return redirect()->route('pos.dashboard');
             }
 
-            return redirect()->route('pos.select-restaurant');
+            return redirect()->route('pos.select-pos-location');
         }
 
         $webUser = Auth::guard('web')->user();
@@ -48,11 +61,11 @@ class AuthenticatedSessionController extends Controller
             Auth::guard('tenant')->login($webUser);
             $request->session()->regenerate();
 
-            if ($request->session()->has('active_restaurant_id')) {
+            if ($request->session()->has('active_pos_location_id')) {
                 return redirect()->route('pos.dashboard');
             }
 
-            return redirect()->route('pos.select-restaurant');
+            return redirect()->route('pos.select-pos-location');
         }
 
         return Inertia::render('App/Auth/Login', [
@@ -165,25 +178,7 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        $restaurants = $user->getAccessibleTenants()->where('status', 'active')->values();
-
-        if ($restaurants->count() === 1) {
-            $restaurant = $restaurants->first();
-
-            session([
-                'active_company_id' => $user->employee?->branch_id ?? $restaurant->branch_id,
-                'active_restaurant_id' => $restaurant->id,
-            ]);
-
-            UserLog::create([
-                'user_id' => $user->id,
-                'type' => 'login',
-                'logged_at' => now(),
-                'restaurant_id' => $restaurant->id,
-            ]);
-
-            return redirect()->route('pos.dashboard');
-        }
+        $request->session()->forget('active_pos_location_id');
 
         UserLog::create([
             'user_id' => $user->id,
@@ -192,57 +187,54 @@ class AuthenticatedSessionController extends Controller
             'restaurant_id' => null,
         ]);
 
-        return redirect()->route('pos.select-restaurant');
+        return redirect()->route('pos.select-pos-location');
     }
 
-    public function selectRestaurant(Request $request): Response|RedirectResponse
+    public function selectPosLocation(Request $request): Response|RedirectResponse
     {
-        $user = Auth::guard('tenant')->user();
-        $restaurants = $user->getAccessibleTenants()->where('status', 'active')->values();
+        $locations = PosLocation::query()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        if ($restaurants->count() === 1) {
-            $restaurant = $restaurants->first();
-
-            session([
-                'active_company_id' => $user->employee?->branch_id ?? $restaurant->branch_id,
-                'active_restaurant_id' => $restaurant->id,
+        if ($locations->isEmpty()) {
+            return redirect()->route('pos.login')->withErrors([
+                'pos_location_id' => 'No active POS locations found.',
             ]);
+        }
 
-            return redirect()->route('pos.dashboard');
+        if ($locations->count() === 1) {
+            session(['active_pos_location_id' => $locations->first()->id]);
+
+            $redirectTo = $this->safeRedirectTo($request->query('redirect_to'));
+            return $redirectTo ? redirect()->to($redirectTo) : redirect()->route('pos.dashboard');
         }
 
         return Inertia::render('App/Auth/SelectRestaurant', [
-            'restaurants' => $restaurants->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+            'restaurants' => $locations->map(fn($l) => ['id' => $l->id, 'name' => $l->name])->values(),
+            'title' => 'Select POS Location',
+            'postRouteName' => 'pos.set-pos-location',
+            'fieldName' => 'pos_location_id',
+            'redirectTo' => $this->safeRedirectTo($request->query('redirect_to')),
         ]);
     }
 
-    public function setRestaurant(Request $request): RedirectResponse
+    public function setPosLocation(Request $request): RedirectResponse
     {
-        $user = Auth::guard('tenant')->user();
-        $restaurants = $user->getAccessibleTenants()->where('status', 'active')->values();
+        $activeLocationIds = PosLocation::query()
+            ->where('status', 'active')
+            ->pluck('id')
+            ->all();
 
         $request->validate([
-            'restaurant_id' => ['required', Rule::in($restaurants->pluck('id')->all())],
+            'pos_location_id' => ['required', Rule::in($activeLocationIds)],
             'redirect_to' => ['nullable', 'string', 'max:2048'],
         ]);
 
-        $restaurant = $restaurants->firstWhere('id', $request->restaurant_id);
+        session(['active_pos_location_id' => (int) $request->pos_location_id]);
 
-        session([
-            'active_company_id' => $user->employee?->branch_id ?? $restaurant->branch_id,
-            'active_restaurant_id' => $restaurant->id,
-        ]);
-
-        $redirectTo = $request->input('redirect_to');
-        $isSafeRedirect =
-            $redirectTo
-            && Str::startsWith($redirectTo, '/')
-            && !Str::startsWith($redirectTo, '//')
-            && !Str::contains($redirectTo, ['://', "\n", "\r"]);
-
-        return $isSafeRedirect
-            ? redirect()->to($redirectTo)
-            : redirect()->route('pos.dashboard');
+        $redirectTo = $this->safeRedirectTo($request->input('redirect_to'));
+        return $redirectTo ? redirect()->to($redirectTo) : redirect()->route('pos.dashboard');
     }
 
     public function destroyPos(Request $request): RedirectResponse

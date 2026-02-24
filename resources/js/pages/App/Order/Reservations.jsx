@@ -184,7 +184,7 @@ const Reservations = () => {
                                         <TableCell sx={{ fontWeight: 600, color:'#fff', whiteSpace:'nowrap' }}>Special Request</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Status</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color:'#fff', whiteSpace:'nowrap' }}>Cancellation Reason</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Location</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Restaurant</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>

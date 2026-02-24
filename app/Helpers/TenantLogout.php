@@ -41,6 +41,6 @@ class TenantLogout
         Auth::guard($guard)->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        session()->forget(['active_restaurant_id', 'active_company_id']);
+        session()->forget(['active_restaurant_id', 'active_company_id', 'active_pos_location_id']);
     }
 }

@@ -17,7 +17,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const OrderMenu = () => {
-    const { orderNo, orderContext, totalSavedOrders, allrestaurants, activeTenantId, firstCategoryId, reservation, is_new_order } = usePage().props;
+    const { orderNo, orderContext, totalSavedOrders, allrestaurants, activeTenantId, firstCategoryId, reservation, is_new_order, activePosLocation } = usePage().props;
 
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
@@ -25,7 +25,13 @@ const OrderMenu = () => {
 
     // const [showPayment, setShowPayment] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(firstCategoryId || '');
-    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId);
+    const [selectedRestaurant, setSelectedRestaurant] = useState(() => {
+        if (Array.isArray(allrestaurants) && allrestaurants.length > 0) {
+            return allrestaurants[0].id;
+        }
+
+        return activeTenantId || '';
+    });
     const [variantProductId, setVariantProductId] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [activeView, setActiveView] = useState('orderDetail');
@@ -36,6 +42,19 @@ const OrderMenu = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [searchMode, setSearchMode] = useState('product'); // 'product' or 'booking'
+
+    useEffect(() => {
+        if (!selectedRestaurant && Array.isArray(allrestaurants) && allrestaurants.length > 0) {
+            setSelectedRestaurant(allrestaurants[0].id);
+        }
+    }, [allrestaurants, selectedRestaurant]);
+
+    useEffect(() => {
+        if (selectedRestaurant && !orderDetails.tenant_id && !orderDetails.restaurant_id) {
+            handleOrderDetailChange('tenant_id', selectedRestaurant);
+            handleOrderDetailChange('restaurant_id', selectedRestaurant);
+        }
+    }, [handleOrderDetailChange, orderDetails.restaurant_id, orderDetails.tenant_id, selectedRestaurant]);
 
     const handleRestaurantChange = (restaurantId) => {
         setSelectedRestaurant(restaurantId);
@@ -420,7 +439,7 @@ const OrderMenu = () => {
                             </IconButton>
                             <Typography sx={{ color: '#063455', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
                         </Box>
-                        <Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <FormControl fullWidth>
                                 <InputLabel id="restuarant-label">Restuarants</InputLabel>
                                 <Select labelId="restuarant-label" value={selectedRestaurant} size="small" label="Restuarants" onChange={(e) => handleRestaurantChange(e.target.value)}>

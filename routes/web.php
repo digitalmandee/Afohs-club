@@ -81,8 +81,8 @@ Route::prefix('pos')->middleware('web')->group(function () {
     Route::post('check-user-id', [\App\Http\Controllers\App\Auth\AuthController::class, 'checkUserId'])->name('pos.check-user-id');
 
     Route::middleware('auth:tenant')->group(function () {
-        Route::get('select-restaurant', [\App\Http\Controllers\App\Auth\AuthenticatedSessionController::class, 'selectRestaurant'])->name('pos.select-restaurant');
-        Route::post('select-restaurant', [\App\Http\Controllers\App\Auth\AuthenticatedSessionController::class, 'setRestaurant'])->name('pos.set-restaurant');
+        Route::get('select-pos-location', [\App\Http\Controllers\App\Auth\AuthenticatedSessionController::class, 'selectPosLocation'])->name('pos.select-pos-location');
+        Route::post('select-pos-location', [\App\Http\Controllers\App\Auth\AuthenticatedSessionController::class, 'setPosLocation'])->name('pos.set-pos-location');
         Route::post('logout', [\App\Http\Controllers\App\Auth\AuthenticatedSessionController::class, 'destroyPos'])->name('pos.logout');
     });
 

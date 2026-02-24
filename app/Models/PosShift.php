@@ -13,6 +13,7 @@ class PosShift extends BaseModel
     protected $fillable = [
         'user_id',
         'tenant_id',
+        'location_id',
         'start_date',
         'start_time',
         'end_time',
@@ -35,5 +36,10 @@ class PosShift extends BaseModel
     public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    public function posLocation()
+    {
+        return $this->belongsTo(PosLocation::class, 'location_id');
     }
 }

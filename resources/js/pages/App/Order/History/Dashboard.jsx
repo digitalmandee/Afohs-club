@@ -244,6 +244,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             member: order.member,
             customer: order.customer,
             employee: order.employee,
+            tenant: order.tenant,
             table: order.table,
             cashier: order.cashier,
             waiter: order.waiter,
@@ -314,6 +315,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             ${memberNo ? `<div class="row"><div>Member Id</div><div>${memberNo}</div></div>` : ''}
             <div class="row"><div>Order Type</div><div>${formatOrderType(order.order_type)}</div></div>
             ${order.table ? `<div class="row"><div>Table Number</div><div>${order.table.table_no}</div></div>` : ''}
+            ${order.tenant ? `<div class="row"><div>Restaurant</div><div>${order.tenant.name}</div></div>` : ''}
             <div class="divider"></div>
             ${itemsHtml}
             <div class="divider"></div>
@@ -597,7 +599,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ENT</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CTS</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Location</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Restaurant</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>

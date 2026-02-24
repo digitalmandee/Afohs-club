@@ -97,6 +97,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 member,
                 customer,
                 employee,
+                tenant: invoiceData.tenant || null,
                 table: invoiceData.table || null,
                 cashier: invoiceData.cashier || null,
                 waiter: invoiceData.waiter || null,
@@ -213,6 +214,10 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
             <div class="row">
               <div>Table Number</div>
               <div>${data.table?.table_no ?? '-'}</div>
+            </div>
+            <div class="row">
+              <div>Restaurant</div>
+              <div>${data.tenant?.name ?? '-'}</div>
             </div>
 
             <div class="divider"></div>
@@ -377,6 +382,14 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                         Table Number
                     </Typography>
                     <Typography variant="caption">{paymentData.table?.table_no}</Typography>
+                </Box>
+            )}
+            {paymentData.tenant && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        Restaurant
+                    </Typography>
+                    <Typography variant="caption">{paymentData.tenant?.name}</Typography>
                 </Box>
             )}
 
