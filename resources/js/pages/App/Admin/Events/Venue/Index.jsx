@@ -6,7 +6,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddEventVenueModal from '@/components/App/Events/Venue/AddModal';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 import Pagination from '@/components/Pagination';
 
 const EventVenues = ({ eventVenuesData, filters: initialFilters }) => {
@@ -83,7 +83,7 @@ const EventVenues = ({ eventVenuesData, filters: initialFilters }) => {
                     <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Define capacity, availability, and venue-specific rules</Typography>
                 </Box>
                 <div className="flex items-center gap-2">
-                    <TextField
+                    {/* <TextField
                         placeholder="Search..."
                         size="small"
                         value={search}
@@ -105,12 +105,19 @@ const EventVenues = ({ eventVenuesData, filters: initialFilters }) => {
                     />
                     <Button variant="contained" startIcon={<Search />} onClick={handleSearch} sx={{ backgroundColor: '#063455', borderRadius: '16px' }}>
                         Search
-                    </Button>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', textTransform: 'none', borderRadius: '16px' }} onClick={handleAdd}>
+                    </Button> */}
+                    <Button 
+                    variant="contained" 
+                    startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', textTransform: 'none', borderRadius: '16px' }} onClick={handleAdd}>
                         Add Venue
                     </Button>
-                    <Button variant="outlined" color="error" startIcon={<DeleteForever />} onClick={() => router.visit(route('event-venues.trashed'))} sx={{ borderRadius: '16px' }}>
-                        Recycle Bin
+                    <Button 
+                    variant="outlined" 
+                    color="error" 
+                    startIcon={<FaTrash size={14} />} 
+                    onClick={() => router.visit(route('event-venues.trashed'))} 
+                    sx={{ borderRadius: '16px', textTransform:'none', ml:2 }}>
+                        Trashed
                     </Button>
                 </div>
             </Box>

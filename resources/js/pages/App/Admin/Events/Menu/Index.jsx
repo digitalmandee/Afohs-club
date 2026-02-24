@@ -5,7 +5,7 @@ import { Add as AddIcon, Delete as DeleteIcon, Search, DeleteForever } from '@mu
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 import Pagination from '@/components/Pagination';
 
 const EventMenuManage = ({ eventMenusData, filters: initialFilters }) => {
@@ -64,7 +64,7 @@ const EventMenuManage = ({ eventMenusData, filters: initialFilters }) => {
                 </Box>
 
                 <div className="flex items-center gap-2">
-                    <TextField
+                    {/* <TextField
                         placeholder="Search..."
                         size="small"
                         value={search}
@@ -86,12 +86,17 @@ const EventMenuManage = ({ eventMenusData, filters: initialFilters }) => {
                     />
                     <Button variant="contained" startIcon={<Search />} onClick={handleSearch} sx={{ backgroundColor: '#063455', borderRadius: '16px' }}>
                         Search
-                    </Button>
+                    </Button> */}
                     <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', textTransform: 'none', height: 35, borderRadius: '16px' }} onClick={() => router.visit(route('event-menu.create'))}>
                         Add Menu
                     </Button>
-                    <Button variant="outlined" color="error" startIcon={<DeleteForever />} onClick={() => router.visit(route('event-menu.trashed'))} sx={{ borderRadius: '16px' }}>
-                        Recycle Bin
+                    <Button
+                        variant="outlined"
+                        color="error"
+                        startIcon={<FaTrash size={14}/>}
+                        onClick={() => router.visit(route('event-menu.trashed'))}
+                        sx={{ borderRadius: '16px', textTransform: 'none', ml: 2 }}>
+                        Trashed
                     </Button>
                 </div>
             </Box>
