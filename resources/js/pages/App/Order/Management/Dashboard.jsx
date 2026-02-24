@@ -609,7 +609,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                     </Typography>
                                                 </Typography>
                                                 <Typography sx={{ mb: 2, fontSize: '14px', opacity: 0.9 }}>
-                                                    Location: <strong>{card.tenant?.name || 'Unknown'}</strong>
+                                                    Restaurant: <strong>{card.tenant?.name || 'Unknown'}</strong>
                                                 </Typography>
                                                 <Box
                                                     sx={{

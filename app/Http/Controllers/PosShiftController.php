@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PosLocation;
 use App\Models\PosShift;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,11 +16,19 @@ class PosShiftController extends Controller
         return $request->session()->get('active_restaurant_id') ?? tenant('id');
     }
 
+    private function posLocationId(Request $request = null): ?int
+    {
+        $request = $request ?? request();
+        $locationId = $request->session()->get('active_pos_location_id');
+
+        return $locationId ? (int) $locationId : null;
+    }
+
     private function getActiveShiftForUser(int $userId)
     {
         return PosShift::where('user_id', $userId)
             ->where('status', 'active')
-            ->with('tenant:id,name')
+            ->with(['tenant:id,name', 'posLocation:id,name'])
             ->latest()
             ->first();
     }
@@ -32,7 +41,7 @@ class PosShiftController extends Controller
         $user = Auth::user();
 
         $shifts = PosShift::where('user_id', $user->id)
-            ->with('tenant:id,name')
+            ->with(['tenant:id,name', 'posLocation:id,name'])
             ->latest()
             ->limit(50)
             ->get();
@@ -48,6 +57,19 @@ class PosShiftController extends Controller
         $user = Auth::user();
 
         $activeShift = $this->getActiveShiftForUser($user->id);
+        if ($activeShift && !$activeShift->relationLoaded('posLocation')) {
+            $activeShift->load('posLocation:id,name');
+        }
+
+        if ($activeShift && !$activeShift->posLocation) {
+            $posLocationId = $this->posLocationId();
+            if ($posLocationId) {
+                $posLocation = PosLocation::query()->select('id', 'name')->find($posLocationId);
+                if ($posLocation) {
+                    $activeShift->setRelation('posLocation', $posLocation);
+                }
+            }
+        }
 
         return response()->json([
             'has_active_shift' => (bool) $activeShift,
@@ -64,6 +86,14 @@ class PosShiftController extends Controller
 
         $user = Auth::user();
         $tenantId = $this->restaurantId($request);
+        $posLocationId = $this->posLocationId($request);
+
+        if (!$posLocationId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'POS location is not selected. Please select a POS location first.',
+            ], 400);
+        }
 
         $existingShift = $this->getActiveShiftForUser($user->id);
 
@@ -78,6 +108,7 @@ class PosShiftController extends Controller
         $shift = PosShift::create([
             'user_id' => $user->id,
             'tenant_id' => $tenantId,
+            'location_id' => $posLocationId,
             'start_date' => Carbon::today()->toDateString(),  // Auto-set to today
             'start_time' => Carbon::now(),
             'status' => 'active',
@@ -87,7 +118,7 @@ class PosShiftController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Shift started successfully.',
-            'shift' => $shift->load('tenant:id,name')
+            'shift' => $shift->load(['tenant:id,name', 'posLocation:id,name'])
         ]);
     }
 

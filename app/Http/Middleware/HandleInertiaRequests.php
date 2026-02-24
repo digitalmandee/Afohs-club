@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\PosLocation;
 use App\Models\Tenant;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
@@ -44,11 +45,19 @@ class HandleInertiaRequests extends Middleware
         $sessionRestaurant = $sessionRestaurantId ? Tenant::select('id', 'name')->find($sessionRestaurantId) : null;
         $currentTenant = tenant();
 
+        $sessionPosLocationId = $request->session()->get('active_pos_location_id');
+        $sessionPosLocation = $sessionPosLocationId ? PosLocation::select('id', 'name')->find($sessionPosLocationId) : null;
+
         $activeRestaurant = null;
         if ($sessionRestaurant) {
             $activeRestaurant = ['id' => $sessionRestaurant->id, 'name' => $sessionRestaurant->name];
         } elseif ($currentTenant) {
             $activeRestaurant = ['id' => $currentTenant->id, 'name' => $currentTenant->name];
+        }
+
+        $activePosLocation = null;
+        if ($sessionPosLocation) {
+            $activePosLocation = ['id' => $sessionPosLocation->id, 'name' => $sessionPosLocation->name];
         }
 
         return [
@@ -57,6 +66,7 @@ class HandleInertiaRequests extends Middleware
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'tenant' => tenant(),
             'activeRestaurant' => $activeRestaurant,
+            'activePosLocation' => $activePosLocation,
             'auth' => [
                 'user' => $request->user()?->load('employee:id,user_id,employee_id,phone_no,designation,address'),
                 'role' => $request->user()?->roles->first()?->name ?? null,

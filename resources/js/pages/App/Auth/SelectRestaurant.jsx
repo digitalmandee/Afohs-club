@@ -3,16 +3,22 @@ import { Head, router } from '@inertiajs/react';
 import { Box, Button, Typography } from '@mui/material';
 import React, { useState } from 'react';
 
-const SelectRestaurant = ({ restaurants }) => {
-    const [selectedRestaurantId, setSelectedRestaurantId] = useState('');
+const SelectRestaurant = ({ restaurants, title = 'Select POS Location', postRouteName = 'pos.set-pos-location', fieldName = 'pos_location_id', redirectTo = null }) => {
+    const [selectedId, setSelectedId] = useState('');
     const [processing, setProcessing] = useState(false);
 
-    const handleSelect = (restaurantId) => {
+    const handleSelect = (id) => {
         if (processing) return;
-        setSelectedRestaurantId(String(restaurantId));
+        setSelectedId(String(id));
+
+        const payload = {
+            [fieldName]: id,
+            ...(redirectTo ? { redirect_to: redirectTo } : {}),
+        };
+
         router.post(
-            route('pos.set-restaurant'),
-            { restaurant_id: restaurantId },
+            route(postRouteName),
+            payload,
             {
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
@@ -22,7 +28,7 @@ const SelectRestaurant = ({ restaurants }) => {
 
     return (
         <>
-            <Head title="Select Restaurant" />
+            <Head title={title} />
             <AppAuthLayout>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box
@@ -45,25 +51,25 @@ const SelectRestaurant = ({ restaurants }) => {
                             fontSize: '30px',
                         }}
                     >
-                        Select Restaurant
+                        {title}
                     </Typography>
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, mt: 1 }}>
                         {(restaurants || []).map((restaurant) => (
                             <Button
                                 key={restaurant.id}
-                                variant={String(selectedRestaurantId) === String(restaurant.id) ? 'contained' : 'outlined'}
+                                variant={String(selectedId) === String(restaurant.id) ? 'contained' : 'outlined'}
                                 onClick={() => handleSelect(restaurant.id)}
                                 disabled={processing}
                                 sx={{
                                     justifyContent: 'space-between',
                                     borderRadius: 1,
                                     textTransform: 'none',
-                                    bgcolor: String(selectedRestaurantId) === String(restaurant.id) ? '#063455' : undefined,
+                                    bgcolor: String(selectedId) === String(restaurant.id) ? '#063455' : undefined,
                                     borderColor: '#063455',
-                                    color: String(selectedRestaurantId) === String(restaurant.id) ? '#FFFFFF' : '#063455',
+                                    color: String(selectedId) === String(restaurant.id) ? '#FFFFFF' : '#063455',
                                     '&:hover': {
-                                        bgcolor: String(selectedRestaurantId) === String(restaurant.id) ? '#083654' : 'rgba(6,52,85,0.06)',
+                                        bgcolor: String(selectedId) === String(restaurant.id) ? '#083654' : 'rgba(6,52,85,0.06)',
                                         borderColor: '#063455',
                                     },
                                 }}
