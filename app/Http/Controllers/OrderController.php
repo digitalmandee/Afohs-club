@@ -2238,7 +2238,7 @@ class OrderController extends Controller
             }
         }
 
-        $categories = Category::when($restaurantId, fn($q) => $q->where('location_id', $restaurantId))
+        $categories = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->latest()
             ->get();
 

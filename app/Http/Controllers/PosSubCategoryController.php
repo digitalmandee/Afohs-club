@@ -19,7 +19,7 @@ class PosSubCategoryController extends Controller
     private function selectedRestaurantId(Request $request = null): int|string|null
     {
         $request = $request ?? request();
-        $requestedId = $request->query('restaurant_id');
+        $requestedId = $request->query('restaurant_id') ?? $request->input('restaurant_id');
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         $tenants = $user ? $user->getAccessibleTenants() : collect();
 
@@ -39,7 +39,7 @@ class PosSubCategoryController extends Controller
         $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
 
         $subCategories = PosSubCategory::with('category')
-            ->when($restaurantId, fn($q) => $q->where('location_id', $restaurantId))
+            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->when($request->search, function ($query, $search) {
                 $query
                     ->where('name', 'like', "%{$search}%")
@@ -51,7 +51,7 @@ class PosSubCategoryController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $categories = Category::when($restaurantId, fn($q) => $q->where('location_id', $restaurantId))
+        $categories = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->select('id', 'name')
             ->get();
 
@@ -66,8 +66,8 @@ class PosSubCategoryController extends Controller
 
     public function store(Request $request)
     {
-        $tenantId = $this->activeTenantId($request);
-        $locationId = $this->selectedRestaurantId($request);
+        $tenantId = $this->selectedRestaurantId($request);
+        $locationId = $request->session()->get('active_pos_location_id');
         $request->validate([
             'category_id' => 'required|exists:pos_categories,id',
             'name' => 'required|string|max:50',
@@ -77,7 +77,7 @@ class PosSubCategoryController extends Controller
         PosSubCategory::create($request->merge([
             'created_by' => Auth::id(),
             'tenant_id' => $tenantId,
-            'location_id' => $locationId,
+            'location_id' => $locationId ? (int) $locationId : null,
         ])->all());
 
         return redirect()->back()->with('success', 'Sub Category created successfully.');
@@ -158,7 +158,7 @@ class PosSubCategoryController extends Controller
     {
         $restaurantId = $this->selectedRestaurantId($request);
         $subCategories = PosSubCategory::where('category_id', $categoryId)
-            ->when($restaurantId, fn($q, $rid) => $q->where('location_id', $rid))
+            ->when($restaurantId, fn($q, $rid) => $q->where('tenant_id', $rid))
             ->select('id', 'name')
             ->get();
 

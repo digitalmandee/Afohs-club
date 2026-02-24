@@ -187,9 +187,7 @@ Route::group([
         Route::delete('/inventory/products/{id}/force-delete', [InventoryController::class, 'forceDelete'])->name('inventory.force-delete');
 
         Route::get('/inventory/products', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('/inventory/products/add', function () {
-            return Inertia::render('App/Inventory/Product');
-        })->name('product.create');
+        Route::get('/inventory/products/add', [InventoryController::class, 'create'])->name('product.create');
         Route::get('/inventory/products/edit/{id}', [InventoryController::class, 'show'])->name('inventory.show');
         Route::post('/inventory/products/{id}/update', [InventoryController::class, 'update'])->name('inventory.update');
         Route::delete('/inventory/products/{id}/destroy', [InventoryController::class, 'destroy'])->name('inventory.destroy');

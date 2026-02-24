@@ -175,9 +175,9 @@ Route::prefix('pos')->middleware('web')->group(function () {
         Route::delete('inventory/products/{id}/force-delete', [\App\Http\Controllers\InventoryController::class, 'forceDelete'])->name('pos.inventory.force-delete');
         Route::get('inventory/products', [\App\Http\Controllers\InventoryController::class, 'index'])->name('pos.inventory.index');
         Route::get('inventory/products/create', [\App\Http\Controllers\InventoryController::class, 'create'])->name('pos.product.create');
-        Route::get('inventory/products/{inventory}', [\App\Http\Controllers\InventoryController::class, 'show'])->name('pos.inventory.show');
-        Route::put('inventory/products/{inventory}', [\App\Http\Controllers\InventoryController::class, 'update'])->name('pos.inventory.update');
-        Route::delete('inventory/products/{inventory}', [\App\Http\Controllers\InventoryController::class, 'destroy'])->name('pos.inventory.destroy');
+        Route::get('inventory/products/{id}', [\App\Http\Controllers\InventoryController::class, 'show'])->name('pos.inventory.show');
+        Route::put('inventory/products/{id}', [\App\Http\Controllers\InventoryController::class, 'update'])->name('pos.inventory.update');
+        Route::delete('inventory/products/{id}', [\App\Http\Controllers\InventoryController::class, 'destroy'])->name('pos.inventory.destroy');
         Route::post('inventory/products', [\App\Http\Controllers\InventoryController::class, 'store'])->name('pos.inventory.store');
         Route::get('inventory/products/{id}/single', [\App\Http\Controllers\InventoryController::class, 'singleProduct'])->name('pos.product.single');
 

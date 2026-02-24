@@ -24,7 +24,7 @@ class InventoryController extends Controller
     {
         $request = $request ?? request();
         $restaurantId = session('active_restaurant_id') ?? tenant('id');
-        $requestedId = $request->query('restaurant_id');
+        $requestedId = $request->query('restaurant_id') ?? $request->input('restaurant_id');
 
         if ($requestedId !== null && $requestedId !== '') {
             $user = Auth::guard('tenant')->user() ?? Auth::user();
@@ -57,7 +57,7 @@ class InventoryController extends Controller
         }
 
         $productLists = $query->paginate(15);
-        $categoriesList = Category::when($restaurantId, fn($q) => $q->where('location_id', $restaurantId))
+        $categoriesList = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->select('id', 'name')
             ->get();
 
@@ -68,7 +68,7 @@ class InventoryController extends Controller
     {
         $restaurantId = $this->restaurantId($request);
 
-        $categories = Category::when($restaurantId, fn($q) => $q->where('location_id', $restaurantId))
+        $categories = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->latest()
             ->get();
 
@@ -80,7 +80,7 @@ class InventoryController extends Controller
         $restaurantId = $this->restaurantId($request);
 
         $subCategories = PosSubCategory::where('category_id', $category_id)
-            ->when($restaurantId, fn($q) => $q->where('location_id', $restaurantId))
+            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->select('id', 'name')
             ->get();
 
@@ -175,9 +175,19 @@ class InventoryController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
+
+        $restaurantId = $this->restaurantId($request);
+
+        return Inertia::render('App/Inventory/Product', [
+            'product' => null,
+            'id' => null,
+            'allrestaurants' => $allrestaurants->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+            'activeTenantId' => $restaurantId,
+        ]);
     }
 
     /**
@@ -185,6 +195,11 @@ class InventoryController extends Controller
      */
     public function store(Request $request)
     {
+        $restaurantId = $this->restaurantId($request);
+        if (!$restaurantId) {
+            abort(400, 'Restaurant is required.');
+        }
+
         // Validate the incoming request data
         $request->validate([
             'name' => 'nullable|string|max:255',
@@ -251,7 +266,7 @@ class InventoryController extends Controller
             'base_price' => $request->input('base_price'),
             'description' => $request->input('description'),
             'images' => $imagePaths,
-            'tenant_id' => tenant()->id,
+            'tenant_id' => $restaurantId,
             'created_by' => Auth::id(),
             'max_discount' => $request->input('max_discount'),
             'max_discount_type' => $request->input('max_discount_type', 'percentage'),
@@ -327,14 +342,22 @@ class InventoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
+
+        $restaurantId = $this->restaurantId($request);
         $product = Product::with(['variants:id,product_id,name,type,active', 'variants.items', 'category', 'kitchen', 'ingredients'])
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->find($id);
 
-        return Inertia::render('App/Inventory/Product', compact('product', 'id'));
+        return Inertia::render('App/Inventory/Product', [
+            'product' => $product,
+            'id' => $id,
+            'allrestaurants' => $allrestaurants->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+            'activeTenantId' => $restaurantId,
+        ]);
     }
 
     /**
@@ -350,7 +373,10 @@ class InventoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
+        $restaurantId = $this->restaurantId($request);
+        if (!$restaurantId) {
+            abort(400, 'Restaurant is required.');
+        }
 
         $request->validate([
             'name' => 'required|string|max:255',
