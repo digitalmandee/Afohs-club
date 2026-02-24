@@ -117,7 +117,8 @@ class OrderController extends Controller
 
     public function getFloorsWithTables(Request $request)
     {
-        $today = Carbon::today()->toDateString();
+        $activeShift = $this->getActiveShift();
+        $today = $activeShift?->start_date ?? Carbon::today()->toDateString();
         $now = Carbon::now('Asia/Karachi');
         $restaurantId = session('active_restaurant_id') ?? tenant('id');
         $requestedId = $request->query('restaurant_id');
@@ -143,13 +144,15 @@ class OrderController extends Controller
                     ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
                     ->when($locationId, fn($q) => $q->where('location_id', $locationId))
                     ->with([
-                        'orders' => function ($orderQuery) use ($today, $restaurantId, $locationId) {
+                        'orders' => function ($orderQuery) use ($restaurantId, $locationId) {
                             $orderQuery
                                 ->select('id', 'table_id', 'status', 'payment_status', 'start_date')
-                                ->whereDate('start_date', $today)
                                 ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
                                 ->when($locationId, fn($q) => $q->where('location_id', $locationId))
-                                ->whereIn('status', ['pending', 'in_progress', 'completed']);
+                                ->whereIn('status', ['pending', 'in_progress', 'completed'])
+                                ->where(function ($q) {
+                                    $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
+                                });
                         },
                         'reservations' => function ($resQuery) use ($today, $restaurantId, $locationId) {
                             $resQuery
@@ -157,6 +160,7 @@ class OrderController extends Controller
                                 ->whereDate('date', $today)
                                 ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
                                 ->when($locationId, fn($q) => $q->where('location_id', $locationId))
+                                ->whereIn('status', ['pending', 'confirmed'])
                                 ->with([
                                     'order' => function ($q) {
                                         $q
@@ -173,13 +177,15 @@ class OrderController extends Controller
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->when($locationId, fn($q) => $q->where('location_id', $locationId))
             ->with([
-                'orders' => function ($orderQuery) use ($today, $restaurantId, $locationId) {
+                'orders' => function ($orderQuery) use ($restaurantId, $locationId) {
                     $orderQuery
                         ->select('id', 'table_id', 'status', 'payment_status', 'start_date')
-                        ->whereDate('start_date', $today)
                         ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
                         ->when($locationId, fn($q) => $q->where('location_id', $locationId))
-                        ->whereIn('status', ['pending', 'in_progress', 'completed']);
+                        ->whereIn('status', ['pending', 'in_progress', 'completed'])
+                        ->where(function ($q) {
+                            $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
+                        });
                 },
                 'reservations' => function ($resQuery) use ($today, $restaurantId, $locationId) {
                     $resQuery
@@ -187,6 +193,7 @@ class OrderController extends Controller
                         ->whereDate('date', $today)
                         ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
                         ->when($locationId, fn($q) => $q->where('location_id', $locationId))
+                        ->whereIn('status', ['pending', 'confirmed'])
                         ->with([
                             'order' => function ($q) {
                                 $q->select('id', 'table_id', 'status');
@@ -228,19 +235,23 @@ class OrderController extends Controller
                     $startTime = Carbon::parse($reservation->date . ' ' . $reservation->start_time, 'Asia/Karachi')->subMinutes(15);
                     $endTime = Carbon::parse($reservation->date . ' ' . $reservation->end_time, 'Asia/Karachi')->addMinutes(5);
 
-                    // Only block table if current time is within reservation window and reservation not completed
-                    if ($reservation->status !== 'completed' && $now->between($startTime, $endTime)) {
-                        if ($reservation->order) {
-                            $invoice = $reservation->order;
-                            if (!$invoice || $invoice->payment_status !== 'paid' || $reservation->status !== 'completed') {
-                                $isAvailable = false;
-                                break;
-                            }
-                        } else {
-                            // No order but reservation is active → block table
-                            $isAvailable = false;
-                            break;
-                        }
+                    if (!$now->between($startTime, $endTime)) {
+                        continue;
+                    }
+
+                    if (!$reservation->order) {
+                        $isAvailable = false;
+                        break;
+                    }
+
+                    $order = $reservation->order;
+                    $invoice = $order->invoice ?? null;
+                    $isPaid = ($order->payment_status ?? null) === 'paid' || (($invoice->status ?? null) === 'paid');
+                    $isCompleted = ($order->status ?? null) === 'completed';
+
+                    if (!$isPaid || !$isCompleted) {
+                        $isAvailable = false;
+                        break;
                     }
                 }
 
