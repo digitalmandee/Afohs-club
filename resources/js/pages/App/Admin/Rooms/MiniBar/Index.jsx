@@ -6,7 +6,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddRoomModal from '@/components/App/Rooms/MiniBar/AddModal'; // Rename this if needed
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const RoomMiniBar = ({ roomMiniBarData }) => {
     // const [open, setOpen] = useState(true);
@@ -83,11 +83,21 @@ const RoomMiniBar = ({ roomMiniBarData }) => {
                         <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Room Mini Bar</Typography>
                     </Box>
                     <Box>
-                        <Button variant="outlined" startIcon={<RestoreFromTrash />} sx={{ color: '#063455', borderColor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none', marginRight: 2 }} onClick={() => router.visit(route('room-minibar.trashed'))}>
-                            View Trash
-                        </Button>
+
                         <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }} onClick={handleAdd}>
                             Add Item
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            startIcon={<FaTrash size={14} />}
+                            color='error'
+                            style={{
+                                borderRadius: '16px',
+                                height: 35,
+                                marginLeft: '10px',
+                                textTransform: 'none',
+                            }} onClick={() => router.visit(route('room-minibar.trashed'))}>
+                            Trashed
                         </Button>
                     </Box>
                 </Box>

@@ -9,7 +9,7 @@ import Edit from '@mui/icons-material/Edit';
 import Delete from '@mui/icons-material/Delete';
 import RestoreFromTrash from '@mui/icons-material/RestoreFromTrash';
 import { enqueueSnackbar } from 'notistack';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const AllRooms = ({ rooms }) => {
     // const [open, setOpen] = React.useState(true);
@@ -41,8 +41,18 @@ const AllRooms = ({ rooms }) => {
                         </IconButton> */}
                         <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>All Rooms ({rooms.length})</Typography>
                     </Box>
-                    <Button variant="outlined" startIcon={<RestoreFromTrash />} sx={{ color: '#063455', borderColor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }} onClick={() => router.visit(route('rooms.trashed'))}>
-                        View Trash
+                    <Button
+                        variant="outlined"
+                        startIcon={<FaTrash size={14} />}
+                        color='error'
+                        onClick={() => router.visit(route('rooms.trashed'))}
+                        style={{
+                            borderRadius: '16px',
+                            height: 35,
+                            // marginLeft: '10px',
+                            textTransform: 'none',
+                        }}>
+                        Trashed
                     </Button>
                 </Box>
                 <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>Comprehensive list of every room with filters for type and availability</Typography>

@@ -164,7 +164,7 @@ const Management = () => {
                                 onClick={() => router.visit(route('employees.subdepartments.trashed'))}
                                 style={{
                                     // color: '#063455',
-                                    // backgroundColor: 'white',
+                                    // backgroundColor: 'transparent',
                                     borderRadius: '16px',
                                     height: 35,
                                     marginLeft: '10px',

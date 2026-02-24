@@ -6,7 +6,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddRoomModal from '@/components/App/Rooms/Charges/AddModal';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const RoomChargesType = ({ roomChargesData }) => {
     // const [open, setOpen] = useState(true);
@@ -83,11 +83,21 @@ const RoomChargesType = ({ roomChargesData }) => {
                         <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>Room Charges</Typography>
                     </Box>
                     <Box>
-                        <Button variant="outlined" startIcon={<RestoreFromTrash />} sx={{ color: '#063455', borderColor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none', marginRight: 2 }} onClick={() => router.visit(route('room-charges-type.trashed'))}>
-                            View Trash
-                        </Button>
+
                         <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px', textTransform: 'none' }} onClick={handleAdd}>
                             Add Charge
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            startIcon={<FaTrash size={14} />}
+                            color='error'
+                            style={{
+                                borderRadius: '16px',
+                                height: 35,
+                                marginLeft: '10px',
+                                textTransform: 'none',
+                            }} onClick={() => router.visit(route('room-charges-type.trashed'))}>
+                            Trashed
                         </Button>
                     </Box>
                 </Box>

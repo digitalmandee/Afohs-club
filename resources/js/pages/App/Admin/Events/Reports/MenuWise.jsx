@@ -40,15 +40,18 @@ const MenuWiseReport = ({ items = {}, filters = {}, venues = [] }) => {
                         <IconButton onClick={() => router.visit(route('events.reports'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 700, ml: 1 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                             Menu-wise Report
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ borderColor: '#063455', color: '#063455' }}>
+                        <Button variant="outlined"
+                            startIcon={<FileDownloadIcon />} onClick={handleExport}
+                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Export
                         </Button>
-                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderColor: '#063455', color: '#063455' }}>
+                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint}
+                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Print
                         </Button>
                     </Box>

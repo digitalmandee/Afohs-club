@@ -41,7 +41,7 @@ const Trashed = ({ rooms, filters: initialFilters }) => {
 
     return (
         <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-            <div className="mx-3">
+            <div>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <IconButton onClick={() => router.get(route('rooms.manage'))}>

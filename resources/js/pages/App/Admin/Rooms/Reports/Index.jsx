@@ -32,9 +32,9 @@ const RoomReportsIndex = ({ reports = [] }) => {
             <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                    <IconButton onClick={() => window.history.back()} sx={{ mr: 2 }}>
+                    {/* <IconButton onClick={() => window.history.back()} sx={{ mr: 2 }}>
                         <ArrowBackIcon sx={{ color: '#063455' }} />
-                    </IconButton>
+                    </IconButton> */}
                     <Typography variant="h4" sx={{ color: '#063455', fontWeight: 700 }}>
                         Room Reports
                     </Typography>
@@ -52,6 +52,7 @@ const RoomReportsIndex = ({ reports = [] }) => {
                                         transition: 'all 0.3s ease',
                                         height: '100%',
                                         borderRadius: '16px',
+                                        // bgcolor:'#063455'
                                         '&:hover': {
                                             transform: 'translateY(-4px)',
                                             boxShadow: '0 8px 24px rgba(6, 52, 85, 0.15)',
