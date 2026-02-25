@@ -33,8 +33,10 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
     const [searchId, setSearchId] = useState(filters.search_id || '');
     const [searchName, setSearchName] = useState(filters.search_name || '');
     const [searchMembership, setSearchMembership] = useState(filters.search_membership || '');
-    const [customerType, setCustomerType] = useState(filters.customer_type || 'all');
-    const [type, setType] = useState(filters.type || 'all');
+    const [customerType, setCustomerType] = useState(filters.client_type || filters.customer_type || 'all');
+    const [type, setType] = useState(filters.order_type || filters.type || 'all');
+    const [selectedRestaurantId, setSelectedRestaurantId] = useState(filters.tenant_id ? String(filters.tenant_id) : 'all');
+    const [orderStatus, setOrderStatus] = useState(filters.order_status || 'all');
     const [time, setTime] = useState(filters.time || 'all');
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
@@ -46,6 +48,32 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
 
     // Add state for category filtering
     const [activeCategory, setActiveCategory] = useState('All Menus');
+
+    const getClientLabel = (order) => {
+        if (order?.member) {
+            const typeName = order.member?.memberType?.name;
+            return typeName === 'Corporate' ? 'Corporate' : 'Member';
+        }
+        if (order?.employee) return 'Employee';
+        if (order?.customer) return order.customer?.guestType?.name || order.customer?.guest_type?.name || 'Guest';
+        return 'Guest';
+    };
+
+    const getClientDisplayName = (order) => {
+        if (order?.member) {
+            const no = order.member?.membership_no ? ` (${order.member.membership_no})` : '';
+            return `${order.member?.full_name || ''}${no}`.trim();
+        }
+        if (order?.employee) {
+            const no = order.employee?.employee_id ? ` (${order.employee.employee_id})` : '';
+            return `${order.employee?.name || ''}${no}`.trim();
+        }
+        if (order?.customer) {
+            const no = order.customer?.customer_no ? ` (${order.customer.customer_no})` : '';
+            return `${order.customer?.name || ''}${no}`.trim();
+        }
+        return 'N/A';
+    };
 
     const openFilter = () => setIsFilterOpen(true);
     const closeFilter = () => setIsFilterOpen(false);
@@ -158,8 +186,10 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                     search_name: searchName,
                     search_membership: searchMembership,
                     time: time,
-                    type: type === 'all' ? undefined : type,
-                    customer_type: customerType === 'all' ? undefined : customerType,
+                    order_type: type === 'all' ? undefined : type,
+                    client_type: customerType === 'all' ? undefined : customerType,
+                    order_status: orderStatus === 'all' ? undefined : orderStatus,
+                    tenant_id: selectedRestaurantId === 'all' ? undefined : selectedRestaurantId,
                     start_date: startDate,
                     end_date: endDate,
                 },
@@ -193,6 +223,8 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
         setSearchMembership('');
         setCustomerType('all');
         setType('all');
+        setSelectedRestaurantId('all');
+        setOrderStatus('all');
         setTime('all');
         setStartDate('');
         setEndDate('');
@@ -552,6 +584,64 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                 </Button>
                             </Grid>
                         </Grid>
+
+                        <Grid container spacing={2} alignItems="center" sx={{ mt: 0.5 }}>
+                            <Grid item xs={12} md={3}>
+                                <FormControl
+                                    size="small"
+                                    sx={{
+                                        width: '100%',
+                                        '& .MuiOutlinedInput-root': { borderRadius: '16px' },
+                                    }}
+                                >
+                                    <Select value={selectedRestaurantId} onChange={(e) => setSelectedRestaurantId(e.target.value)} displayEmpty>
+                                        <MenuItem value="all">All Restaurants</MenuItem>
+                                        {(allrestaurants || []).map((r) => (
+                                            <MenuItem key={r.id} value={String(r.id)}>
+                                                {r.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid item xs={12} md={3}>
+                                <FormControl
+                                    size="small"
+                                    sx={{
+                                        width: '100%',
+                                        '& .MuiOutlinedInput-root': { borderRadius: '16px' },
+                                    }}
+                                >
+                                    <Select value={type} onChange={(e) => setType(e.target.value)} displayEmpty>
+                                        <MenuItem value="all">All Order Types</MenuItem>
+                                        <MenuItem value="dineIn">Dine In</MenuItem>
+                                        <MenuItem value="takeaway">Takeaway</MenuItem>
+                                        <MenuItem value="pickUp">Pick Up</MenuItem>
+                                        <MenuItem value="delivery">Delivery</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid item xs={12} md={3}>
+                                <FormControl
+                                    size="small"
+                                    sx={{
+                                        width: '100%',
+                                        '& .MuiOutlinedInput-root': { borderRadius: '16px' },
+                                    }}
+                                >
+                                    <Select value={orderStatus} onChange={(e) => setOrderStatus(e.target.value)} displayEmpty>
+                                        <MenuItem value="all">All Status</MenuItem>
+                                        <MenuItem value="in_progress">In Progress</MenuItem>
+                                        <MenuItem value="waiting_for_payment">Waiting For Payment</MenuItem>
+                                        <MenuItem value="completed">Completed</MenuItem>
+                                        <MenuItem value="cancelled">Cancelled</MenuItem>
+                                        <MenuItem value="refund">Refund</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                        </Grid>
                     </Box>
 
                     {/* Orders Grid */}
@@ -603,7 +693,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                             >
                                                 <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px' }}>#{card.id}</Typography>
                                                 <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px' }}>
-                                                    {card.member ? `${card.member?.full_name} (${card.member?.membership_no})` : `${card.customer ? card.customer.name : card.employee?.name}`}
+                                                    {getClientDisplayName(card)}
                                                     <Typography component="span" variant="body2" textTransform="capitalize" sx={{ ml: 0.3, opacity: 0.8 }}>
                                                         ({card.order_type})
                                                     </Typography>
@@ -628,7 +718,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                     </Typography>
                                                 </Box>
                                                 <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                                                    <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member ? 'Member' : card.customer ? 'Guest' : card.employee ? 'Employee' : 'Guest'}</Typography>
+                                                    <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{getClientLabel(card)}</Typography>
                                                     <Box display="flex">
                                                         <Avatar sx={{ bgcolor: '#1976D2', width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>{card.table?.table_no}</Avatar>
                                                         <Avatar sx={{ bgcolor: '#E3E3E3', width: 36, height: 36, color: '#666' }}>

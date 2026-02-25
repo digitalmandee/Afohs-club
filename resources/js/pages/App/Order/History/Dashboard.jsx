@@ -267,6 +267,9 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
         const printWindow = window.open('', '_blank');
         const customerName = order.member?.full_name || order.customer?.name || order.employee?.name || 'N/A';
         const memberNo = order.member?.membership_no || '';
+        const guestNo = order.customer?.customer_no || '';
+        const employeeNo = order.employee?.employee_id || '';
+        const guestTypeName = order.customer?.guestType?.name || '';
         const bankCharges = parseFloat(order.invoice_bank_charges_amount || 0);
 
         const itemsHtml =
@@ -313,6 +316,9 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             <div class="divider"></div>
             <div class="row"><div>Customer Name</div><div>${customerName}</div></div>
             ${memberNo ? `<div class="row"><div>Member Id</div><div>${memberNo}</div></div>` : ''}
+            ${!memberNo && employeeNo ? `<div class="row"><div>Employee ID</div><div>${employeeNo}</div></div>` : ''}
+            ${!memberNo && !employeeNo && guestNo ? `<div class="row"><div>Guest No</div><div>${guestNo}</div></div>` : ''}
+            ${!memberNo && !employeeNo && guestTypeName ? `<div class="row"><div>Guest Type</div><div>${guestTypeName}</div></div>` : ''}
             <div class="row"><div>Order Type</div><div>${formatOrderType(order.order_type)}</div></div>
             ${order.table ? `<div class="row"><div>Table Number</div><div>${order.table.table_no}</div></div>` : ''}
             ${order.tenant ? `<div class="row"><div>Restaurant</div><div>${order.tenant.name}</div></div>` : ''}

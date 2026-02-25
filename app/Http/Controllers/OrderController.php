@@ -286,11 +286,12 @@ class OrderController extends Controller
 
     public function orderManagement(Request $request)
     {
-        $filters = $request->only('search_id', 'search_name', 'search_membership', 'time', 'type', 'start_date', 'end_date');
+        $filters = $request->only('search_id', 'search_name', 'search_membership', 'time', 'client_type', 'customer_type', 'order_type', 'type', 'order_status', 'tenant_id', 'start_date', 'end_date');
         $allrestaurants = Auth::user()->getAccessibleTenants();
 
         // Check if request expects JSON (Axios call)
         if ($request->wantsJson()) {
+            $tenants = $allrestaurants ?? collect();
             $query = Order::where('created_by', Auth::id())
                 ->with([
                     'table:id,table_no',
@@ -313,6 +314,10 @@ class OrderController extends Controller
             });
 
             $query->where('status', '!=', 'saved');
+
+            if ($request->filled('tenant_id') && $tenants->contains(fn($t) => (string) $t->id === (string) $request->tenant_id)) {
+                $query->where('tenant_id', $request->tenant_id);
+            }
 
             // 🔍 Search By ID
             if ($request->filled('search_id')) {
@@ -362,23 +367,43 @@ class OrderController extends Controller
                 $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
             }
 
-            // 🍽 Order type (Smart Filter)
-            if ($request->type && $request->type !== 'all') {
-                if ($request->type === 'member') {
+            $clientType = $request->input('client_type') ?? $request->input('customer_type');
+            if (!$clientType && in_array($request->type, ['member', 'corporate', 'employee', 'guest'], true)) {
+                $clientType = $request->type;
+            }
+
+            if ($clientType && $clientType !== 'all') {
+                if ($clientType === 'member') {
                     $query->whereNotNull('member_id');
-                } elseif ($request->type === 'employee') {
+                } elseif ($clientType === 'employee') {
                     $query->whereNotNull('employee_id');
-                } elseif ($request->type === 'guest') {
+                } elseif ($clientType === 'guest') {
                     $query
                         ->whereNotNull('customer_id')
                         ->whereNull('member_id')
                         ->whereNull('employee_id');
-                } elseif ($request->type === 'corporate') {
+                } elseif ($clientType === 'corporate') {
                     $query->whereHas('member.memberType', function ($q) {
                         $q->where('name', 'Corporate');
                     });
+                }
+            }
+
+            $orderType = $request->input('order_type');
+            if (!$orderType && $request->type && !in_array($request->type, ['all', 'member', 'corporate', 'employee', 'guest'], true)) {
+                $orderType = $request->type;
+            }
+            if ($orderType && $orderType !== 'all') {
+                $query->where('order_type', $orderType);
+            }
+
+            if ($request->filled('order_status') && $request->order_status !== 'all') {
+                if ($request->order_status === 'waiting_for_payment') {
+                    $query->where('payment_status', 'awaiting');
+                } elseif ($request->order_status === 'in_progress') {
+                    $query->whereIn('status', ['pending', 'in_progress']);
                 } else {
-                    $query->where('order_type', $request->type);
+                    $query->where('status', $request->order_status);
                 }
             }
 

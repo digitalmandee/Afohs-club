@@ -99,6 +99,9 @@ class ReservationController extends Controller
         $restaurantId = $this->restaurantId($request);
         $locationId = $this->posLocationId($request) ?: (int) $restaurantId;
 
+        $tableId = $request->input('table_id') ?? $request->input('table') ?? $request->input('table.id');
+        $request->merge(['table_id' => $tableId]);
+
         $validated = $request->validate([
             // 'member.id' => 'required|exists:members,user_id',
             'person_count' => 'required|integer|min:1',
@@ -111,11 +114,9 @@ class ReservationController extends Controller
             'nature_of_function' => 'nullable|string|max:255',
             'theme_of_function' => 'nullable|string|max:255',
             'special_request' => 'nullable|string|max:1000',
-            'table' => [
+            'table_id' => [
                 'required',
-                Rule::exists('tables', 'id')
-                    ->where('tenant_id', $restaurantId)
-                    ->where('location_id', $locationId),
+                Rule::exists('tables', 'id'),
             ],
         ], [
             'member.id.required' => 'Please select a member.',
@@ -137,7 +138,7 @@ class ReservationController extends Controller
             'nature_of_function' => $validated['nature_of_function'] ?? null,
             'theme_of_function' => $validated['theme_of_function'] ?? null,
             'special_request' => $validated['special_request'] ?? null,
-            'table_id' => $validated['table'] ?? null,
+            'table_id' => $validated['table_id'] ?? null,
             'status' => 'pending',
             'tenant_id' => $restaurantId,
             'location_id' => $locationId,
