@@ -75,7 +75,6 @@ class OrderController extends Controller
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
         $activeTenantId = $this->selectedRestaurantId($request);
-        $locationId = (int) ($request->session()->get('active_pos_location_id') ?? $activeTenantId);
 
         $floorData = null;
         $tableData = null;
@@ -88,8 +87,7 @@ class OrderController extends Controller
             $floorQuery = Floor::select('id', 'name')
                 ->where('status', 1)
                 ->where('id', $floorId)
-                ->when($activeTenantId, fn($q) => $q->where('tenant_id', $activeTenantId))
-                ->when($locationId, fn($q) => $q->where('location_id', $locationId));
+                ->when($activeTenantId, fn($q) => $q->where('tenant_id', $activeTenantId));
 
             if ($tableId) {
                 // Directly fetch the single table instead of returning an array
@@ -97,7 +95,6 @@ class OrderController extends Controller
                     ->where('floor_id', $floorId)
                     ->where('id', $tableId)
                     ->when($activeTenantId, fn($q) => $q->where('tenant_id', $activeTenantId))
-                    ->when($locationId, fn($q) => $q->where('location_id', $locationId))
                     ->first();
             }
 
@@ -137,18 +134,15 @@ class OrderController extends Controller
         $floorTables = Floor::select('id', 'name')
             ->where('status', 1)
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-            ->when($locationId, fn($q) => $q->where('location_id', $locationId))
             ->with(['tables' => function ($query) use ($today, $restaurantId, $locationId) {
                 $query
                     ->select('id', 'floor_id', 'table_no', 'capacity')
                     ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-                    ->when($locationId, fn($q) => $q->where('location_id', $locationId))
                     ->with([
                         'orders' => function ($orderQuery) use ($restaurantId, $locationId) {
                             $orderQuery
                                 ->select('id', 'table_id', 'status', 'payment_status', 'start_date')
                                 ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-                                ->when($locationId, fn($q) => $q->where('location_id', $locationId))
                                 ->whereIn('status', ['pending', 'in_progress', 'completed'])
                                 ->where(function ($q) {
                                     $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
@@ -159,7 +153,6 @@ class OrderController extends Controller
                                 ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'status')
                                 ->whereDate('date', $today)
                                 ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-                                ->when($locationId, fn($q) => $q->where('location_id', $locationId))
                                 ->whereIn('status', ['pending', 'confirmed'])
                                 ->with([
                                     'order' => function ($q) {
@@ -175,13 +168,11 @@ class OrderController extends Controller
         $tablesWithoutFloor = Table::select('id', 'floor_id', 'table_no', 'capacity')
             ->whereNull('floor_id')
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-            ->when($locationId, fn($q) => $q->where('location_id', $locationId))
             ->with([
                 'orders' => function ($orderQuery) use ($restaurantId, $locationId) {
                     $orderQuery
                         ->select('id', 'table_id', 'status', 'payment_status', 'start_date')
                         ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-                        ->when($locationId, fn($q) => $q->where('location_id', $locationId))
                         ->whereIn('status', ['pending', 'in_progress', 'completed'])
                         ->where(function ($q) {
                             $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
@@ -192,7 +183,6 @@ class OrderController extends Controller
                         ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'status')
                         ->whereDate('date', $today)
                         ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-                        ->when($locationId, fn($q) => $q->where('location_id', $locationId))
                         ->whereIn('status', ['pending', 'confirmed'])
                         ->with([
                             'order' => function ($q) {
@@ -210,7 +200,6 @@ class OrderController extends Controller
                 'tables' => $tablesWithoutFloor,
             ]);
         }
-        Log::info($floorTables);
         // 🔗 Attach invoices manually
         $floorTables->each(function ($floor) {
             $floor->tables->each(function ($table) {
@@ -620,7 +609,7 @@ class OrderController extends Controller
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
         $activeTenantId = $restaurantId;
-        $latestCategory = Category::where('location_id', $restaurantId)->latest()->first();
+        $latestCategory = Category::where('tenant_id', $restaurantId)->latest()->first();
         $firstCategoryId = $latestCategory->id ?? null;
 
         $orderContext = null;

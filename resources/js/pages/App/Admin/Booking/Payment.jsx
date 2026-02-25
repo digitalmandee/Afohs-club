@@ -34,8 +34,8 @@ const BookingPayment = ({ invoice, roomOrders }) => {
 
     // Update input amount when remaining changes (auto-fill)
     useEffect(() => {
-        // Only auto-fill if user hasn't typed? Or just reset to remaining
-        setInvoiceForm((prev) => ({ ...prev, inputAmount: remainingAmount.toString() }));
+        const nextAmount = Math.round(Number(remainingAmount || 0));
+        setInvoiceForm((prev) => ({ ...prev, inputAmount: nextAmount.toString(), customerCharges: '0' }));
     }, [remainingAmount]);
 
     const [invoiceForm, setInvoiceForm] = useState({
@@ -133,7 +133,10 @@ const BookingPayment = ({ invoice, roomOrders }) => {
     };
 
     const handleQuickAmount = (value) => {
-        setInvoiceForm((prev) => ({ ...prev, inputAmount: value }));
+        const nextAmount = Math.round(Number(value || 0));
+        const min = Math.round(Number(minAmount || 0));
+        const charges = Math.max(0, nextAmount - min);
+        setInvoiceForm((prev) => ({ ...prev, inputAmount: nextAmount.toString(), customerCharges: charges.toString() }));
     };
 
     const handlePayNow = async (e) => {

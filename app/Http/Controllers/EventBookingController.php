@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
 use App\Models\Booking;
@@ -927,12 +928,22 @@ class EventBookingController extends Controller
      */
     public function calendarData(Request $request)
     {
-        $month = $request->get('month', date('m'));
-        $year = $request->get('year', date('Y'));
+        $from = $request->get('from');
+        $to = $request->get('to');
 
-        // Get start and end dates for the month
-        $startDate = "{$year}-{$month}-01";
-        $endDate = date('Y-m-t', strtotime($startDate));
+        if (!empty($from) && !empty($to)) {
+            $startDate = Carbon::parse($from)->startOfDay();
+            $endDate = Carbon::parse($to)->endOfDay();
+        } else {
+            $month = $request->get('month', date('m'));
+            $year = $request->get('year', date('Y'));
+
+            $startDate = Carbon::createFromDate((int) $year, (int) $month, 1)->startOfDay();
+            if ($startDate->isSameMonth(Carbon::now())) {
+                $startDate = Carbon::now()->startOfDay();
+            }
+            $endDate = (clone $startDate)->addDays(30)->endOfDay();
+        }
 
         // Get all event venues
         $venues = EventVenue::select('id', 'name')
@@ -946,7 +957,8 @@ class EventBookingController extends Controller
             'corporateMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ])
-            ->whereBetween('event_date', [$startDate, $endDate])
+            ->whereBetween('event_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereNotIn('status', ['cancelled', 'refunded'])
             ->orderBy('event_date')
             ->orderBy('event_time_from')
             ->get()
@@ -1082,11 +1094,21 @@ class EventBookingController extends Controller
             });
         }
 
-        $aggregates = (clone $query)->selectRaw('
-            COALESCE(SUM(total_price), 0) as total_amount,
-            COALESCE(SUM(paid_amount), 0) as total_paid,
-            COALESCE(SUM(total_price - paid_amount), 0) as total_balance
-        ')->first();
+        $aggregates = (clone $query)
+            ->leftJoin('financial_invoices as fi', function ($join) {
+                $join
+                    ->on('fi.invoiceable_id', '=', 'event_bookings.id')
+                    ->where('fi.invoiceable_type', \App\Models\EventBooking::class)
+                    ->where('fi.invoice_type', 'event_booking')
+                    ->whereNull('fi.deleted_at');
+            })
+            ->selectRaw('
+                COALESCE(SUM(event_bookings.total_price), 0) as total_amount,
+                COALESCE(SUM(event_bookings.advance_amount), 0) as total_advance,
+                COALESCE(SUM(COALESCE(fi.paid_amount, 0) + COALESCE(fi.advance_payment, 0)), 0) as total_paid,
+                COALESCE(SUM(event_bookings.total_price - (COALESCE(fi.paid_amount, 0) + COALESCE(fi.advance_payment, 0))), 0) as total_balance
+            ')
+            ->first();
 
         $bookings = $query->orderBy('created_at', 'desc')->paginate(50)->withQueryString();
 
@@ -1117,11 +1139,21 @@ class EventBookingController extends Controller
             });
         }
 
-        $aggregates = (clone $query)->selectRaw('
-            COALESCE(SUM(total_price), 0) as total_amount,
-            COALESCE(SUM(paid_amount), 0) as total_paid,
-            COALESCE(SUM(total_price - paid_amount), 0) as total_balance
-        ')->first();
+        $aggregates = (clone $query)
+            ->leftJoin('financial_invoices as fi', function ($join) {
+                $join
+                    ->on('fi.invoiceable_id', '=', 'event_bookings.id')
+                    ->where('fi.invoiceable_type', \App\Models\EventBooking::class)
+                    ->where('fi.invoice_type', 'event_booking')
+                    ->whereNull('fi.deleted_at');
+            })
+            ->selectRaw('
+                COALESCE(SUM(event_bookings.total_price), 0) as total_amount,
+                COALESCE(SUM(event_bookings.advance_amount), 0) as total_advance,
+                COALESCE(SUM(COALESCE(fi.paid_amount, 0) + COALESCE(fi.advance_payment, 0)), 0) as total_paid,
+                COALESCE(SUM(event_bookings.total_price - (COALESCE(fi.paid_amount, 0) + COALESCE(fi.advance_payment, 0))), 0) as total_balance
+            ')
+            ->first();
 
         $bookings = $query->orderBy('created_at', 'desc')->paginate(50)->withQueryString();
 
@@ -1152,11 +1184,21 @@ class EventBookingController extends Controller
             });
         }
 
-        $aggregates = (clone $query)->selectRaw('
-            COALESCE(SUM(total_price), 0) as total_amount,
-            COALESCE(SUM(paid_amount), 0) as total_paid,
-            COALESCE(SUM(total_price - paid_amount), 0) as total_balance
-        ')->first();
+        $aggregates = (clone $query)
+            ->leftJoin('financial_invoices as fi', function ($join) {
+                $join
+                    ->on('fi.invoiceable_id', '=', 'event_bookings.id')
+                    ->where('fi.invoiceable_type', \App\Models\EventBooking::class)
+                    ->where('fi.invoice_type', 'event_booking')
+                    ->whereNull('fi.deleted_at');
+            })
+            ->selectRaw('
+                COALESCE(SUM(event_bookings.total_price), 0) as total_amount,
+                COALESCE(SUM(event_bookings.advance_amount), 0) as total_advance,
+                COALESCE(SUM(COALESCE(fi.paid_amount, 0) + COALESCE(fi.advance_payment, 0)), 0) as total_paid,
+                COALESCE(SUM(event_bookings.total_price - (COALESCE(fi.paid_amount, 0) + COALESCE(fi.advance_payment, 0))), 0) as total_balance
+            ')
+            ->first();
 
         $bookings = $query->orderBy('created_at', 'desc')->paginate(50)->withQueryString();
 
@@ -1176,7 +1218,16 @@ class EventBookingController extends Controller
         $customerType = $filters['customer_type'] ?? 'all';
         // Note: The original 'manage' search logic conflated search term with type check somewhat.
         // Here we explictly filter by type if selected.
-        if ($customerType === 'member') {
+        if (is_string($customerType) && str_starts_with($customerType, 'guest-')) {
+            $guestTypeId = (int) substr($customerType, strlen('guest-'));
+            $query
+                ->whereNotNull('customer_id')
+                ->whereNull('member_id')
+                ->whereNull('corporate_member_id')
+                ->whereHas('customer', function ($q) use ($guestTypeId) {
+                    $q->where('guest_type_id', $guestTypeId);
+                });
+        } elseif ($customerType === 'member') {
             $query->whereNotNull('member_id');
         } elseif ($customerType === 'corporate') {
             $query->whereNotNull('corporate_member_id');

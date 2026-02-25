@@ -26,6 +26,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
     const [searchId, setSearchId] = useState(filters.search_id || '');
     const [membershipNo, setMembershipNo] = useState(filters.membership_no || '');
     const [customerType, setCustomerType] = useState(filters.customer_type || 'all');
+    const [guestTypes, setGuestTypes] = useState([]);
 
     const [bookingDateFrom, setBookingDateFrom] = useState(filters.booking_date_from ? dayjs(filters.booking_date_from) : null);
     const [bookingDateTo, setBookingDateTo] = useState(filters.booking_date_to ? dayjs(filters.booking_date_to) : null);
@@ -104,6 +105,18 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
             setSuggestions([]);
         }
     }, [searchTerm, customerType]); // Re-fetch if type changes while searching
+
+    useEffect(() => {
+        if (!routeName.includes('events')) {
+            setGuestTypes([]);
+            return;
+        }
+
+        axios
+            .get(route('api.guest-types.active'))
+            .then((res) => setGuestTypes(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setGuestTypes([]));
+    }, [routeName]);
 
     const handleApply = () => {
         const filterParams = {};
@@ -218,6 +231,12 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                 <MenuItem value="member">Member</MenuItem>
                                 <MenuItem value="corporate">Corporate</MenuItem>
                                 <MenuItem value="guest">Guest</MenuItem>
+                                {routeName.includes('events') &&
+                                    guestTypes.map((type) => (
+                                        <MenuItem key={type.id} value={`guest-${type.id}`}>
+                                            {type.name}
+                                        </MenuItem>
+                                    ))}
                             </Select>
                         </FormControl>
                     </Grid>
