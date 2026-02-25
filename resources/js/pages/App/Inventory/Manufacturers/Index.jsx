@@ -177,6 +177,7 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
                         <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Products</TableCell>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
@@ -189,6 +190,7 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
                                 manufacturers.data.map((manufacturer) => (
                                     <TableRow key={manufacturer.id} hover>
                                         <TableCell>{manufacturer.name}</TableCell>
+                                        <TableCell>{manufacturer.products_count ?? 0}</TableCell>
                                         <TableCell>
                                             <Chip label={manufacturer.status} size="small" color={manufacturer.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
                                         </TableCell>
@@ -205,7 +207,7 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} align="center">
+                                    <TableCell colSpan={5} align="center">
                                         No manufacturers found.
                                     </TableCell>
                                 </TableRow>

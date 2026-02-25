@@ -185,6 +185,7 @@ const UnitsIndex = ({ units, filters }) => {
                                 <TableRow>
                                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Code</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Products</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
@@ -198,6 +199,7 @@ const UnitsIndex = ({ units, filters }) => {
                                         <TableRow key={unit.id} hover>
                                             <TableCell>{unit.name}</TableCell>
                                             <TableCell>{unit.code}</TableCell>
+                                            <TableCell>{unit.products_count ?? 0}</TableCell>
                                             <TableCell>
                                                 <Chip label={unit.status} size="small" color={unit.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
                                             </TableCell>
@@ -214,7 +216,7 @@ const UnitsIndex = ({ units, filters }) => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={4} align="center">
+                                        <TableCell colSpan={6} align="center">
                                             No units found.
                                         </TableCell>
                                     </TableRow>
