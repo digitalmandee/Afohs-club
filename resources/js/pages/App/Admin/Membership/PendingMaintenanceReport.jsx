@@ -782,7 +782,7 @@ const PendingMaintenanceReport = () => {
                                     minWidth: '120px',
                                     textTransform: 'none',
                                     '&:hover': {
-                                        backgroundColor: '#047857',
+                                        backgroundColor: '#063455',
                                     },
                                 }}
                             >

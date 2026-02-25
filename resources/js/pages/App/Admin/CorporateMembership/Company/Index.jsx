@@ -102,19 +102,22 @@ const CorporateCompanies = ({ companies }) => {
             <Grid container spacing={3} style={{ marginTop: 5 }}>
                 {companyList.map((company) => (
                     <Grid item xs={12} sm={6} md={4} key={company.id}>
-                        <Card>
+                        <Card sx={{
+                            borderRadius: '16px'
+                        }}>
                             <Box
                                 sx={{
                                     display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     p: 2,
+                                    bgcolor: '#063455',
                                     borderBottom: '1px solid #eee',
                                 }}
                             >
-                                <Typography fontWeight={600}>{company.name}</Typography>
+                                <Typography fontWeight={600} color='#fff'>{company.name} </Typography>
                                 <IconButton onClick={(e) => handleMenuOpen(e, company)}>
-                                    <MoreVertIcon />
+                                    <MoreVertIcon sx={{color:'#fff'}} />
                                 </IconButton>
                             </Box>
                             {/* <CardContent>
