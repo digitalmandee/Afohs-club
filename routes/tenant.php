@@ -72,6 +72,7 @@ Route::group([
         Route::get('/order/search-products', [OrderController::class, 'searchProducts'])->name('order.search.products');
         Route::get('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
         Route::post('/order/{id}/update', [OrderController::class, 'update'])->name('orders.update');
+        Route::post('/order/{id}/move-table', [OrderController::class, 'moveTable'])->name('orders.move-table');
 
         // Delivery Rider
         Route::get('/riders/all', [UserController::class, 'riders'])->name('riders.all');

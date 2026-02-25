@@ -1,7 +1,7 @@
 // import SideNav from '@/components/App/SideBar/SideNav';
 import { AccessTime, FilterAlt as FilterIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Pagination, Paper, Select, Typography, Autocomplete, TextField, Chip, Dialog, DialogContent, DialogTitle } from '@mui/material';
+import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Pagination, Paper, Select, Typography, Autocomplete, TextField, Chip, Dialog, DialogContent, DialogTitle, DialogActions, CircularProgress } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import CancelOrder from './Cancel';
 import EditOrderModal from './EditModal';
@@ -80,6 +80,14 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
     const [orderItems, setOrderItems] = useState([]);
     const [showCancelModal, setShowCancelModal] = useState(false);
 
+    const [moveModalOpen, setMoveModalOpen] = useState(false);
+    const [moveOrder, setMoveOrder] = useState(null);
+    const [moveRestaurantId, setMoveRestaurantId] = useState('all');
+    const [moveTableOption, setMoveTableOption] = useState(null);
+    const [moveTableOptions, setMoveTableOptions] = useState([]);
+    const [loadingMoveTables, setLoadingMoveTables] = useState(false);
+    const [movingTable, setMovingTable] = useState(false);
+
     const handleOpenCancelModal = () => setShowCancelModal(true);
     const handleCloseCancelModal = () => {
         setSelectedCard(null);
@@ -105,6 +113,94 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                 enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
             },
         });
+    };
+
+    const isMoveAllowed = (order) => {
+        if (!order) return false;
+        if (order.status === 'cancelled' || order.status === 'refund' || order.status === 'completed') return false;
+        if (order.payment_status === 'awaiting') return false;
+        if (order.invoice) return false;
+        if (!order.table?.id && !order.table_id) return false;
+        return true;
+    };
+
+    const fetchMoveTables = async (restaurantId) => {
+        if (!restaurantId || restaurantId === 'all') {
+            setMoveTableOptions([]);
+            return;
+        }
+        setLoadingMoveTables(true);
+        try {
+            const res = await axios.get(route(routeNameForContext('api.floors-with-tables')), {
+                params: { restaurant_id: restaurantId },
+            });
+            const floors = Array.isArray(res.data) ? res.data : [];
+            const options = floors.flatMap((floor) => {
+                const floorName = floor?.name || 'No Floor';
+                const tables = Array.isArray(floor?.tables) ? floor.tables : [];
+                return tables
+                    .filter((t) => t?.is_available)
+                    .map((t) => ({
+                        id: t.id,
+                        label: `${floorName} - Table ${t.table_no}`,
+                    }));
+            });
+            setMoveTableOptions(options);
+        } catch (e) {
+            console.error(e);
+            enqueueSnackbar('Failed to load tables', { variant: 'error' });
+            setMoveTableOptions([]);
+        } finally {
+            setLoadingMoveTables(false);
+        }
+    };
+
+    const openMoveModal = (order) => {
+        setMoveOrder(order);
+        const defaultRestaurantId = String(order?.tenant?.id || order?.tenant_id || '');
+        setMoveRestaurantId(defaultRestaurantId || 'all');
+        setMoveTableOption(null);
+        setMoveModalOpen(true);
+        if (defaultRestaurantId) {
+            fetchMoveTables(defaultRestaurantId);
+        } else {
+            setMoveTableOptions([]);
+        }
+    };
+
+    const closeMoveModal = () => {
+        setMoveModalOpen(false);
+        setMoveOrder(null);
+        setMoveRestaurantId('all');
+        setMoveTableOption(null);
+        setMoveTableOptions([]);
+    };
+
+    const submitMoveTable = async () => {
+        if (!moveOrder) return;
+        if (!moveRestaurantId || moveRestaurantId === 'all') {
+            enqueueSnackbar('Please select a restaurant', { variant: 'error' });
+            return;
+        }
+        if (!moveTableOption?.id) {
+            enqueueSnackbar('Please select a table', { variant: 'error' });
+            return;
+        }
+        setMovingTable(true);
+        try {
+            await axios.post(route(routeNameForContext('orders.move-table'), { id: moveOrder.id }), {
+                restaurant_id: moveRestaurantId,
+                table_id: moveTableOption.id,
+            });
+            enqueueSnackbar('Order moved successfully', { variant: 'success' });
+            closeMoveModal();
+            fetchOrders(orders.current_page || 1);
+        } catch (e) {
+            const msg = e?.response?.data?.message || 'Failed to move order';
+            enqueueSnackbar(msg, { variant: 'error' });
+        } finally {
+            setMovingTable(false);
+        }
     };
 
     const onSave = (status) => {
@@ -862,6 +958,11 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                         {card.rider ? `Rider: ${card.rider.name}` : 'Assign Rider'}
                                                     </Button>
                                                 )}
+                                                {isMoveAllowed(card) && (
+                                                    <Button variant="outlined" fullWidth sx={{ textTransform: 'none', mt: 1, borderColor: '#003153', color: '#003153' }} onClick={() => openMoveModal(card)}>
+                                                        Move
+                                                    </Button>
+                                                )}
                                             </Box>
                                         </Paper>
                                     </Grid>
@@ -930,6 +1031,73 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                     </Button>
                                 </Box>
                             </Box>
+                        </Dialog>
+                    )}
+
+                    {moveModalOpen && (
+                        <Dialog open={moveModalOpen} onClose={closeMoveModal} maxWidth="sm" fullWidth>
+                            <DialogTitle>Move Order #{moveOrder?.id}</DialogTitle>
+                            <DialogContent sx={{ py: 2 }}>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12}>
+                                        <FormControl fullWidth size="small">
+                                            <InputLabel>Restaurant</InputLabel>
+                                            <Select
+                                                value={moveRestaurantId}
+                                                label="Restaurant"
+                                                onChange={(e) => {
+                                                    const next = e.target.value;
+                                                    setMoveRestaurantId(next);
+                                                    setMoveTableOption(null);
+                                                    fetchMoveTables(next);
+                                                }}
+                                            >
+                                                <MenuItem value="all">Select restaurant</MenuItem>
+                                                {(allrestaurants || []).map((r) => (
+                                                    <MenuItem key={r.id} value={String(r.id)}>
+                                                        {r.name}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Autocomplete
+                                            options={moveTableOptions}
+                                            value={moveTableOption}
+                                            onChange={(e, v) => setMoveTableOption(v)}
+                                            getOptionLabel={(o) => o?.label || ''}
+                                            isOptionEqualToValue={(o, v) => String(o?.id) === String(v?.id)}
+                                            loading={loadingMoveTables}
+                                            disabled={!moveRestaurantId || moveRestaurantId === 'all'}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    label="Table"
+                                                    size="small"
+                                                    InputProps={{
+                                                        ...params.InputProps,
+                                                        endAdornment: (
+                                                            <>
+                                                                {loadingMoveTables ? <CircularProgress color="inherit" size={18} /> : null}
+                                                                {params.InputProps.endAdornment}
+                                                            </>
+                                                        ),
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </DialogContent>
+                            <DialogActions sx={{ px: 3, pb: 2 }}>
+                                <Button onClick={closeMoveModal} disabled={movingTable} variant="outlined">
+                                    Cancel
+                                </Button>
+                                <Button onClick={submitMoveTable} disabled={movingTable} variant="contained" sx={{ bgcolor: '#003153', '&:hover': { bgcolor: '#00254d' } }}>
+                                    {movingTable ? 'Moving...' : 'Move'}
+                                </Button>
+                            </DialogActions>
                         </Dialog>
                     )}
 

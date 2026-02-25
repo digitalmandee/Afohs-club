@@ -429,6 +429,133 @@ class OrderController extends Controller
         ]);
     }
 
+    public function moveTable(Request $request, $id)
+    {
+        if (!$this->checkActiveShift()) {
+            return response()->json([
+                'message' => 'You must have an active shift to move tables.',
+                'error_code' => 'NO_ACTIVE_SHIFT'
+            ], 403);
+        }
+
+        $request->validate([
+            'restaurant_id' => 'required',
+            'table_id' => 'required|exists:tables,id',
+        ]);
+
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $tenants = $user ? $user->getAccessibleTenants() : collect();
+
+        $restaurantId = (string) $request->restaurant_id;
+        if (!$tenants->contains(fn($t) => (string) $t->id === $restaurantId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid restaurant.',
+            ], 422);
+        }
+
+        $order = Order::where('created_by', Auth::id())->with('table:id,table_no')->findOrFail($id);
+
+        if ($order->status === 'completed' || $order->status === 'cancelled' || $order->status === 'refund' || $order->payment_status === 'awaiting') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This order cannot be moved.',
+            ], 422);
+        }
+
+        $invoiceExists = FinancialInvoice::where(function ($q) use ($order) {
+            $q
+                ->where(function ($sq) use ($order) {
+                    $sq->where('invoiceable_type', Order::class)->where('invoiceable_id', $order->id);
+                })
+                ->orWhereJsonContains('data->order_id', $order->id);
+        })->exists();
+
+        if ($invoiceExists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invoice already generated for this order.',
+            ], 422);
+        }
+
+        $tableId = (int) $request->table_id;
+        $table = Table::select('id', 'tenant_id', 'location_id', 'table_no')->whereKey($tableId)->firstOrFail();
+
+        if ((string) $table->tenant_id !== $restaurantId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected table does not belong to selected restaurant.',
+            ], 422);
+        }
+
+        $activeShift = $this->getActiveShift();
+        $shiftDate = $activeShift?->start_date ?? Carbon::today()->toDateString();
+
+        $conflictingOrder = Order::where('id', '!=', $order->id)
+            ->where('tenant_id', $restaurantId)
+            ->where('table_id', $tableId)
+            ->whereDate('start_date', $shiftDate)
+            ->whereIn('status', ['pending', 'in_progress', 'completed'])
+            ->where(function ($q) {
+                $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
+            })
+            ->latest('id')
+            ->first();
+
+        if ($conflictingOrder) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected table already has an active order (#' . $conflictingOrder->id . ').',
+            ], 409);
+        }
+
+        $conflictingReservation = Reservation::where('tenant_id', $restaurantId)
+            ->where('table_id', $tableId)
+            ->whereDate('date', $shiftDate)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->exists();
+
+        if ($conflictingReservation) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected table is reserved today.',
+            ], 409);
+        }
+
+        DB::beginTransaction();
+        try {
+            $posLocationId = (int) ($request->session()->get('active_pos_location_id') ?? $order->location_id ?? $activeShift?->location_id);
+
+            $order->update([
+                'tenant_id' => $restaurantId,
+                'location_id' => $posLocationId ?: $order->location_id,
+                'table_id' => $tableId,
+            ]);
+
+            OrderItem::where('order_id', $order->id)->update([
+                'tenant_id' => $restaurantId,
+                'location_id' => $posLocationId ?: null,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order moved successfully.',
+                'order_id' => $order->id,
+                'table_id' => $tableId,
+                'restaurant_id' => $restaurantId,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to move order.',
+            ], 500);
+        }
+    }
+
     public function generateInvoice($id)
     {
         DB::beginTransaction();
