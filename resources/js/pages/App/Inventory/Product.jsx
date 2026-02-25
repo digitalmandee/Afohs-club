@@ -142,8 +142,8 @@ const AddProduct = ({ product, id }) => {
         if (!menu.name.trim()) errors.push('Name is required');
         if (!menu.category_id) errors.push('Category is required');
         if (menu.manage_stock) {
-            if (menu.current_stock === '' || menu.current_stock === null || isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
-            if (menu.minimal_stock === '' || menu.minimal_stock === null || isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
+            if (menu.current_stock !== '' && menu.current_stock !== null && isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
+            if (menu.minimal_stock !== '' && menu.minimal_stock !== null && isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
         }
         if (!menu.available_order_types || menu.available_order_types.length === 0) errors.push('At least one order type must be selected');
         if (menu.cost_of_goods_sold === '' || menu.cost_of_goods_sold === null || isNaN(menu.cost_of_goods_sold)) errors.push('COGS must be a valid number');
@@ -158,6 +158,12 @@ const AddProduct = ({ product, id }) => {
         setFieldErrors({}); // Clear errors when going back
     };
 
+    const normalizeInt = (value) => {
+        if (value === null || value === undefined || value === '') return 0;
+        const n = Number.parseInt(String(value), 10);
+        return Number.isNaN(n) ? 0 : n;
+    };
+
     // Handle form input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -167,6 +173,25 @@ const AddProduct = ({ product, id }) => {
         }));
         // Clear error for the field when user starts typing
         setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    };
+
+    const handleManageStockToggle = (checked) => {
+        setData((prev) => ({
+            ...prev,
+            manage_stock: checked,
+            ...(checked
+                ? {}
+                : {
+                      current_stock: 0,
+                      minimal_stock: 0,
+                      notify_when_out_of_stock: false,
+                  }),
+        }));
+        setFieldErrors((prev) => ({
+            ...prev,
+            current_stock: '',
+            minimal_stock: '',
+        }));
     };
 
     const openDiscountDialog = () => {
@@ -354,6 +379,10 @@ const AddProduct = ({ product, id }) => {
         transform((data) => ({
             ...data,
             deleted_images: deletedImages, // Include deleted images for backend processing
+            manage_stock: Boolean(data.manage_stock),
+            current_stock: data.manage_stock ? normalizeInt(data.current_stock) : 0,
+            minimal_stock: data.manage_stock ? normalizeInt(data.minimal_stock) : 0,
+            notify_when_out_of_stock: data.manage_stock ? Boolean(data.notify_when_out_of_stock) : false,
             ingredients: selectedIngredients.map((ing) => ({
                 id: ing.id,
                 quantity_used: ing.quantity_used,
@@ -690,7 +719,7 @@ const AddProduct = ({ product, id }) => {
                                     </Grid>
                                     <Grid item xs={12}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                            <Switch checked={data.manage_stock} onChange={(e) => setData('manage_stock', e.target.checked)} color="primary" />
+                                            <Switch checked={Boolean(data.manage_stock)} onChange={(e) => handleManageStockToggle(e.target.checked)} color="primary" />
                                             <Box sx={{ ml: 1 }}>
                                                 <Typography variant="body1" sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>
                                                     Manage Stock
@@ -701,7 +730,7 @@ const AddProduct = ({ product, id }) => {
                                             </Box>
                                         </Box>
                                     </Grid>
-                                    {data.manage_stock == 1 && (
+                                    {Boolean(data.manage_stock) && (
                                         <>
                                             <Grid item xs={6}>
                                                 <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>

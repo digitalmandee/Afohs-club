@@ -194,6 +194,11 @@ class InventoryController extends Controller
             }
         }
 
+        $currentStock = $request->input('current_stock');
+        $minimalStock = $request->input('minimal_stock');
+        $currentStock = ($currentStock === null || $currentStock === '') ? 0 : (int) $currentStock;
+        $minimalStock = ($minimalStock === null || $minimalStock === '') ? 0 : (int) $minimalStock;
+
         // Create a new product and store it in the database
         $product = Product::create([
             'name' => $request->input('name'),
@@ -201,8 +206,8 @@ class InventoryController extends Controller
             'category_id' => $request->input('category_id'),
             'sub_category_id' => $request->input('sub_category_id'),
             'manufacturer_id' => $request->input('manufacturer_id'),
-            'current_stock' => $request->input('current_stock', 0),
-            'minimal_stock' => $request->input('minimal_stock', 0),
+            'current_stock' => $currentStock,
+            'minimal_stock' => $minimalStock,
             'is_discountable' => $request->input('is_discountable', true),
             'is_salable' => $request->input('is_salable', true),
             'is_purchasable' => $request->input('is_purchasable', true),
@@ -390,16 +395,20 @@ class InventoryController extends Controller
             }
         }
 
+        $currentStock = $request->input('current_stock');
+        $minimalStock = $request->input('minimal_stock');
+        $currentStock = ($currentStock === null || $currentStock === '') ? 0 : (int) $currentStock;
+        $minimalStock = ($minimalStock === null || $minimalStock === '') ? 0 : (int) $minimalStock;
+
         Product::where('id', $id)
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->update([
             'name' => $request->input('name'),
             'menu_code' => $request->input('menu_code'),
             'category_id' => $request->input('category_id'),
             'sub_category_id' => $request->input('sub_category_id'),
             'manufacturer_id' => $request->input('manufacturer_id'),
-            'current_stock' => $request->input('current_stock', 0),
-            'minimal_stock' => $request->input('minimal_stock', 0),
+            'current_stock' => $currentStock,
+            'minimal_stock' => $minimalStock,
             'is_discountable' => $request->has('is_discountable') ? $request->boolean('is_discountable') : (bool) $product->is_discountable,
             'is_salable' => $request->input('is_salable', true),
             'is_purchasable' => $request->input('is_purchasable', true),
