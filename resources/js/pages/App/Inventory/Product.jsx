@@ -13,12 +13,15 @@ import { routeNameForContext } from '@/lib/utils';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const AddProduct = ({ product, id }) => {
+const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
     const [open, setOpen] = useState(true);
+    const initialRestaurantId = activeTenantId ?? product?.tenant_id ?? (allrestaurants?.length === 1 ? allrestaurants[0].id : '');
+    const [selectedRestaurantId, setSelectedRestaurantId] = useState(initialRestaurantId ? String(initialRestaurantId) : '');
     const { data, setData, submit, processing, errors, reset, transform } = useForm(
         id
             ? {
                   id: product.id,
+                  restaurant_id: initialRestaurantId,
                   name: product.name || '',
                   // Auto-generate menu_code if missing for existing items effectively
                   menu_code: product.menu_code || String(product.id),
@@ -47,6 +50,7 @@ const AddProduct = ({ product, id }) => {
                   images: product.images || [],
               }
             : {
+                  restaurant_id: initialRestaurantId,
                   name: '',
                   menu_code: '',
                   category_id: '',
@@ -119,6 +123,7 @@ const AddProduct = ({ product, id }) => {
                 // Map errors to fields
                 const newFieldErrors = {};
                 validationErrors.forEach((error) => {
+                    if (error.includes('Restaurant')) newFieldErrors.restaurant_id = error;
                     if (error.includes('Name')) newFieldErrors.name = error;
                     if (error.includes('Category')) newFieldErrors.category_id = error;
                     if (error.includes('Current stock')) newFieldErrors.current_stock = error;
@@ -139,6 +144,7 @@ const AddProduct = ({ product, id }) => {
 
     const getMenuValidationErrors = (menu) => {
         const errors = [];
+        if (!menu.restaurant_id) errors.push('Restaurant is required');
         if (!menu.name.trim()) errors.push('Name is required');
         if (!menu.category_id) errors.push('Category is required');
         if (menu.manage_stock) {
@@ -391,11 +397,33 @@ const AddProduct = ({ product, id }) => {
         }
     }, [data.cost_of_goods_sold, data.base_price]);
 
-    const fetchCategories = () => {
-        axios.get(route(routeNameForContext('inventory.categories'))).then((response) => {
+    const fetchCategories = (restaurantId = selectedRestaurantId) => {
+        if (!restaurantId) {
+            setCategories([]);
+            return;
+        }
+        axios.get(route(routeNameForContext('inventory.categories')), { params: { restaurant_id: restaurantId } }).then((response) => {
             setCategories(response.data.categories);
         });
     };
+
+    useEffect(() => {
+        if (selectedRestaurantId !== data.restaurant_id) {
+            setData((prev) => ({
+                ...prev,
+                restaurant_id: selectedRestaurantId,
+                ...(id
+                    ? {}
+                    : {
+                          category_id: '',
+                          sub_category_id: '',
+                      }),
+            }));
+        }
+
+        fetchCategories(selectedRestaurantId);
+        setSubCategories([]);
+    }, [selectedRestaurantId]);
 
     const fetchManufacturers = () => {
         axios.get(route(routeNameForContext('api.manufacturers.list'))).then((response) => {
@@ -409,14 +437,16 @@ const AddProduct = ({ product, id }) => {
         });
     };
 
-    const fetchSubCategories = (categoryId) => {
-        if (!categoryId) {
+    const fetchSubCategories = (categoryId, restaurantId = selectedRestaurantId) => {
+        if (!categoryId || !restaurantId) {
             setSubCategories([]);
             return;
         }
-        axios.get(route(routeNameForContext('api.sub-categories.by-category'), categoryId)).then((response) => {
-            setSubCategories(response.data.subCategories);
-        });
+        axios
+            .get(route(routeNameForContext('api.sub-categories.by-category'), categoryId), { params: { restaurant_id: restaurantId } })
+            .then((response) => {
+                setSubCategories(response.data.subCategories);
+            });
     };
 
     useEffect(() => {
@@ -425,7 +455,7 @@ const AddProduct = ({ product, id }) => {
         } else {
             setSubCategories([]);
         }
-    }, [data.category_id]);
+    }, [data.category_id, selectedRestaurantId]);
 
     useEffect(() => {
         fetchCategories();
@@ -566,6 +596,31 @@ const AddProduct = ({ product, id }) => {
                         {addMenuStep === 1 && (
                             <Box sx={{ px: 3, pb: 3 }}>
                                 <Grid container spacing={3}>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                            Restaurant
+                                        </Typography>
+                                        <Autocomplete
+                                            fullWidth
+                                            size="small"
+                                            options={allrestaurants || []}
+                                            getOptionLabel={(option) => option.name || ''}
+                                            value={(allrestaurants || []).find((r) => String(r.id) === String(selectedRestaurantId)) || null}
+                                            onChange={(event, newValue) => {
+                                                const newId = newValue ? String(newValue.id) : '';
+                                                setSelectedRestaurantId(newId);
+                                                setFieldErrors((prev) => ({ ...prev, restaurant_id: '' }));
+                                            }}
+                                            disabled={!!id}
+                                            isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
+                                            renderInput={(params) => (
+                                                <TextField {...params} placeholder="Select restaurant" variant="outlined" error={!!fieldErrors.restaurant_id} helperText={fieldErrors.restaurant_id} />
+                                            )}
+                                            ListboxProps={{
+                                                style: { maxHeight: 200 },
+                                            }}
+                                        />
+                                    </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Product Name

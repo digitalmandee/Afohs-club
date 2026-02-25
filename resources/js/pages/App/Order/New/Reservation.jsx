@@ -318,7 +318,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
             setSlotsLoading(true);
             axios
                 .get(route(routeNameForContext('tables.available-times'), selectedTableId), {
-                    params: { date: formattedDate },
+                    params: { date: formattedDate, restaurant_id: selectedRestaurant || undefined },
                 })
                 .then((res) => {
                     console.log('Time slots response:', res.data);

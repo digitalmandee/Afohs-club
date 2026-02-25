@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class CategoryController extends Controller
@@ -15,13 +16,13 @@ class CategoryController extends Controller
     private function activeTenantId(Request $request = null)
     {
         $request = $request ?? request();
-        return $request->session()->get('active_restaurant_id') ?? $request->route('tenant');
+        return $request->session()->get('active_restaurant_id') ?? $request->route('tenant') ?? tenant('id');
     }
 
     private function selectedRestaurantId(Request $request = null)
     {
         $request = $request ?? request();
-        $requestedId = $request->query('restaurant_id');
+        $requestedId = $request->query('restaurant_id') ?? $request->input('restaurant_id');
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         $tenants = $user ? $user->getAccessibleTenants() : collect();
 
@@ -42,7 +43,7 @@ class CategoryController extends Controller
 
         $query = Category::query();
         if ($restaurantId) {
-            $query->where('location_id', $restaurantId);
+            $query->where('tenant_id', $restaurantId);
         }
 
         $categoriesList = $query
@@ -68,7 +69,7 @@ class CategoryController extends Controller
 
         $query = Category::query();
         if ($restaurantId) {
-            $query->where('location_id', $restaurantId);
+            $query->where('tenant_id', $restaurantId);
         }
 
         $categories = $query->latest()->get();
@@ -78,14 +79,20 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $tenantId = $this->activeTenantId($request);
-        $locationId = $this->selectedRestaurantId($request);
-        if (!$locationId) {
+        $restaurantId = $this->selectedRestaurantId($request);
+        if (!$restaurantId) {
             abort(403);
         }
 
+        $posLocationId = $request->session()->get('active_pos_location_id');
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:pos_categories,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('pos_categories', 'name')->where(fn($q) => $q->where('tenant_id', $restaurantId)->whereNull('deleted_at')),
+            ],
             'status' => 'required|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
@@ -95,8 +102,8 @@ class CategoryController extends Controller
             $validated['image'] = $path;
         }
 
-        $validated['tenant_id'] = $tenantId;
-        $validated['location_id'] = $locationId;
+        $validated['tenant_id'] = $restaurantId;
+        $validated['location_id'] = $posLocationId ? (int) $posLocationId : null;
         $validated['created_by'] = Auth::id();
 
         Category::create($validated);
@@ -107,12 +114,19 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $restaurantId = $this->selectedRestaurantId($request);
-        if ($restaurantId && (string) $category->location_id !== (string) $restaurantId) {
+        if ($restaurantId && (string) $category->tenant_id !== (string) $restaurantId) {
             abort(404);
         }
 
         $validated = $request->validate([
-            'name' => "required|string|max:255|unique:pos_categories,name,{$category->id}",
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('pos_categories', 'name')
+                    ->ignore($category->id)
+                    ->where(fn($q) => $q->where('tenant_id', $restaurantId)->whereNull('deleted_at')),
+            ],
             'status' => 'required|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'existingImage' => 'nullable|string',
@@ -143,7 +157,7 @@ class CategoryController extends Controller
     public function destroy(Request $request, Category $category)
     {
         $restaurantId = $this->selectedRestaurantId($request);
-        if ($restaurantId && (string) $category->location_id !== (string) $restaurantId) {
+        if ($restaurantId && (string) $category->tenant_id !== (string) $restaurantId) {
             abort(404);
         }
 
@@ -182,7 +196,7 @@ class CategoryController extends Controller
 
         $query = Category::onlyTrashed();
         if ($restaurantId) {
-            $query->where('location_id', $restaurantId);
+            $query->where('tenant_id', $restaurantId);
         }
 
         $trashedCategories = $query
@@ -207,7 +221,7 @@ class CategoryController extends Controller
 
         $query = Category::withTrashed();
         if ($restaurantId) {
-            $query->where('location_id', $restaurantId);
+            $query->where('tenant_id', $restaurantId);
         }
 
         $category = $query->findOrFail($id);
@@ -222,7 +236,7 @@ class CategoryController extends Controller
 
         $query = Category::withTrashed();
         if ($restaurantId) {
-            $query->where('location_id', $restaurantId);
+            $query->where('tenant_id', $restaurantId);
         }
 
         $category = $query->findOrFail($id);

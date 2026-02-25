@@ -6,7 +6,7 @@ import { useOrderStore } from '@/stores/useOrderStore';
 import { Box, Button, List, ListItem, ListItemSecondaryAction, ListItemText, Paper, Radio, ToggleButton, ToggleButtonGroup, Typography, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, CircularProgress, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { router } from '@inertiajs/react';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DineDialog from './Dine';
 import ReservationDialog from './Reservation';
 import TakeAwayDialog from './Takeaway';
@@ -32,19 +32,24 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId, activeP
     const [loading, setLoading] = useState(false);
     const [shiftInfo, setShiftInfo] = useState(null);
     const [selectedRestaurant, setSelectedRestaurant] = useState(() => {
-        if (Array.isArray(allrestaurants) && allrestaurants.length > 0) {
-            return allrestaurants[0].id;
-        }
+        const query = new URLSearchParams(window.location.search);
+        const restaurantIdFromUrl = query.get('restaurant_id');
 
-        return activeTenantId || '';
+        if (restaurantIdFromUrl) return restaurantIdFromUrl;
+        if (activeTenantId) return activeTenantId;
+        if (Array.isArray(allrestaurants) && allrestaurants.length > 0) return allrestaurants[0].id;
+
+        return '';
     });
     const [tablesReloadKey, setTablesReloadKey] = useState(0);
+    const prevRestaurantRef = useRef(null);
+    const prevOrderTypeRef = useRef(null);
 
     useEffect(() => {
         if (!selectedRestaurant && Array.isArray(allrestaurants) && allrestaurants.length > 0) {
-            setSelectedRestaurant(allrestaurants[0].id);
+            setSelectedRestaurant(activeTenantId || allrestaurants[0].id);
         }
-    }, [allrestaurants, selectedRestaurant]);
+    }, [activeTenantId, allrestaurants, selectedRestaurant]);
 
     // Booking Search State
     const [bookingSearchTerm, setBookingSearchTerm] = useState('');
@@ -140,20 +145,20 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId, activeP
 
     const handleRestaurantChange = (restaurantId) => {
         setSelectedRestaurant(restaurantId);
-        if (orderDetails.order_type === 'dineIn' || orderDetails.order_type === 'reservation') {
-            setTablesReloadKey((k) => k + 1);
-            loadFloorTables(restaurantId);
-        }
     };
 
-    const loadFloorTables = async (restaurantId = selectedRestaurant) => {
+    const loadFloorTables = async (restaurantId = selectedRestaurant, options = {}) => {
+        const resetSelection = options?.resetSelection === true;
+
         try {
             const response = await axios.get(route(routeNameForContext('api.floors-with-tables')), {
                 params: { restaurant_id: restaurantId },
             });
             setFloorTables(response.data);
-            handleOrderDetailChange('floor', '');
-            handleOrderDetailChange('table', '');
+            if (resetSelection) {
+                handleOrderDetailChange('floor', '');
+                handleOrderDetailChange('table', '');
+            }
         } catch (error) {
             console.error(error);
         }
@@ -171,14 +176,34 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId, activeP
         }
     };
 
-    // Call when user selects DineIn or Reservation or Room
     useEffect(() => {
-        if (orderDetails.order_type === 'dineIn' || orderDetails.order_type === 'reservation') {
-            loadFloorTables();
-        } else if (orderDetails.order_type === 'room') {
+        if (orderDetails.order_type === 'room') {
             loadRooms();
         }
     }, [orderDetails.order_type]);
+
+    useEffect(() => {
+        const isTableFlow = orderDetails.order_type === 'dineIn' || orderDetails.order_type === 'reservation';
+        if (!isTableFlow) {
+            prevOrderTypeRef.current = orderDetails.order_type;
+            return;
+        }
+
+        if (!selectedRestaurant) return;
+
+        const restaurantChanged = prevRestaurantRef.current !== null && String(prevRestaurantRef.current) !== String(selectedRestaurant);
+        const orderTypeChanged = prevOrderTypeRef.current !== null && prevOrderTypeRef.current !== orderDetails.order_type;
+        const shouldResetSelection = restaurantChanged || orderTypeChanged;
+
+        if (shouldResetSelection) {
+            setTablesReloadKey((k) => k + 1);
+        }
+
+        loadFloorTables(selectedRestaurant, { resetSelection: shouldResetSelection });
+
+        prevRestaurantRef.current = selectedRestaurant;
+        prevOrderTypeRef.current = orderDetails.order_type;
+    }, [orderDetails.order_type, selectedRestaurant]);
 
     return (
         <>

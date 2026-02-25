@@ -12,9 +12,7 @@ class PosUnitController extends Controller
 {
     public function index(Request $request)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
         $units = PosUnit::query()
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })
@@ -30,33 +28,39 @@ class PosUnitController extends Controller
 
     public function getUnits()
     {
-        $units = PosUnit::where('status', 'active')->select('id', 'name')->get();
+        $units = PosUnit::query()
+            ->where('status', 'active')
+            ->select('id', 'name')
+            ->get();
         return response()->json(['units' => $units]);
     }
 
     public function store(Request $request)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
+        $posLocationId = (int) session('active_pos_location_id');
         $request->validate([
             'name' => [
                 'required',
                 'string',
                 'max:50',
                 Rule::unique('pos_units', 'name')
-                    ->where(fn($q) => $q->where('tenant_id', $restaurantId)->whereNull('deleted_at')),
+                    ->whereNull('deleted_at'),
             ],
             'code' => 'required|string|max:20',
             'status' => 'required|in:active,inactive',
         ]);
 
-        PosUnit::create($request->merge(['created_by' => Auth::id(), 'tenant_id' => $restaurantId])->all());
+        PosUnit::create($request->merge([
+            'created_by' => Auth::id(),
+            'tenant_id' => null,
+            'location_id' => $posLocationId,
+        ])->all());
 
         return redirect()->back()->with('success', 'Unit created successfully.');
     }
 
     public function update(Request $request, $id)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
         $unit = PosUnit::findOrFail($id);
 
         $request->validate([
@@ -66,13 +70,17 @@ class PosUnitController extends Controller
                 'max:50',
                 Rule::unique('pos_units', 'name')
                     ->ignore($unit->id)
-                    ->where(fn($q) => $q->where('tenant_id', $restaurantId)->whereNull('deleted_at')),
+                    ->whereNull('deleted_at'),
             ],
             'code' => 'required|string|max:20',
             'status' => 'required|in:active,inactive',
         ]);
 
-        $unit->update($request->merge(['updated_by' => Auth::id(), 'tenant_id' => $restaurantId])->all());
+        $unit->update($request->merge([
+            'updated_by' => Auth::id(),
+            'tenant_id' => null,
+            'location_id' => $unit->location_id,
+        ])->all());
 
         return redirect()->back()->with('success', 'Unit updated successfully.');
     }

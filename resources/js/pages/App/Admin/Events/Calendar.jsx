@@ -29,8 +29,11 @@ const EventCalendar = () => {
 
     const fetchData = async () => {
         try {
+            const start = moment(`${year}-${month}-01`, 'YYYY-MM-DD').isSame(moment(), 'month') ? moment().startOf('day') : moment(`${year}-${month}-01`, 'YYYY-MM-DD');
+            const end = start.clone().add(30, 'days');
+
             const { data } = await axios.get(route('api.events.calendar'), {
-                params: { month, year },
+                params: { from: start.format('YYYY-MM-DD'), to: end.format('YYYY-MM-DD') },
             });
 
             // Transform venues into resources
@@ -63,18 +66,17 @@ const EventCalendar = () => {
                 }
 
                 // Handle overnight events (when end time is earlier than start time)
+                const startDateTime = `${booking.event_date}T${booking.event_time_from}`;
                 let endDateTime = `${booking.event_date}T${booking.event_time_to}`;
-                if (booking.event_time_to < booking.event_time_from) {
-                    // Event goes to next day
-                    const nextDay = moment(booking.event_date).add(1, 'day').format('YYYY-MM-DD');
-                    endDateTime = `${nextDay}T${booking.event_time_to}`;
+                if (booking.event_time_to <= booking.event_time_from) {
+                    endDateTime = moment(startDateTime).add(15, 'minutes').format('YYYY-MM-DDTHH:mm');
                 }
 
                 return {
                     id: booking.id,
                     booking: booking,
                     text: displayText,
-                    start: `${booking.event_date}T${booking.event_time_from}`,
+                    start: startDateTime,
                     end: endDateTime,
                     resource: booking.event_venue_id,
                     backColor: getStatusColor(booking.status),
@@ -188,8 +190,9 @@ const EventCalendar = () => {
         };
     }, []);
 
-    const startDate = moment(`${year}-${month}-01`, 'YYYY-MM-DD').format('YYYY-MM-DD');
-    const days = moment(`${year}-${month}`, 'YYYY-MM').daysInMonth();
+    const calendarStart = moment(`${year}-${month}-01`, 'YYYY-MM-DD').isSame(moment(), 'month') ? moment().startOf('day') : moment(`${year}-${month}-01`, 'YYYY-MM-DD');
+    const startDate = calendarStart.format('YYYY-MM-DD');
+    const days = 30;
 
     const config = {
         locale: 'en-us',

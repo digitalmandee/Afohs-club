@@ -12,9 +12,7 @@ class PosManufacturerController extends Controller
 {
     public function index(Request $request)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
         $manufacturers = PosManufacturer::query()
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })
@@ -30,26 +28,29 @@ class PosManufacturerController extends Controller
 
     public function store(Request $request)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
+        $posLocationId = (int) session('active_pos_location_id');
         $request->validate([
             'name' => [
                 'required',
                 'string',
                 'max:50',
                 Rule::unique('pos_manufacturers', 'name')
-                    ->where(fn($q) => $q->where('tenant_id', $restaurantId)->whereNull('deleted_at')),
+                    ->whereNull('deleted_at'),
             ],
             'status' => 'required|in:active,inactive',
         ]);
 
-        PosManufacturer::create($request->merge(['created_by' => Auth::id(), 'tenant_id' => $restaurantId])->all());
+        PosManufacturer::create($request->merge([
+            'created_by' => Auth::id(),
+            'tenant_id' => null,
+            'location_id' => $posLocationId,
+        ])->all());
 
         return redirect()->back()->with('success', 'Manufacturer created successfully.');
     }
 
     public function update(Request $request, $id)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
         $manufacturer = PosManufacturer::findOrFail($id);
 
         $request->validate([
@@ -59,12 +60,16 @@ class PosManufacturerController extends Controller
                 'max:50',
                 Rule::unique('pos_manufacturers', 'name')
                     ->ignore($manufacturer->id)
-                    ->where(fn($q) => $q->where('tenant_id', $restaurantId)->whereNull('deleted_at')),
+                    ->whereNull('deleted_at'),
             ],
             'status' => 'required|in:active,inactive',
         ]);
 
-        $manufacturer->update($request->merge(['updated_by' => Auth::id(), 'tenant_id' => $restaurantId])->all());
+        $manufacturer->update($request->merge([
+            'updated_by' => Auth::id(),
+            'tenant_id' => null,
+            'location_id' => $manufacturer->location_id,
+        ])->all());
 
         return redirect()->back()->with('success', 'Manufacturer updated successfully.');
     }
@@ -112,7 +117,8 @@ class PosManufacturerController extends Controller
 
     public function getManufacturers()
     {
-        $manufacturers = PosManufacturer::select('id', 'name')
+        $manufacturers = PosManufacturer::query()
+            ->select('id', 'name')
             ->get();
 
         return response()->json(['manufacturers' => $manufacturers]);

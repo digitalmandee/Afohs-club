@@ -157,6 +157,7 @@ const EventsCancelled = ({ bookings, filters = {}, aggregates }) => {
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Event Date</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Cancelled Date</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Total</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Advance</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Paid</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Balance</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
@@ -164,7 +165,10 @@ const EventsCancelled = ({ bookings, filters = {}, aggregates }) => {
                                     </TableHead>
                                     <TableBody>
                                         {filteredBookings.length > 0 ? (
-                                            filteredBookings.map((booking) => (
+                                            filteredBookings.map((booking) => {
+                                                const totalPaid = Number(booking.invoice?.paid_amount ?? 0) + Number(booking.invoice?.advance_payment ?? 0);
+                                                const totalPrice = Number(booking.total_price ?? 0);
+                                                return (
                                                 <TableRow key={booking.id} hover>
                                                     <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_no}</TableCell>
                                                     {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.name || booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || 'N/A'}</TableCell> */}
@@ -220,8 +224,9 @@ const EventsCancelled = ({ bookings, filters = {}, aggregates }) => {
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.event_date ? dayjs(booking.event_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.updated_at ? dayjs(booking.updated_at).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.total_price}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.paid_amount}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.total_price - booking.paid_amount}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.advance_amount ?? 0}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{totalPaid}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{totalPrice - totalPaid}</TableCell>
                                                     <TableCell>
                                                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                                             <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', color: '#063455' }}>
@@ -251,10 +256,11 @@ const EventsCancelled = ({ bookings, filters = {}, aggregates }) => {
                                                         </Box>
                                                     </TableCell>
                                                 </TableRow>
-                                            ))
+                                                );
+                                            })
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={8} align="center">
+                                                <TableCell colSpan={12} align="center">
                                                     <Typography variant="body1" color="textSecondary">
                                                         No cancelled event bookings found
                                                     </Typography>
@@ -269,6 +275,7 @@ const EventsCancelled = ({ bookings, filters = {}, aggregates }) => {
                                                     Grand Total
                                                 </TableCell>
                                                 <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_amount}</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_advance}</TableCell>
                                                 <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_paid}</TableCell>
                                                 <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_balance}</TableCell>
                                                 <TableCell colSpan={1} />
