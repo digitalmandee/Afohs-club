@@ -129,17 +129,15 @@ class OrderController extends Controller
             }
         }
 
-        $locationId = (int) (session('active_pos_location_id') ?? $restaurantId);
-
         $floorTables = Floor::select('id', 'name')
             ->where('status', 1)
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-            ->with(['tables' => function ($query) use ($today, $restaurantId, $locationId) {
+            ->with(['tables' => function ($query) use ($today, $restaurantId) {
                 $query
                     ->select('id', 'floor_id', 'table_no', 'capacity')
                     ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
                     ->with([
-                        'orders' => function ($orderQuery) use ($restaurantId, $locationId) {
+                        'orders' => function ($orderQuery) use ($restaurantId) {
                             $orderQuery
                                 ->select('id', 'table_id', 'status', 'payment_status', 'start_date')
                                 ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
@@ -148,7 +146,7 @@ class OrderController extends Controller
                                     $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
                                 });
                         },
-                        'reservations' => function ($resQuery) use ($today, $restaurantId, $locationId) {
+                        'reservations' => function ($resQuery) use ($today, $restaurantId) {
                             $resQuery
                                 ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'status')
                                 ->whereDate('date', $today)
@@ -169,7 +167,7 @@ class OrderController extends Controller
             ->whereNull('floor_id')
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->with([
-                'orders' => function ($orderQuery) use ($restaurantId, $locationId) {
+                'orders' => function ($orderQuery) use ($restaurantId) {
                     $orderQuery
                         ->select('id', 'table_id', 'status', 'payment_status', 'start_date')
                         ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
@@ -178,7 +176,7 @@ class OrderController extends Controller
                             $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
                         });
                 },
-                'reservations' => function ($resQuery) use ($today, $restaurantId, $locationId) {
+                'reservations' => function ($resQuery) use ($today, $restaurantId) {
                     $resQuery
                         ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'status')
                         ->whereDate('date', $today)
@@ -601,15 +599,15 @@ class OrderController extends Controller
 
     public function orderMenu(Request $request)
     {
-        $restaurantId = $this->selectedRestaurantId($request);
+        $restaurantId = $request->routeIs('pos.*') ? null : $this->selectedRestaurantId($request);
         $totalSavedOrders = Order::where('status', 'saved')
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->count();
 
-        $user = Auth::guard('tenant')->user() ?? Auth::user();
-        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
-        $activeTenantId = $restaurantId;
-        $latestCategory = Category::where('tenant_id', $restaurantId)->latest()->first();
+        $latestCategory = Category::query()
+            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
+            ->latest()
+            ->first();
         $firstCategoryId = $latestCategory->id ?? null;
 
         $orderContext = null;
@@ -796,8 +794,6 @@ class OrderController extends Controller
 
         return Inertia::render('App/Order/OrderMenu', [
             'totalSavedOrders' => $totalSavedOrders,
-            'allrestaurants' => $allrestaurants,
-            'activeTenantId' => $activeTenantId,
             'firstCategoryId' => $firstCategoryId,
             'reservation' => $reservation,  // Reservation flow
             'is_new_order' => $request->boolean('is_new_order'),  // Flag to distinguish New Reservation flow
@@ -2178,20 +2174,22 @@ class OrderController extends Controller
         }
 
         $productsQuery = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id);
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
-        $requestedId = $request->query('restaurant_id');
+        if (! $request->routeIs('pos.*')) {
+            $restaurantId = session('active_restaurant_id') ?? tenant('id');
+            $requestedId = $request->query('restaurant_id');
 
-        if ($requestedId !== null && $requestedId !== '') {
-            $user = Auth::guard('tenant')->user() ?? Auth::user();
-            $tenants = $user ? $user->getAccessibleTenants() : collect();
+            if ($requestedId !== null && $requestedId !== '') {
+                $user = Auth::guard('tenant')->user() ?? Auth::user();
+                $tenants = $user ? $user->getAccessibleTenants() : collect();
 
-            if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
-                $restaurantId = $requestedId;
+                if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
+                    $restaurantId = $requestedId;
+                }
             }
-        }
 
-        if ($restaurantId) {
-            $productsQuery->where('tenant_id', $restaurantId);
+            if ($restaurantId) {
+                $productsQuery->where('tenant_id', $restaurantId);
+            }
         }
 
         // Only filter by order_type if it exists and is not 'room_service'
@@ -2215,21 +2213,27 @@ class OrderController extends Controller
 
     public function getCategories(Request $request)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
-        $requestedId = $request->query('restaurant_id');
+        $categoriesQuery = Category::query();
 
-        if ($requestedId !== null && $requestedId !== '') {
-            $user = Auth::guard('tenant')->user() ?? Auth::user();
-            $tenants = $user ? $user->getAccessibleTenants() : collect();
+        if (! $request->routeIs('pos.*')) {
+            $restaurantId = session('active_restaurant_id') ?? tenant('id');
+            $requestedId = $request->query('restaurant_id');
 
-            if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
-                $restaurantId = $requestedId;
+            if ($requestedId !== null && $requestedId !== '') {
+                $user = Auth::guard('tenant')->user() ?? Auth::user();
+                $tenants = $user ? $user->getAccessibleTenants() : collect();
+
+                if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
+                    $restaurantId = $requestedId;
+                }
+            }
+
+            if ($restaurantId) {
+                $categoriesQuery->where('tenant_id', $restaurantId);
             }
         }
 
-        $categories = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-            ->latest()
-            ->get();
+        $categories = $categoriesQuery->latest()->get();
 
         return response()->json(['categories' => $categories]);
     }

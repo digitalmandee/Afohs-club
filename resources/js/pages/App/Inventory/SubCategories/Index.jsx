@@ -11,12 +11,10 @@ import axios from 'axios';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants, activeTenantId }) => {
+const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
     // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [processing, setProcessing] = useState(false);
-    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId || filters.restaurant_id || '');
-    const [formRestaurantId, setFormRestaurantId] = useState(activeTenantId || filters.restaurant_id || '');
     const [categoryOptions, setCategoryOptions] = useState(categories || []);
 
     // Create/Edit Modal State
@@ -38,38 +36,21 @@ const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants
 
     useEffect(() => {
         if (!modalOpen || editingSubCategory) return;
-        if (!formRestaurantId) return;
-
-        axios
-            .get(route(routeNameForContext('inventory.categories')), { params: { restaurant_id: formRestaurantId } })
-            .then((response) => {
-                const nextCategories = response.data?.categories || [];
-                setCategoryOptions(nextCategories);
-                setFormData((prev) => {
-                    const exists = nextCategories.some((c) => c.id === prev.category_id);
-                    return exists ? prev : { ...prev, category_id: '' };
-                });
-            })
-            .catch(() => enqueueSnackbar('Failed to load categories.', { variant: 'error' }));
-    }, [modalOpen, editingSubCategory, formRestaurantId]);
+        axios.get(route(routeNameForContext('inventory.categories'))).then((response) => {
+            const nextCategories = response.data?.categories || [];
+            setCategoryOptions(nextCategories);
+            setFormData((prev) => {
+                const exists = nextCategories.some((c) => c.id === prev.category_id);
+                return exists ? prev : { ...prev, category_id: '' };
+            });
+        });
+    }, [modalOpen, editingSubCategory]);
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
         router.get(
             route(routeNameForContext('sub-categories.index')),
-            { search: e.target.value, restaurant_id: selectedRestaurant },
-            { preserveState: true, replace: true },
-        );
-    };
-
-    const handleRestaurantChange = (restaurantId) => {
-        setSelectedRestaurant(restaurantId);
-        if (!editingSubCategory) {
-            setFormRestaurantId(restaurantId);
-        }
-        router.get(
-            route(routeNameForContext('sub-categories.index')),
-            { search, restaurant_id: restaurantId },
+            { search: e.target.value },
             { preserveState: true, replace: true },
         );
     };
@@ -83,11 +64,9 @@ const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants
                 name: subCategory.name,
                 status: subCategory.status,
             });
-            setFormRestaurantId(selectedRestaurant);
         } else {
             setEditingSubCategory(null);
             setFormData({ category_id: '', name: '', status: 'active' });
-            setFormRestaurantId(selectedRestaurant);
         }
         setModalOpen(true);
     };
@@ -109,7 +88,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants
 
         setProcessing(true);
         if (editingSubCategory) {
-            router.put(route(routeNameForContext('sub-categories.update'), { id: editingSubCategory.id, restaurant_id: selectedRestaurant }), formData, {
+            router.put(route(routeNameForContext('sub-categories.update'), { id: editingSubCategory.id }), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Sub Category updated successfully!', { variant: 'success' });
                     handleCloseModal();
@@ -120,7 +99,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants
                 onFinish: () => setProcessing(false),
             });
         } else {
-            router.post(route(routeNameForContext('sub-categories.store'), { restaurant_id: formRestaurantId }), formData, {
+            router.post(route(routeNameForContext('sub-categories.store')), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Sub Category created successfully!', { variant: 'success' });
                     handleCloseModal();
@@ -147,7 +126,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants
     const handleDelete = () => {
         if (!subCategoryToDelete) return;
         setProcessing(true);
-        router.delete(route(routeNameForContext('sub-categories.destroy'), { id: subCategoryToDelete.id, restaurant_id: selectedRestaurant }), {
+        router.delete(route(routeNameForContext('sub-categories.destroy'), { id: subCategoryToDelete.id }), {
             onSuccess: () => {
                 enqueueSnackbar('Sub Category deleted successfully!', { variant: 'success' });
                 handleCloseDeleteModal();
@@ -197,28 +176,6 @@ const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants
                                         borderRadius: '16px',
                                     },
                                 }} />
-                            <FormControl
-                                size="small"
-                                sx={{
-                                    minWidth: 220,
-                                    '& .MuiOutlinedInput-root': { borderRadius: '16px' },
-                                }}
-                            >
-                                <InputLabel id="sub-category-restaurant-select-label">Restaurant</InputLabel>
-                                <Select
-                                    labelId="sub-category-restaurant-select-label"
-                                    value={selectedRestaurant}
-                                    label="Restaurant"
-                                    onChange={(e) => handleRestaurantChange(e.target.value)}
-                                >
-                                    {Array.isArray(allrestaurants) &&
-                                        allrestaurants.map((r) => (
-                                            <MenuItem key={r.id} value={r.id}>
-                                                {r.name}
-                                            </MenuItem>
-                                        ))}
-                                </Select>
-                            </FormControl>
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
@@ -236,7 +193,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants
                                 variant="outlined"
                                 color="error"
                                 startIcon={<DeleteIcon />}
-                            onClick={() => router.visit(route(routeNameForContext('sub-categories.trashed'), { restaurant_id: selectedRestaurant }))}
+                            onClick={() => router.visit(route(routeNameForContext('sub-categories.trashed')))}
                                 sx={{
                                     bgcolor: 'transparent',
                                     textTransform: 'none',
@@ -296,7 +253,18 @@ const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants
                     </TableContainer>
 
                     <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={subCategories.last_page} page={subCategories.current_page} onChange={(e, p) => router.get(route(routeNameForContext('sub-categories.index')), { page: p, search, restaurant_id: selectedRestaurant }, { preserveState: true })} color="primary" />
+                    <Pagination
+                        count={subCategories.last_page}
+                        page={subCategories.current_page}
+                        onChange={(e, p) =>
+                            router.get(
+                                route(routeNameForContext('sub-categories.index')),
+                                { page: p, search },
+                                { preserveState: true },
+                            )
+                        }
+                        color="primary"
+                    />
                     </Box>
                 </Box>
             {/* </Box> */}
@@ -306,23 +274,6 @@ const SubCategoriesIndex = ({ subCategories, categories, filters, allrestaurants
                 <DialogTitle>{editingSubCategory ? 'Edit Sub Category' : 'Add New Sub Category'}</DialogTitle>
                 <DialogContent>
                     <Box component="form" sx={{ mt: 1 }}>
-                        <FormControl fullWidth margin="normal">
-                            <InputLabel id="sub-category-modal-restaurant-select-label">Restaurant</InputLabel>
-                            <Select
-                                labelId="sub-category-modal-restaurant-select-label"
-                                value={formRestaurantId}
-                                label="Restaurant"
-                                onChange={(e) => setFormRestaurantId(e.target.value)}
-                                disabled={!!editingSubCategory}
-                            >
-                                {Array.isArray(allrestaurants) &&
-                                    allrestaurants.map((r) => (
-                                        <MenuItem key={r.id} value={r.id}>
-                                            {r.name}
-                                        </MenuItem>
-                                    ))}
-                            </Select>
-                        </FormControl>
                         <FormControl fullWidth margin="normal">
                             <Autocomplete
                                 options={categoryOptions}
