@@ -387,7 +387,7 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                         textTransform: 'none',
                         borderRadius:'16px',
                         '&:hover': {
-                            backgroundColor: '#047857',
+                            backgroundColor: '#063455',
                         },
                     }}
                 >

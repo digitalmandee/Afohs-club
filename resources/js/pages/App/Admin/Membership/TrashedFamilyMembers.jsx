@@ -41,7 +41,7 @@ const TrashedFamilyMembers = ({ familyMembers, filters: initialFilters }) => {
 
     return (
         <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-            <div className="mx-3">
+            <div>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <IconButton onClick={() => router.get(route('membership.family-members'))}>
@@ -81,11 +81,11 @@ const TrashedFamilyMembers = ({ familyMembers, filters: initialFilters }) => {
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Membership No</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Parent Member</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Parent Member</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Deleted At</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Deleted At</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>

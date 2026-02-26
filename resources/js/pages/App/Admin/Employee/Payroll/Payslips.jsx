@@ -349,7 +349,7 @@ const Payslips = () => {
 
                         <Grid item xs={12} sm={6} md={2}>
                             <Button
-                                fullWidth
+                                // fullWidth
                                 variant="outlined"
                                 // startIcon={<FilterListIcon />}
                                 onClick={fetchPayslips}
@@ -359,19 +359,20 @@ const Payslips = () => {
                                     color: '#fff',
                                     borderRadius: '16px',
                                     gap: 2,
+                                    textTransform:'none',
                                     '&:hover': { borderColor: '#052d45' },
                                 }}
                             >
-                                <FilterAlt fontSize="small" style={{ color: '#fff' }} />
-                                Apply Filter
+                                <SearchIcon fontSize="small" style={{ color: '#fff' }} />
+                                Search
                             </Button>
                         </Grid>
                     </Grid>
                 </Box>
 
                 {/* Payslips Table */}
-                <Card>
-                    <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
+                {/* <Card> */}
+                    <TableContainer sx={{ borderRadius: '16px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
@@ -496,7 +497,7 @@ const Payslips = () => {
                             />
                         </Box>
                     )}
-                </Card>
+                {/* </Card> */}
 
                 {/* Payslip Details Dialog */}
                 <Dialog open={showPayslipDialog} onClose={() => setShowPayslipDialog(false)} maxWidth="md" fullWidth>

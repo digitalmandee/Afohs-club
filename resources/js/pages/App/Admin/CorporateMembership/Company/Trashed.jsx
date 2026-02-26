@@ -25,47 +25,58 @@ const TrashedCorporateCompanies = ({ companies, filters }) => {
     };
 
     return (
-        <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <IconButton onClick={() => window.history.back()} sx={{ mr: 1 }}>
-                    <ArrowBack />
-                </IconButton>
-                <Typography variant="h5" fontWeight={600} color="#063455">
-                    Deleted Corporate Companies
-                </Typography>
+        <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 2 }}>
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <IconButton onClick={() => window.history.back()} sx={{ mr: 1 }}>
+                        <ArrowBack sx={{ color: '#063455' }} />
+                    </IconButton>
+                    <Typography sx={{ color: '#063455', fontWeight: '700', fontSize: '30px' }}>
+                        Deleted Corporate Companies
+                    </Typography>
+                </Box>
+
+                <Box sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center' }}>
+                    <form onSubmit={handleSearch} style={{ width: '100%' }}>
+                        <TextField
+                            fullWidth
+                            placeholder="Search deleted companies..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Search />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '16px',
+                            },
+                        }}
+                            size="small"
+                        />
+                    </form>
+                </Box>
             </Box>
 
-            <Paper sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center' }}>
-                <form onSubmit={handleSearch} style={{ width: '100%' }}>
-                    <TextField
-                        fullWidth
-                        placeholder="Search deleted companies..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Search />
-                                </InputAdornment>
-                            ),
-                        }}
-                        size="small"
-                    />
-                </form>
-            </Paper>
-
-            <TableContainer component={Paper}>
+            <TableContainer sx={{borderRadius:'12px'}}>
                 <Table>
-                    <TableHead sx={{ bgcolor: '#eeeeee' }}>
+                    <TableHead sx={{ bgcolor: '#063455' }}>
                         <TableRow>
-                            <TableCell>
-                                <strong>Name</strong>
+                            <TableCell sx={{color:'#fff', fontWeight:600}}>
+                                Name
                             </TableCell>
-                            <TableCell>
-                                <strong>Deleted At</strong>
+                            <TableCell sx={{color:'#fff', fontWeight:600}}>
+                                Deleted At
                             </TableCell>
-                            <TableCell align="right">
-                                <strong>Actions</strong>
+                            <TableCell sx={{color:'#fff', fontWeight:600}}>
+                                Actions
                             </TableCell>
                         </TableRow>
                     </TableHead>
@@ -75,7 +86,14 @@ const TrashedCorporateCompanies = ({ companies, filters }) => {
                                 <TableCell>{company.name}</TableCell>
                                 <TableCell>{new Date(company.deleted_at).toLocaleDateString()}</TableCell>
                                 <TableCell align="right">
-                                    <Button variant="outlined" startIcon={<RestoreFromTrash />} onClick={() => handleRestore(company.id)} size="small" color="primary">
+                                    <Button variant="outlined" startIcon={<RestoreFromTrash />} 
+                                    onClick={() => handleRestore(company.id)}
+                                    size='small' 
+                                    sx={{
+                                        border:'1px solid #063455',
+                                        color:'#063455',
+                                        textTransform:'none'
+                                    }}>
                                         Restore
                                     </Button>
                                 </TableCell>
