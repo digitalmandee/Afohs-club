@@ -807,6 +807,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
                                                         ({card.order_type})
                                                     </Typography>
                                                 </Typography>
+                                                {/* <Box></Box> */}
                                                 <Typography sx={{ mb: 2, fontSize: '14px', opacity: 0.9 }}>
                                                     Restaurant: <strong>{card.tenant?.name || 'Unknown'}</strong>
                                                 </Typography>

@@ -88,10 +88,10 @@ const ManageCustomer = ({ customerData }) => {
                 <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage registered guests currently staying or scheduled to arrive</Typography>
 
                 <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px', marginTop: '2rem' }}>
-                    <Table>
+                    <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Customer No</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, width: '200px', }}>Customer No</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Name</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Email</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Action</TableCell>
@@ -103,7 +103,7 @@ const ManageCustomer = ({ customerData }) => {
                                 customers.map((customer, index) => (
                                     <TableRow key={customer.id} style={{ borderBottom: '1px solid #eee' }}>
                                         {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight: '400' }}>{index + 1}</TableCell> */}
-                                        <TableCell sx={{ color: '#000', fontSize: '14px', fontWeight: '600' }}>{customer.customer_no}</TableCell>
+                                        <TableCell sx={{ color: '#000', fontSize: '14px', fontWeight: '600', width: '200px', }}>{customer.customer_no}</TableCell>
                                         {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight: '400' }}>{customer.name}</TableCell> */}
                                         <TableCell
                                             sx={{

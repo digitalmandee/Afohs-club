@@ -174,7 +174,7 @@ const AllMembers = ({ members }) => {
             > */}
             <div className="container-fluid p-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
                 {/* Recently Joined Section */}
-                    <div className="mx-3">
+                    
                         <div className="d-flex justify-content-between align-items-center">
                             <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>All Members</Typography>
                             <Button
@@ -578,7 +578,7 @@ const AllMembers = ({ members }) => {
                                 ))}
                             </Box>
                         </TableContainer>
-                    </div>
+                    
                 {/* Modal */}
                 <MembershipPauseDialog open={pauseModalOpen} onClose={() => setPauseModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
                 <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />

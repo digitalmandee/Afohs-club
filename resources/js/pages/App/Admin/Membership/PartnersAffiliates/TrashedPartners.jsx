@@ -41,7 +41,7 @@ const TrashedPartners = ({ partners, filters: initialFilters }) => {
 
     return (
         <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-            <div className="mx-3">
+            <div>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <IconButton onClick={() => router.get(route('admin.membership.partners-affiliates.index'))}>
@@ -80,13 +80,13 @@ const TrashedPartners = ({ partners, filters: initialFilters }) => {
                 <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Logo/Image</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Organization Name</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Focal Person</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Deleted At</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455' }}>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Logo/Image</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Organization Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Focal Person</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Deleted At</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -94,7 +94,7 @@ const TrashedPartners = ({ partners, filters: initialFilters }) => {
                                 partners.data.map((partner) => (
                                     <TableRow key={partner.id} style={{ borderBottom: '1px solid #eee' }}>
                                         <TableCell>
-                                            <div style={{ width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <div style={{ width: 25, height: 25, borderRadius: '50%', overflow: 'hidden', backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 {/* Placeholder since media isn't eagerly loaded in trashed method in controller yet, or standard image logic */}
                                                 <Typography variant="caption">{partner.organization_name?.charAt(0)}</Typography>
                                             </div>
@@ -106,7 +106,14 @@ const TrashedPartners = ({ partners, filters: initialFilters }) => {
                                         </TableCell>
                                         <TableCell sx={{ color: '#7F7F7F' }}>{dayjs(partner.deleted_at).format('DD-MM-YYYY HH:mm')}</TableCell>
                                         <TableCell>
-                                            <Button variant="outlined" color="primary" startIcon={<RestoreFromTrash />} onClick={() => handleRestore(partner.id)} disabled={processingId === partner.id}>
+                                            <Button 
+                                            variant="outlined" 
+                                            color="primary" 
+                                            startIcon={<RestoreFromTrash />} 
+                                            onClick={() => handleRestore(partner.id)} 
+                                            disabled={processingId === partner.id}
+                                            sx={{textTransform:'none'}}
+                                            >
                                                 {processingId === partner.id ? 'Restoring...' : 'Restore'}
                                             </Button>
                                         </TableCell>

@@ -79,10 +79,11 @@ const CustomersIndex = ({ customerData }) => {
 
                 <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage registered guests currently staying or scheduled to arrive</Typography>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px', marginTop: '2rem' }}>
+                <TableContainer style={{ overflowX: 'auto', borderRadius: '16px', marginTop: '2rem' }}>
                     <Table>
+                        
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                            <TableRow style={{ backgroundColor: '#063455', }}>
                                 <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Customer No</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Name</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Email</TableCell>
@@ -94,7 +95,19 @@ const CustomersIndex = ({ customerData }) => {
                             {customers.length > 0 ? (
                                 customers.map((customer) => (
                                     <TableRow key={customer.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ color: '#000', fontSize: '14px', fontWeight: '600' }}>{customer.customer_no}</TableCell>
+                                        <TableCell
+                                            sx={{
+                                                color: '#000',
+                                                fontSize: '14px',
+                                                fontWeight: '600',
+                                                width: 100,
+                                                minWidth: 100,
+                                                maxWidth: 100,
+                                                padding: '8px',
+                                                boxSizing: 'border-box',
+                                            }}>
+                                            {customer.customer_no}
+                                        </TableCell>
                                         <TableCell
                                             sx={{
                                                 color: '#7F7F7F',

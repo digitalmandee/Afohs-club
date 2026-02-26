@@ -560,13 +560,13 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                         <TableContainer component={Paper} sx={{ borderRadius: '12px', border: '1px solid #E5E5EA', boxShadow: 'none' }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
-                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Photo</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Name</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Membership No</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Relation</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Action</TableCell>
+                                    <TableRow sx={{ backgroundColor: '#063455' }}>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Photo</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Name</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Membership No</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Relation</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Action</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
