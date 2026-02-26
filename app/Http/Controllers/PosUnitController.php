@@ -13,6 +13,7 @@ class PosUnitController extends Controller
     public function index(Request $request)
     {
         $units = PosUnit::query()
+            ->withCount('products')
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })

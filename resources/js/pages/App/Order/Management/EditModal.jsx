@@ -6,7 +6,7 @@ import AddItems from './AddItem';
 import VariantSelectorDialog from '../VariantSelectorDialog';
 import CancelItemDialog from './CancelItemDialog';
 
-function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSave, allrestaurants }) {
+function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSave, onSaveAndPrint, allowUpdateAndPrint, allrestaurants }) {
     const [showAddItem, setShowAddItem] = useState(false);
     const [variantPopupOpen, setVariantPopupOpen] = useState(false);
     const [variantProductId, setVariantProductId] = useState(null);
@@ -348,6 +348,19 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
         } catch (error) {
             console.error('Failed to save order', error);
             // optionally show an error Snackbar here
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const onSubmitAndPrint = async () => {
+        if (!onSaveAndPrint) return;
+        setLoading(true);
+        try {
+            await onSaveAndPrint(orderStatus);
+            setShowAddItem(false);
+        } catch (error) {
+            console.error('Failed to save order', error);
         } finally {
             setLoading(false);
         }
@@ -804,6 +817,22 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                             >
                                 Cancel
                             </Button>
+                            {Boolean(allowUpdateAndPrint && onSaveAndPrint) && (
+                                <Button
+                                    variant="outlined"
+                                    fullWidth
+                                    onClick={() => onSubmitAndPrint()}
+                                    disabled={loading}
+                                    sx={{
+                                        borderColor: '#003153',
+                                        color: '#003153',
+                                        textTransform: 'none',
+                                        py: 1,
+                                    }}
+                                >
+                                    Update & Print
+                                </Button>
+                            )}
                             <Button
                                 variant="contained"
                                 fullWidth
@@ -832,7 +861,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 overflow: 'auto',
                             }}
                         >
-                            <AddItems allrestaurants={allrestaurants} orderItems={orderItems} setOrderItems={setOrderItems} setShowAddItem={setShowAddItem} initialRestaurantId={order?.tenant_id} orderType={order?.order_type} />
+                            <AddItems allrestaurants={allrestaurants} orderItems={orderItems} setOrderItems={setOrderItems} setShowAddItem={setShowAddItem} initialRestaurantId={order?.tenant_id} orderType={order?.order_type} disableRestaurantSelect={true} />
                         </Box>
                     )}
                 </DialogContent>

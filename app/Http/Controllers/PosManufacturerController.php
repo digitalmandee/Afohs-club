@@ -13,6 +13,7 @@ class PosManufacturerController extends Controller
     public function index(Request $request)
     {
         $manufacturers = PosManufacturer::query()
+            ->withCount('products')
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })

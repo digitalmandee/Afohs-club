@@ -13,38 +13,9 @@ use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
-    private function activeTenantId(Request $request = null)
-    {
-        $request = $request ?? request();
-        return $request->session()->get('active_restaurant_id') ?? $request->route('tenant') ?? tenant('id');
-    }
-
-    private function selectedRestaurantId(Request $request = null)
-    {
-        $request = $request ?? request();
-        $requestedId = $request->query('restaurant_id') ?? $request->input('restaurant_id');
-        $user = Auth::guard('tenant')->user() ?? Auth::user();
-        $tenants = $user ? $user->getAccessibleTenants() : collect();
-
-        if ($requestedId !== null && $requestedId !== '') {
-            if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
-                return $requestedId;
-            }
-        }
-
-        return $this->activeTenantId($request);
-    }
-
     public function index(Request $request)
     {
-        $restaurantId = $this->selectedRestaurantId($request);
-        $user = Auth::guard('tenant')->user() ?? Auth::user();
-        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
-
         $query = Category::query();
-        if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
-        }
 
         $categoriesList = $query
             ->when($request->search, function ($query, $search) {
@@ -57,33 +28,19 @@ class CategoryController extends Controller
 
         return Inertia::render('App/Inventory/Categories/Index', [
             'categories' => $categoriesList,
-            'filters' => $request->only(['search', 'restaurant_id']),
-            'allrestaurants' => $allrestaurants->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->values(),
-            'activeTenantId' => $restaurantId,
+            'filters' => $request->only(['search']),
         ]);
     }
 
     public function getCategories(Request $request)
     {
-        $restaurantId = $this->selectedRestaurantId($request);
-
-        $query = Category::query();
-        if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
-        }
-
-        $categories = $query->latest()->get();
+        $categories = Category::latest()->get();
 
         return response()->json(['categories' => $categories]);
     }
 
     public function store(Request $request)
     {
-        $restaurantId = $this->selectedRestaurantId($request);
-        if (!$restaurantId) {
-            abort(403);
-        }
-
         $posLocationId = $request->session()->get('active_pos_location_id');
 
         $validated = $request->validate([
@@ -91,7 +48,7 @@ class CategoryController extends Controller
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('pos_categories', 'name')->where(fn($q) => $q->where('tenant_id', $restaurantId)->whereNull('deleted_at')),
+                Rule::unique('pos_categories', 'name')->whereNull('deleted_at'),
             ],
             'status' => 'required|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -102,7 +59,7 @@ class CategoryController extends Controller
             $validated['image'] = $path;
         }
 
-        $validated['tenant_id'] = $restaurantId;
+        $validated['tenant_id'] = null;
         $validated['location_id'] = $posLocationId ? (int) $posLocationId : null;
         $validated['created_by'] = Auth::id();
 
@@ -113,11 +70,6 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-        $restaurantId = $this->selectedRestaurantId($request);
-        if ($restaurantId && (string) $category->tenant_id !== (string) $restaurantId) {
-            abort(404);
-        }
-
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -125,7 +77,7 @@ class CategoryController extends Controller
                 'max:255',
                 Rule::unique('pos_categories', 'name')
                     ->ignore($category->id)
-                    ->where(fn($q) => $q->where('tenant_id', $restaurantId)->whereNull('deleted_at')),
+                    ->whereNull('deleted_at'),
             ],
             'status' => 'required|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -156,27 +108,16 @@ class CategoryController extends Controller
 
     public function destroy(Request $request, Category $category)
     {
-        $restaurantId = $this->selectedRestaurantId($request);
-        if ($restaurantId && (string) $category->tenant_id !== (string) $restaurantId) {
-            abort(404);
-        }
-
         $newCategoryId = $request->input('new_category_id');
 
         // Reassign products logic
         if ($newCategoryId) {
             $productQuery = Product::where('category_id', $category->id);
-            if ($restaurantId) {
-                $productQuery->where('tenant_id', $restaurantId);
-            }
 
             $productQuery
                 ->update(['category_id' => $newCategoryId]);
         } else {
             $productQuery = Product::where('category_id', $category->id);
-            if ($restaurantId) {
-                $productQuery->where('tenant_id', $restaurantId);
-            }
 
             $productQuery
                 ->update(['category_id' => null]);
@@ -190,14 +131,7 @@ class CategoryController extends Controller
 
     public function trashed(Request $request)
     {
-        $restaurantId = $this->selectedRestaurantId($request);
-        $user = Auth::guard('tenant')->user() ?? Auth::user();
-        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
-
         $query = Category::onlyTrashed();
-        if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
-        }
 
         $trashedCategories = $query
             ->when($request->search, function ($query, $search) {
@@ -209,20 +143,13 @@ class CategoryController extends Controller
 
         return Inertia::render('App/Inventory/Categories/Trashed', [
             'trashedCategories' => $trashedCategories,
-            'filters' => $request->only(['search', 'restaurant_id']),
-            'allrestaurants' => $allrestaurants->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->values(),
-            'activeTenantId' => $restaurantId,
+            'filters' => $request->only(['search']),
         ]);
     }
 
     public function restore($id)
     {
-        $restaurantId = $this->selectedRestaurantId();
-
         $query = Category::withTrashed();
-        if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
-        }
 
         $category = $query->findOrFail($id);
         $category->restore();
@@ -232,12 +159,7 @@ class CategoryController extends Controller
 
     public function forceDelete($id)
     {
-        $restaurantId = $this->selectedRestaurantId();
-
         $query = Category::withTrashed();
-        if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
-        }
 
         $category = $query->findOrFail($id);
 

@@ -13,15 +13,12 @@ import { routeNameForContext } from '@/lib/utils';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
+const AddProduct = ({ product, id }) => {
     const [open, setOpen] = useState(true);
-    const initialRestaurantId = activeTenantId ?? product?.tenant_id ?? (allrestaurants?.length === 1 ? allrestaurants[0].id : '');
-    const [selectedRestaurantId, setSelectedRestaurantId] = useState(initialRestaurantId ? String(initialRestaurantId) : '');
     const { data, setData, submit, processing, errors, reset, transform } = useForm(
         id
             ? {
                   id: product.id,
-                  restaurant_id: initialRestaurantId,
                   name: product.name || '',
                   // Auto-generate menu_code if missing for existing items effectively
                   menu_code: product.menu_code || String(product.id),
@@ -50,7 +47,6 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
                   images: product.images || [],
               }
             : {
-                  restaurant_id: initialRestaurantId,
                   name: '',
                   menu_code: '',
                   category_id: '',
@@ -123,7 +119,6 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
                 // Map errors to fields
                 const newFieldErrors = {};
                 validationErrors.forEach((error) => {
-                    if (error.includes('Restaurant')) newFieldErrors.restaurant_id = error;
                     if (error.includes('Name')) newFieldErrors.name = error;
                     if (error.includes('Category')) newFieldErrors.category_id = error;
                     if (error.includes('Current stock')) newFieldErrors.current_stock = error;
@@ -144,12 +139,11 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
 
     const getMenuValidationErrors = (menu) => {
         const errors = [];
-        if (!menu.restaurant_id) errors.push('Restaurant is required');
         if (!menu.name.trim()) errors.push('Name is required');
         if (!menu.category_id) errors.push('Category is required');
         if (menu.manage_stock) {
-            if (menu.current_stock === '' || menu.current_stock === null || isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
-            if (menu.minimal_stock === '' || menu.minimal_stock === null || isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
+            if (menu.current_stock !== '' && menu.current_stock !== null && isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
+            if (menu.minimal_stock !== '' && menu.minimal_stock !== null && isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
         }
         if (!menu.available_order_types || menu.available_order_types.length === 0) errors.push('At least one order type must be selected');
         if (menu.cost_of_goods_sold === '' || menu.cost_of_goods_sold === null || isNaN(menu.cost_of_goods_sold)) errors.push('COGS must be a valid number');
@@ -164,6 +158,12 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
         setFieldErrors({}); // Clear errors when going back
     };
 
+    const normalizeInt = (value) => {
+        if (value === null || value === undefined || value === '') return 0;
+        const n = Number.parseInt(String(value), 10);
+        return Number.isNaN(n) ? 0 : n;
+    };
+
     // Handle form input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -173,6 +173,25 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
         }));
         // Clear error for the field when user starts typing
         setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    };
+
+    const handleManageStockToggle = (checked) => {
+        setData((prev) => ({
+            ...prev,
+            manage_stock: checked,
+            ...(checked
+                ? {}
+                : {
+                      current_stock: 0,
+                      minimal_stock: 0,
+                      notify_when_out_of_stock: false,
+                  }),
+        }));
+        setFieldErrors((prev) => ({
+            ...prev,
+            current_stock: '',
+            minimal_stock: '',
+        }));
     };
 
     const openDiscountDialog = () => {
@@ -360,6 +379,10 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
         transform((data) => ({
             ...data,
             deleted_images: deletedImages, // Include deleted images for backend processing
+            manage_stock: Boolean(data.manage_stock),
+            current_stock: data.manage_stock ? normalizeInt(data.current_stock) : 0,
+            minimal_stock: data.manage_stock ? normalizeInt(data.minimal_stock) : 0,
+            notify_when_out_of_stock: data.manage_stock ? Boolean(data.notify_when_out_of_stock) : false,
             ingredients: selectedIngredients.map((ing) => ({
                 id: ing.id,
                 quantity_used: ing.quantity_used,
@@ -397,33 +420,11 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
         }
     }, [data.cost_of_goods_sold, data.base_price]);
 
-    const fetchCategories = (restaurantId = selectedRestaurantId) => {
-        if (!restaurantId) {
-            setCategories([]);
-            return;
-        }
-        axios.get(route(routeNameForContext('inventory.categories')), { params: { restaurant_id: restaurantId } }).then((response) => {
+    const fetchCategories = () => {
+        axios.get(route(routeNameForContext('inventory.categories'))).then((response) => {
             setCategories(response.data.categories);
         });
     };
-
-    useEffect(() => {
-        if (selectedRestaurantId !== data.restaurant_id) {
-            setData((prev) => ({
-                ...prev,
-                restaurant_id: selectedRestaurantId,
-                ...(id
-                    ? {}
-                    : {
-                          category_id: '',
-                          sub_category_id: '',
-                      }),
-            }));
-        }
-
-        fetchCategories(selectedRestaurantId);
-        setSubCategories([]);
-    }, [selectedRestaurantId]);
 
     const fetchManufacturers = () => {
         axios.get(route(routeNameForContext('api.manufacturers.list'))).then((response) => {
@@ -437,16 +438,14 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
         });
     };
 
-    const fetchSubCategories = (categoryId, restaurantId = selectedRestaurantId) => {
-        if (!categoryId || !restaurantId) {
+    const fetchSubCategories = (categoryId) => {
+        if (!categoryId) {
             setSubCategories([]);
             return;
         }
-        axios
-            .get(route(routeNameForContext('api.sub-categories.by-category'), categoryId), { params: { restaurant_id: restaurantId } })
-            .then((response) => {
-                setSubCategories(response.data.subCategories);
-            });
+        axios.get(route(routeNameForContext('api.sub-categories.by-category'), categoryId)).then((response) => {
+            setSubCategories(response.data.subCategories);
+        });
     };
 
     useEffect(() => {
@@ -455,7 +454,7 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
         } else {
             setSubCategories([]);
         }
-    }, [data.category_id, selectedRestaurantId]);
+    }, [data.category_id]);
 
     useEffect(() => {
         fetchCategories();
@@ -598,31 +597,6 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
-                                            Restaurant
-                                        </Typography>
-                                        <Autocomplete
-                                            fullWidth
-                                            size="small"
-                                            options={allrestaurants || []}
-                                            getOptionLabel={(option) => option.name || ''}
-                                            value={(allrestaurants || []).find((r) => String(r.id) === String(selectedRestaurantId)) || null}
-                                            onChange={(event, newValue) => {
-                                                const newId = newValue ? String(newValue.id) : '';
-                                                setSelectedRestaurantId(newId);
-                                                setFieldErrors((prev) => ({ ...prev, restaurant_id: '' }));
-                                            }}
-                                            disabled={!!id}
-                                            isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
-                                            renderInput={(params) => (
-                                                <TextField {...params} placeholder="Select restaurant" variant="outlined" error={!!fieldErrors.restaurant_id} helperText={fieldErrors.restaurant_id} />
-                                            )}
-                                            ListboxProps={{
-                                                style: { maxHeight: 200 },
-                                            }}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={6}>
-                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Product Name
                                         </Typography>
                                         <TextField required fullWidth placeholder="Cappucino" name="name" value={data.name} onChange={handleInputChange} variant="outlined" size="small" error={!!fieldErrors.name} helperText={fieldErrors.name} />
@@ -745,7 +719,7 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
                                     </Grid>
                                     <Grid item xs={12}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                            <Switch checked={data.manage_stock} onChange={(e) => setData('manage_stock', e.target.checked)} color="primary" />
+                                            <Switch checked={Boolean(data.manage_stock)} onChange={(e) => handleManageStockToggle(e.target.checked)} color="primary" />
                                             <Box sx={{ ml: 1 }}>
                                                 <Typography variant="body1" sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>
                                                     Manage Stock
@@ -756,7 +730,7 @@ const AddProduct = ({ product, id, allrestaurants, activeTenantId }) => {
                                             </Box>
                                         </Box>
                                     </Grid>
-                                    {data.manage_stock == 1 && (
+                                    {Boolean(data.manage_stock) && (
                                         <>
                                             <Grid item xs={6}>
                                                 <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>

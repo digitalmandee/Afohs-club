@@ -8,7 +8,7 @@ import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 import { routeNameForContext } from '@/lib/utils';
 
-export default function CategoryIndex({ categories, allrestaurants, activeTenantId, filters }) {
+export default function CategoryIndex({ categories, filters }) {
     // Note: Converted categoriesList to categories (paginated object) from controller
     // If controller sends 'categories' variable as pagination object: { data: [...], ... }
 
@@ -20,8 +20,6 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
     const [openAddMenu, setOpenAddMenu] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
-    const [selectedRestaurant, setSelectedRestaurant] = useState(activeTenantId || '');
-    const [formRestaurantId, setFormRestaurantId] = useState(activeTenantId || '');
     const [reassignCategoryId, setReassignCategoryId] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
@@ -46,8 +44,7 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
         setOpenAddMenu(true);
         reset();
         setEditingCategoryId(null);
-        setFormRestaurantId(selectedRestaurant || activeTenantId || '');
-    }, [reset, selectedRestaurant, activeTenantId]);
+    }, [reset]);
 
     const handleAddMenuClose = useCallback(() => {
         setOpenAddMenu(false);
@@ -97,12 +94,12 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
 
             if (editingCategoryId) {
                 formData.append('_method', 'PUT');
-                router.post(route(routeNameForContext('category.update'), { category: editingCategoryId, restaurant_id: selectedRestaurant }), formData, {
+                router.post(route(routeNameForContext('category.update'), { category: editingCategoryId }), formData, {
                     forceFormData: true,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        router.visit(route(routeNameForContext('inventory.category'), { restaurant_id: selectedRestaurant }));
+                        router.visit(route(routeNameForContext('inventory.category')));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || 'An error occurred while updating the category.');
@@ -111,14 +108,12 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                 });
                 setSnackbar({ open: true, message: 'Category updated successfully!', severity: 'success' });
             } else {
-                const targetRestaurantId = formRestaurantId || selectedRestaurant;
-                post(route(routeNameForContext('inventory.category.store'), { restaurant_id: targetRestaurantId }), {
+                post(route(routeNameForContext('inventory.category.store')), {
                     data: formData,
                     onSuccess: () => {
                         setShowConfirmation(true);
                         handleAddMenuClose();
-                        setSelectedRestaurant(targetRestaurantId);
-                        router.visit(route(routeNameForContext('inventory.category'), { restaurant_id: targetRestaurantId }));
+                        router.visit(route(routeNameForContext('inventory.category')));
                     },
                     onError: (errors) => {
                         setErrorMessage(errors.name || errors.image || errors.message || 'An error occurred while creating the category.');
@@ -127,7 +122,7 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                 });
             }
         },
-        [data, editingCategoryId, post, handleAddMenuClose, selectedRestaurant, formRestaurantId],
+        [data, editingCategoryId, post, handleAddMenuClose],
     );
 
     const handleEdit = useCallback(
@@ -139,10 +134,9 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                 existingImage: category.image,
             });
             setEditingCategoryId(category.id);
-            setFormRestaurantId(category.tenant_id || selectedRestaurant || activeTenantId || '');
             setOpenAddMenu(true);
         },
-        [setData, selectedRestaurant, activeTenantId],
+        [setData],
     );
 
     const handleDeleteClick = useCallback((category) => {
@@ -155,7 +149,7 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
         if (pendingDeleteCategory) {
             setDeleting(true);
 
-            router.delete(route(routeNameForContext('category.destroy'), { category: pendingDeleteCategory.id, restaurant_id: selectedRestaurant }), {
+            router.delete(route(routeNameForContext('category.destroy'), { category: pendingDeleteCategory.id }), {
                 data: {
                     new_category_id: reassignCategoryId || null,
                 },
@@ -164,7 +158,7 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                     setPendingDeleteCategory(null);
                     setReassignCategoryId(null);
                     setDeleting(false);
-                    router.visit(route(routeNameForContext('inventory.category'), { restaurant_id: selectedRestaurant }));
+                    router.visit(route(routeNameForContext('inventory.category')));
                 },
                 onError: (errors) => {
                     setErrorMessage(errors.message || 'An error occurred while deleting the category.');
@@ -175,7 +169,7 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                 },
             });
         }
-    }, [pendingDeleteCategory, reassignCategoryId, selectedRestaurant]);
+    }, [pendingDeleteCategory, reassignCategoryId]);
 
     const handleCancelDelete = useCallback(() => {
         setPendingDeleteCategory(null);
@@ -189,19 +183,7 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
         setSearchTerm(e.target.value);
         router.get(
             route(routeNameForContext('inventory.category')),
-            { search: e.target.value, restaurant_id: selectedRestaurant },
-            { preserveState: true, replace: true },
-        );
-    };
-
-    const handleRestaurantChange = (restaurantId) => {
-        setSelectedRestaurant(restaurantId);
-        if (!editingCategoryId) {
-            setFormRestaurantId(restaurantId);
-        }
-        router.get(
-            route(routeNameForContext('inventory.category')),
-            { search: searchTerm, restaurant_id: restaurantId },
+            { search: e.target.value },
             { preserveState: true, replace: true },
         );
     };
@@ -261,29 +243,6 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                                     ),
                                 }}
                             />
-                            <FormControl
-                                size="small"
-                                sx={{
-                                    ml: 2,
-                                    minWidth: 220,
-                                    '& .MuiOutlinedInput-root': { borderRadius: '16px' },
-                                }}
-                            >
-                                <InputLabel id="category-restaurant-select-label">Restaurant</InputLabel>
-                                <Select
-                                    labelId="category-restaurant-select-label"
-                                    value={selectedRestaurant}
-                                    label="Restaurant"
-                                    onChange={(e) => handleRestaurantChange(e.target.value)}
-                                >
-                                    {Array.isArray(allrestaurants) &&
-                                        allrestaurants.map((r) => (
-                                            <MenuItem key={r.id} value={r.id}>
-                                                {r.name}
-                                            </MenuItem>
-                                        ))}
-                                </Select>
-                            </FormControl>
                             <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
 
                                 <Button
@@ -303,7 +262,7 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                                 <Button
                                 variant="outlined"
                                 color="error"
-                                startIcon={<DeleteIcon />} onClick={() => router.visit(route(routeNameForContext('category.trashed'), { restaurant_id: selectedRestaurant }))}
+                                startIcon={<DeleteIcon />} onClick={() => router.visit(route(routeNameForContext('category.trashed')))}
                                     sx={{
                                         bgcolor: 'transparent',
                                         borderRadius: '16px',
@@ -329,7 +288,12 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                                         }}
                                     >
                                         <CardContent sx={{ p: 2 }}>
-                                            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => router.visit(route(routeNameForContext('inventory.index'), { category_id: category.id, restaurant_id: selectedRestaurant }))}>
+                                            <Grid
+                                                item
+                                                xs={12}
+                                                sx={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }}
+                                                onClick={() => router.visit(route(routeNameForContext('inventory.index'), { category_id: category.id }))}
+                                            >
                                                 <div style={{ display: 'flex' }}>
                                                     <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                         <img
@@ -405,28 +369,6 @@ export default function CategoryIndex({ categories, allrestaurants, activeTenant
                 <DialogContent sx={{ p: 0 }}>
                     <Box sx={{ px: 3, pb: 3 }}>
                         <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <Typography variant="body1" sx={{ mb: 1 }}>
-                                    Restaurant
-                                </Typography>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel id="category-modal-restaurant-select-label">Restaurant</InputLabel>
-                                    <Select
-                                        labelId="category-modal-restaurant-select-label"
-                                        value={formRestaurantId}
-                                        label="Restaurant"
-                                        onChange={(e) => setFormRestaurantId(e.target.value)}
-                                        disabled={!!editingCategoryId}
-                                    >
-                                        {Array.isArray(allrestaurants) &&
-                                            allrestaurants.map((r) => (
-                                                <MenuItem key={r.id} value={r.id}>
-                                                    {r.name}
-                                                </MenuItem>
-                                            ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
                             <Grid item xs={12}>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
                                     Category Name

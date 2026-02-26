@@ -192,18 +192,42 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
             <div class="row">
               <div>Customer Name</div>
-              <div>${data.member?.full_name || data.member?.name || data.customer?.name || 'N/A'}</div>
+              <div>${data.member?.full_name || data.member?.name || data.customer?.name || data.employee?.name || 'N/A'}</div>
             </div>
 
             ${
-                data.member ? (
+                data.member
+                    ? `
                     <div class="row">
                         <div>Member Id Card</div>
-                        <div>${data.member?.membership_no}</div>
+                        <div>${data.member?.membership_no ?? '-'}</div>
                     </div>
-                ) : (
-                    ''
-                )
+                    `
+                    : data.employee
+                      ? `
+                    <div class="row">
+                        <div>Employee ID</div>
+                        <div>${data.employee?.employee_id ?? '-'}</div>
+                    </div>
+                    `
+                      : data.customer
+                        ? `
+                    <div class="row">
+                        <div>Guest No</div>
+                        <div>${data.customer?.customer_no ?? '-'}</div>
+                    </div>
+                    ${
+                        data.customer?.guestType?.name || data.customer?.guest_type?.name
+                            ? `
+                    <div class="row">
+                        <div>Guest Type</div>
+                        <div>${data.customer?.guestType?.name || data.customer?.guest_type?.name}</div>
+                    </div>
+                    `
+                            : ''
+                    }
+                    `
+                        : ''
             }
 
             <div class="row">
@@ -357,16 +381,42 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 <Typography variant="caption" color="text.secondary">
                     Customer Name
                 </Typography>
-                <Typography variant="caption">{paymentData.member?.full_name || paymentData.member?.name || (paymentData.customer ? paymentData.customer.name : paymentData.employee?.name) || 'N/A'}</Typography>
+                <Typography variant="caption">{paymentData.member?.full_name || paymentData.member?.name || paymentData.customer?.name || paymentData.employee?.name || 'N/A'}</Typography>
             </Box>
 
             {paymentData.member && (
                 <Box sx={styles.receiptRow}>
                     <Typography variant="caption" color="text.secondary">
-                        {paymentData.member ? 'Member Id Card' : 'Customer Id Card'}
+                        Member Id Card
                     </Typography>
                     <Typography variant="caption">{paymentData.member?.membership_no}</Typography>
                 </Box>
+            )}
+            {!paymentData.member && paymentData.employee && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        Employee ID
+                    </Typography>
+                    <Typography variant="caption">{paymentData.employee?.employee_id || '-'}</Typography>
+                </Box>
+            )}
+            {!paymentData.member && !paymentData.employee && paymentData.customer && (
+                <>
+                    <Box sx={styles.receiptRow}>
+                        <Typography variant="caption" color="text.secondary">
+                            Guest No
+                        </Typography>
+                        <Typography variant="caption">{paymentData.customer?.customer_no || '-'}</Typography>
+                    </Box>
+                    {paymentData.customer?.guestType?.name && (
+                        <Box sx={styles.receiptRow}>
+                            <Typography variant="caption" color="text.secondary">
+                                Guest Type
+                            </Typography>
+                            <Typography variant="caption">{paymentData.customer.guestType.name}</Typography>
+                        </Box>
+                    )}
+                </>
             )}
 
             <Box sx={styles.receiptRow}>

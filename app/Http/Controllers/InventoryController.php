@@ -20,67 +20,35 @@ use Inertia\Inertia;
 
 class InventoryController extends Controller
 {
-    private function restaurantId(Request $request = null)
-    {
-        $request = $request ?? request();
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
-        $requestedId = $request->query('restaurant_id') ?? $request->input('restaurant_id');
-
-        if ($requestedId !== null && $requestedId !== '') {
-            $user = Auth::guard('tenant')->user() ?? Auth::user();
-            $tenants = $user ? $user->getAccessibleTenants() : collect();
-
-            if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
-                $restaurantId = $requestedId;
-            }
-        }
-
-        return $restaurantId;
-    }
-
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
         $category_id = $request->query('category_id');
 
         $query = Product::latest()->with(['category', 'variants', 'variants.values']);
-
-        if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
-        }
 
         if ($category_id) {
             $query->where('category_id', $category_id);
         }
 
         $productLists = $query->paginate(15);
-        $categoriesList = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-            ->select('id', 'name')
-            ->get();
+        $categoriesList = Category::select('id', 'name')->get();
 
         return Inertia::render('App/Inventory/Dashboard', compact('productLists', 'categoriesList'));
     }
 
     public function getCategories(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
-
-        $categories = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-            ->latest()
-            ->get();
+        $categories = Category::latest()->get();
 
         return response()->json(['categories' => $categories]);
     }
 
     public function getSubCategoriesByCategory(Request $request, $category_id)
     {
-        $restaurantId = $this->restaurantId($request);
-
         $subCategories = PosSubCategory::where('category_id', $category_id)
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->select('id', 'name')
             ->get();
 
@@ -114,18 +82,12 @@ class InventoryController extends Controller
      */
     public function filter(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
-
         $query = Product::select([
             'id', 'name', 'menu_code', 'category_id', 'base_price',
             'current_stock', 'minimal_stock', 'status', 'images',
             'description'
         ])
             ->with(['category:id,name', 'variants:id,product_id,name,type', 'variants.values']);
-
-        if ($restaurantId) {
-            $query->where('tenant_id', $restaurantId);
-        }
 
         // Filter by name (case-insensitive)
         if ($request->filled('name')) {
@@ -177,16 +139,9 @@ class InventoryController extends Controller
      */
     public function create(Request $request)
     {
-        $user = Auth::guard('tenant')->user() ?? Auth::user();
-        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
-
-        $restaurantId = $this->restaurantId($request);
-
         return Inertia::render('App/Inventory/Product', [
             'product' => null,
             'id' => null,
-            'allrestaurants' => $allrestaurants->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->values(),
-            'activeTenantId' => $restaurantId,
         ]);
     }
 
@@ -195,11 +150,6 @@ class InventoryController extends Controller
      */
     public function store(Request $request)
     {
-        $restaurantId = $this->restaurantId($request);
-        if (!$restaurantId) {
-            abort(400, 'Restaurant is required.');
-        }
-
         // Validate the incoming request data
         $request->validate([
             'name' => 'nullable|string|max:255',
@@ -244,6 +194,11 @@ class InventoryController extends Controller
             }
         }
 
+        $currentStock = $request->input('current_stock');
+        $minimalStock = $request->input('minimal_stock');
+        $currentStock = ($currentStock === null || $currentStock === '') ? 0 : (int) $currentStock;
+        $minimalStock = ($minimalStock === null || $minimalStock === '') ? 0 : (int) $minimalStock;
+
         // Create a new product and store it in the database
         $product = Product::create([
             'name' => $request->input('name'),
@@ -251,8 +206,8 @@ class InventoryController extends Controller
             'category_id' => $request->input('category_id'),
             'sub_category_id' => $request->input('sub_category_id'),
             'manufacturer_id' => $request->input('manufacturer_id'),
-            'current_stock' => $request->input('current_stock', 0),
-            'minimal_stock' => $request->input('minimal_stock', 0),
+            'current_stock' => $currentStock,
+            'minimal_stock' => $minimalStock,
             'is_discountable' => $request->input('is_discountable', true),
             'is_salable' => $request->input('is_salable', true),
             'is_purchasable' => $request->input('is_purchasable', true),
@@ -266,7 +221,7 @@ class InventoryController extends Controller
             'base_price' => $request->input('base_price'),
             'description' => $request->input('description'),
             'images' => $imagePaths,
-            'tenant_id' => $restaurantId,
+            'tenant_id' => null,
             'created_by' => Auth::id(),
             'max_discount' => $request->input('max_discount'),
             'max_discount_type' => $request->input('max_discount_type', 'percentage'),
@@ -332,9 +287,7 @@ class InventoryController extends Controller
     // Get Single Product
     public function getProduct($id)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
         $product = Product::with(['variants:id,product_id,name', 'variants.values', 'kitchen'])
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->find($id);
         return response()->json(['success' => true, 'product' => $product], 200);
     }
@@ -344,19 +297,12 @@ class InventoryController extends Controller
      */
     public function show(Request $request, string $id)
     {
-        $user = Auth::guard('tenant')->user() ?? Auth::user();
-        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
-
-        $restaurantId = $this->restaurantId($request);
         $product = Product::with(['variants:id,product_id,name,type,active', 'variants.items', 'category', 'kitchen', 'ingredients'])
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->find($id);
 
         return Inertia::render('App/Inventory/Product', [
             'product' => $product,
             'id' => $id,
-            'allrestaurants' => $allrestaurants->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->values(),
-            'activeTenantId' => $restaurantId,
         ]);
     }
 
@@ -373,11 +319,6 @@ class InventoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $restaurantId = $this->restaurantId($request);
-        if (!$restaurantId) {
-            abort(400, 'Restaurant is required.');
-        }
-
         $request->validate([
             'name' => 'required|string|max:255',
             'menu_code' => 'required|string|max:100',
@@ -413,8 +354,7 @@ class InventoryController extends Controller
         ]);
 
         // Get current product to access existing images
-        $product = Product::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-            ->findOrFail($id);
+        $product = Product::findOrFail($id);
         $oldImages = $product->images ?? [];
 
         // Step 1: Process request images (mix of new files and existing paths)
@@ -455,16 +395,20 @@ class InventoryController extends Controller
             }
         }
 
+        $currentStock = $request->input('current_stock');
+        $minimalStock = $request->input('minimal_stock');
+        $currentStock = ($currentStock === null || $currentStock === '') ? 0 : (int) $currentStock;
+        $minimalStock = ($minimalStock === null || $minimalStock === '') ? 0 : (int) $minimalStock;
+
         Product::where('id', $id)
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->update([
             'name' => $request->input('name'),
             'menu_code' => $request->input('menu_code'),
             'category_id' => $request->input('category_id'),
             'sub_category_id' => $request->input('sub_category_id'),
             'manufacturer_id' => $request->input('manufacturer_id'),
-            'current_stock' => $request->input('current_stock', 0),
-            'minimal_stock' => $request->input('minimal_stock', 0),
+            'current_stock' => $currentStock,
+            'minimal_stock' => $minimalStock,
             'is_discountable' => $request->has('is_discountable') ? $request->boolean('is_discountable') : (bool) $product->is_discountable,
             'is_salable' => $request->input('is_salable', true),
             'is_purchasable' => $request->input('is_purchasable', true),
@@ -551,9 +495,7 @@ class InventoryController extends Controller
     public function destroy(string $id)
     {
         try {
-            $restaurantId = session('active_restaurant_id') ?? tenant('id');
-            $product = Product::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-                ->findOrFail($id);
+            $product = Product::findOrFail($id);
             $product->update(['deleted_by' => Auth::id()]);
             $product->delete();
             return response()->json(['success' => true, 'message' => 'Product deleted.']);
@@ -565,10 +507,7 @@ class InventoryController extends Controller
 
     public function trashed(Request $request)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
-
         $trashedProducts = Product::onlyTrashed()
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->with(['category'])
             ->when($request->search, function ($query, $search) {
                 $query
@@ -587,9 +526,7 @@ class InventoryController extends Controller
 
     public function restore($id)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
         $product = Product::withTrashed()
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->findOrFail($id);
         $product->restore();
 
@@ -598,9 +535,7 @@ class InventoryController extends Controller
 
     public function forceDelete($id)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
         $product = Product::withTrashed()
-            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->findOrFail($id);
 
         // Delete images from storage

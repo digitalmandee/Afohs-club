@@ -103,6 +103,7 @@ Route::prefix('pos')->middleware('web')->group(function () {
         Route::get('order/search-products', [\App\Http\Controllers\OrderController::class, 'searchProducts'])->name('pos.order.search.products');
         Route::get('order/savedOrder', [\App\Http\Controllers\OrderController::class, 'savedOrder'])->name('pos.order.savedOrder');
         Route::post('order/{id}/update', [\App\Http\Controllers\OrderController::class, 'update'])->name('pos.orders.update');
+        Route::post('order/{id}/move-table', [\App\Http\Controllers\OrderController::class, 'moveTable'])->name('pos.orders.move-table');
         Route::post('order/{id}/generate-invoice', [\App\Http\Controllers\OrderController::class, 'generateInvoice'])->name('pos.order.generate-invoice');
         Route::post('order/send/kitchen', [\App\Http\Controllers\OrderController::class, 'sendToKitchen'])->name('pos.order.send-to-kitchen');
 

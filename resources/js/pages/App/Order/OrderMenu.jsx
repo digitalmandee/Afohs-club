@@ -17,7 +17,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const OrderMenu = () => {
-    const { orderNo, orderContext, totalSavedOrders, allrestaurants, activeTenantId, firstCategoryId, reservation, is_new_order, activePosLocation } = usePage().props;
+    const { orderNo, orderContext, totalSavedOrders, firstCategoryId, reservation, is_new_order, activePosLocation } = usePage().props;
 
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
@@ -25,13 +25,6 @@ const OrderMenu = () => {
 
     // const [showPayment, setShowPayment] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(firstCategoryId || '');
-    const [selectedRestaurant, setSelectedRestaurant] = useState(() => {
-        if (Array.isArray(allrestaurants) && allrestaurants.length > 0) {
-            return allrestaurants[0].id;
-        }
-
-        return activeTenantId || '';
-    });
     const [variantProductId, setVariantProductId] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [activeView, setActiveView] = useState('orderDetail');
@@ -42,26 +35,6 @@ const OrderMenu = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [searchMode, setSearchMode] = useState('product'); // 'product' or 'booking'
-
-    useEffect(() => {
-        if (!selectedRestaurant && Array.isArray(allrestaurants) && allrestaurants.length > 0) {
-            setSelectedRestaurant(allrestaurants[0].id);
-        }
-    }, [allrestaurants, selectedRestaurant]);
-
-    useEffect(() => {
-        if (selectedRestaurant && !orderDetails.tenant_id && !orderDetails.restaurant_id) {
-            handleOrderDetailChange('tenant_id', selectedRestaurant);
-            handleOrderDetailChange('restaurant_id', selectedRestaurant);
-        }
-    }, [handleOrderDetailChange, orderDetails.restaurant_id, orderDetails.tenant_id, selectedRestaurant]);
-
-    const handleRestaurantChange = (restaurantId) => {
-        setSelectedRestaurant(restaurantId);
-        setSelectedCategory('');
-        handleOrderDetailChange('tenant_id', restaurantId);
-        handleOrderDetailChange('restaurant_id', restaurantId);
-    };
 
     const handleCategoryClick = (categoryId) => {
         setSelectedCategory(categoryId);
@@ -94,7 +67,7 @@ const OrderMenu = () => {
                 searchMode === 'booking'
                     ? route(routeNameForContext('api.cake-bookings.search'))
                     : route(routeNameForContext('order.search.products'));
-            const params = searchMode === 'booking' ? { query: value.trim() } : { search: value.trim(), restaurant_id: selectedRestaurant };
+            const params = searchMode === 'booking' ? { query: value.trim() } : { search: value.trim() };
 
             const response = await axios.get(url, { params });
 
@@ -118,11 +91,6 @@ const OrderMenu = () => {
 
     // Handle product click from search results
     const handleSearchProductClick = (product) => {
-        // If product is from different restaurant, switch restaurant first
-        if (product.tenant_id !== selectedRestaurant) {
-            handleRestaurantChange(product.tenant_id);
-        }
-
         // Add product to order
         handleProductClick(product);
 
@@ -137,6 +105,11 @@ const OrderMenu = () => {
         if (!product) {
             alert('Booking has no associated product/cake type.');
             return;
+        }
+
+        if (!orderDetails.tenant_id && product.tenant_id) {
+            handleOrderDetailChange('tenant_id', product.tenant_id);
+            handleOrderDetailChange('restaurant_id', product.tenant_id);
         }
 
         const bookedPrice = parseFloat(booking.total_price);
@@ -184,6 +157,11 @@ const OrderMenu = () => {
     const handleProductClick = (product) => {
         // Only check stock if management is enabled
         if (product.manage_stock && product.minimal_stock > product.current_stock - 1) return;
+
+        if (!orderDetails.tenant_id && product.tenant_id) {
+            handleOrderDetailChange('tenant_id', product.tenant_id);
+            handleOrderDetailChange('restaurant_id', product.tenant_id);
+        }
 
         if (product.variants && product.variants.length > 0) {
             setVariantProductId(product.id);
@@ -283,21 +261,17 @@ const OrderMenu = () => {
     };
 
     useEffect(() => {
-        handleOrderDetailChange('tenant_id', selectedRestaurant);
-        handleOrderDetailChange('restaurant_id', selectedRestaurant);
         setProducts([]);
-        axios
-            .get(route(routeNameForContext('products.categories')), { params: { restaurant_id: selectedRestaurant } })
-            .then((res) => {
-                const nextCategories = res.data.categories || [];
-                setCategories(nextCategories);
-                setSelectedCategory((prev) => {
-                    if (!prev) return nextCategories[0]?.id || '';
-                    const exists = nextCategories.some((c) => c.id === prev);
-                    return exists ? prev : nextCategories[0]?.id || '';
-                });
+        axios.get(route(routeNameForContext('products.categories'))).then((res) => {
+            const nextCategories = res.data.categories || [];
+            setCategories(nextCategories);
+            setSelectedCategory((prev) => {
+                if (!prev) return nextCategories[0]?.id || '';
+                const exists = nextCategories.some((c) => c.id === prev);
+                return exists ? prev : nextCategories[0]?.id || '';
             });
-    }, [selectedRestaurant]);
+        });
+    }, []);
 
     useEffect(() => {
         if (!selectedCategory) {
@@ -306,10 +280,10 @@ const OrderMenu = () => {
         }
         axios
             .get(route(routeNameForContext('products.bycategory'), { category_id: selectedCategory }), {
-                params: { order_type: orderDetails.order_type, restaurant_id: selectedRestaurant },
+                params: { order_type: orderDetails.order_type },
             })
             .then((res) => setProducts(res.data.products));
-    }, [selectedCategory, selectedRestaurant, orderDetails.order_type]);
+    }, [selectedCategory, orderDetails.order_type]);
 
     useEffect(() => {
         if (reservation) {
@@ -438,20 +412,6 @@ const OrderMenu = () => {
                                 <ArrowBack />
                             </IconButton>
                             <Typography sx={{ color: '#063455', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <FormControl fullWidth>
-                                <InputLabel id="restuarant-label">Restuarants</InputLabel>
-                                <Select labelId="restuarant-label" value={selectedRestaurant} size="small" label="Restuarants" onChange={(e) => handleRestaurantChange(e.target.value)}>
-                                    {allrestaurants && allrestaurants.length > 0
-                                        ? allrestaurants.map((item, index) => (
-                                              <MenuItem value={item.id} key={index}>
-                                                  {item.name}
-                                              </MenuItem>
-                                          ))
-                                        : ''}
-                                </Select>
-                            </FormControl>
                         </Box>
                     </Box>
 
@@ -709,7 +669,7 @@ const OrderMenu = () => {
                                                                     display: 'flex',
                                                                     flexDirection: 'column',
                                                                     alignItems: 'center',
-                                                                    border: product.tenant_id !== selectedRestaurant ? '2px solid #ff9800' : '1px solid #eee',
+                                                                    border: '1px solid #eee',
                                                                     opacity: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
                                                                     cursor: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
                                                                     borderRadius: 2,
@@ -721,29 +681,6 @@ const OrderMenu = () => {
                                                                     },
                                                                 }}
                                                             >
-                                                                {/* Restaurant indicator */}
-                                                                {product.tenant_id !== selectedRestaurant && (
-                                                                    <Box
-                                                                        sx={{
-                                                                            position: 'absolute',
-                                                                            top: -5,
-                                                                            right: -5,
-                                                                            bgcolor: '#ff9800',
-                                                                            color: 'white',
-                                                                            borderRadius: '50%',
-                                                                            width: 20,
-                                                                            height: 20,
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            justifyContent: 'center',
-                                                                            fontSize: '10px',
-                                                                            fontWeight: 'bold',
-                                                                        }}
-                                                                    >
-                                                                        !
-                                                                    </Box>
-                                                                )}
-
                                                                 {product.images && product.images.length > 0 && (
                                                                     <Box
                                                                         sx={{
@@ -782,8 +719,8 @@ const OrderMenu = () => {
                                                                 <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '9px' }}>
                                                                     Rs {product.base_price}
                                                                 </Typography>
-                                                                {product.tenant && product.tenant_id !== selectedRestaurant && (
-                                                                    <Typography variant="caption" sx={{ textAlign: 'center', color: '#ff9800', fontSize: '9px', mt: 0.5 }}>
+                                                                {product.tenant && (
+                                                                    <Typography variant="caption" sx={{ textAlign: 'center', fontSize: '9px', mt: 0.5 }}>
                                                                         {product.tenant.name}
                                                                     </Typography>
                                                                 )}

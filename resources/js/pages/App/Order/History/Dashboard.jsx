@@ -4,17 +4,20 @@ import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import { Search } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import { useState, useEffect, useMemo } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import debounce from 'lodash.debounce';
 import axios from 'axios';
 import { routeNameForContext } from '@/lib/utils';
+import EditOrderModal from '../Management/EditModal';
+import { enqueueSnackbar } from 'notistack';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }) => {
+const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], allrestaurants = [], canEditAfterBill = false }) => {
     const { auth } = usePage().props;
     const user = auth.user;
 
@@ -41,6 +44,9 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
     const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
+
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editOrderItems, setEditOrderItems] = useState([]);
 
     // Fetch Suggestions
     const fetchSuggestions = useMemo(
@@ -208,6 +214,43 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
         setSelectedOrderDetails(null);
     };
 
+    const handleOpenEdit = (order) => {
+        setSelectedOrder(order);
+        setEditOrderItems(order?.order_items || []);
+        setEditModalOpen(true);
+    };
+
+    const handleCloseEdit = () => {
+        setEditModalOpen(false);
+        setEditOrderItems([]);
+    };
+
+    const handleSaveEdit = (status) => {
+        if (!selectedOrder) return Promise.resolve(null);
+
+        const payload = {
+            updated_items: (editOrderItems || []).filter((it) => typeof it?.id === 'string' && it.id.startsWith('update-')),
+            new_items: (editOrderItems || []).filter((it) => it?.id === 'new'),
+            status,
+        };
+
+        return new Promise((resolve, reject) => {
+            router.post(route(routeNameForContext('orders.update'), { id: selectedOrder.id }), payload, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    enqueueSnackbar('Order updated successfully!', { variant: 'success' });
+                    handleCloseEdit();
+                    router.get(route(routeNameForContext('order.history')), filters, { preserveScroll: true, preserveState: true });
+                    resolve(true);
+                },
+                onError: (errors) => {
+                    enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
+                    reject(errors);
+                },
+            });
+        });
+    };
+
     useEffect(() => {
         if (!viewModalOpen || !selectedOrder?.id) return;
 
@@ -267,6 +310,9 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
         const printWindow = window.open('', '_blank');
         const customerName = order.member?.full_name || order.customer?.name || order.employee?.name || 'N/A';
         const memberNo = order.member?.membership_no || '';
+        const guestNo = order.customer?.customer_no || '';
+        const employeeNo = order.employee?.employee_id || '';
+        const guestTypeName = order.customer?.guestType?.name || '';
         const bankCharges = parseFloat(order.invoice_bank_charges_amount || 0);
 
         const itemsHtml =
@@ -313,6 +359,9 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             <div class="divider"></div>
             <div class="row"><div>Customer Name</div><div>${customerName}</div></div>
             ${memberNo ? `<div class="row"><div>Member Id</div><div>${memberNo}</div></div>` : ''}
+            ${!memberNo && employeeNo ? `<div class="row"><div>Employee ID</div><div>${employeeNo}</div></div>` : ''}
+            ${!memberNo && !employeeNo && guestNo ? `<div class="row"><div>Guest No</div><div>${guestNo}</div></div>` : ''}
+            ${!memberNo && !employeeNo && guestTypeName ? `<div class="row"><div>Guest Type</div><div>${guestTypeName}</div></div>` : ''}
             <div class="row"><div>Order Type</div><div>${formatOrderType(order.order_type)}</div></div>
             ${order.table ? `<div class="row"><div>Table Number</div><div>${order.table.table_no}</div></div>` : ''}
             ${order.tenant ? `<div class="row"><div>Restaurant</div><div>${order.tenant.name}</div></div>` : ''}
@@ -688,6 +737,13 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                                             <PrintIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
+                                                    {Boolean(canEditAfterBill) && (
+                                                        <Tooltip title="Edit Order">
+                                                            <IconButton size="small" onClick={() => handleOpenEdit(order)} sx={{ color: '#003153' }}>
+                                                                <EditIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
                                                 </Box>
                                             </TableCell>
                                         </TableRow>
@@ -1019,6 +1075,17 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                     )}
                 </DialogContent>
             </Dialog>
+            <EditOrderModal
+                open={editModalOpen}
+                allrestaurants={allrestaurants}
+                onClose={handleCloseEdit}
+                order={selectedOrder}
+                orderItems={editOrderItems}
+                setOrderItems={setEditOrderItems}
+                onSave={(status) => handleSaveEdit(status)}
+                onSaveAndPrint={null}
+                allowUpdateAndPrint={false}
+            />
             {/* </Box > */}
         </>
     );

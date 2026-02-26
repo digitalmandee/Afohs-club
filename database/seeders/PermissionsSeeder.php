@@ -289,6 +289,7 @@ class PermissionsSeeder extends Seeder
             'pos.orders.history',
             'pos.orders.create',
             'pos.orders.edit',
+            'pos.orders.edit-after-bill',
             'pos.orders.delete',
             'pos.orders.generate-invoice',
             'pos.orders.payment',

@@ -16,7 +16,6 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
@@ -104,6 +103,39 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
     const handleMemberType = (value) => {
         handleOrderDetailChange('member_type', value);
         handleOrderDetailChange('member', {});
+    };
+
+    const handleMemberSelection = (newValue) => {
+        if (!newValue) {
+            handleOrderDetailChange('member', {});
+            return;
+        }
+
+        if (newValue.booking_type !== 'member') {
+            handleOrderDetailChange('member', newValue);
+            return;
+        }
+
+        const status = String(newValue.status || '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '_');
+        const reason = newValue.status_reason || newValue.reason || '';
+
+        if (status === 'expired') {
+            enqueueSnackbar(`The membership has EXPIRED!${reason ? ` Reason: ${reason}` : ''}`, { variant: 'warning' });
+            handleOrderDetailChange('member', newValue);
+            return;
+        }
+
+        const blocked = new Set(['absent', 'suspended', 'terminated', 'not_assign', 'not_assigned', 'cancelled', 'inactive', 'in_suspension_process']);
+        if (blocked.has(status)) {
+            enqueueSnackbar(`Please consult Accounts Manager in order to continue with this Order.${reason ? ` Reason: ${reason}` : ''}`, { variant: 'error' });
+            handleOrderDetailChange('member', {});
+            return;
+        }
+
+        handleOrderDetailChange('member', newValue);
     };
 
     const handleGuestCreated = (newGuest) => {
@@ -556,7 +588,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
                         </Typography>
                         <Box display="flex" alignItems="center" gap={1}>
                             <Box sx={{ flexGrow: 1 }}>
-                                <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                                <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleMemberSelection(newValue)} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                             </Box>
                             <Button variant="contained" onClick={() => setShowGuestModal(true)} sx={{ backgroundColor: '#063455', color: '#fff', height: '40px' }}>
                                 + Add

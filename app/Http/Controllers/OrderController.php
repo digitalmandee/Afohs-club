@@ -45,6 +45,29 @@ use Mike42\Escpos\Printer;
 
 class OrderController extends Controller
 {
+    private function canEditAfterBill(User $user = null): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        try {
+            if (method_exists($user, 'can') && ($user->can('pos.orders.edit-after-bill') || $user->can('orders.edit_after_bill'))) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+        }
+
+        try {
+            if (method_exists($user, 'hasRole') && ($user->hasRole('Super Admin') || $user->hasRole('super-admin') || $user->hasRole('super admin'))) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+        }
+
+        return false;
+    }
+
     private function activeTenantId(Request $request = null)
     {
         $request = $request ?? request();
@@ -129,17 +152,15 @@ class OrderController extends Controller
             }
         }
 
-        $locationId = (int) (session('active_pos_location_id') ?? $restaurantId);
-
         $floorTables = Floor::select('id', 'name')
             ->where('status', 1)
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-            ->with(['tables' => function ($query) use ($today, $restaurantId, $locationId) {
+            ->with(['tables' => function ($query) use ($today, $restaurantId) {
                 $query
                     ->select('id', 'floor_id', 'table_no', 'capacity')
                     ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
                     ->with([
-                        'orders' => function ($orderQuery) use ($restaurantId, $locationId) {
+                        'orders' => function ($orderQuery) use ($restaurantId) {
                             $orderQuery
                                 ->select('id', 'table_id', 'status', 'payment_status', 'start_date')
                                 ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
@@ -148,7 +169,7 @@ class OrderController extends Controller
                                     $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
                                 });
                         },
-                        'reservations' => function ($resQuery) use ($today, $restaurantId, $locationId) {
+                        'reservations' => function ($resQuery) use ($today, $restaurantId) {
                             $resQuery
                                 ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'status')
                                 ->whereDate('date', $today)
@@ -169,7 +190,7 @@ class OrderController extends Controller
             ->whereNull('floor_id')
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->with([
-                'orders' => function ($orderQuery) use ($restaurantId, $locationId) {
+                'orders' => function ($orderQuery) use ($restaurantId) {
                     $orderQuery
                         ->select('id', 'table_id', 'status', 'payment_status', 'start_date')
                         ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
@@ -178,7 +199,7 @@ class OrderController extends Controller
                             $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
                         });
                 },
-                'reservations' => function ($resQuery) use ($today, $restaurantId, $locationId) {
+                'reservations' => function ($resQuery) use ($today, $restaurantId) {
                     $resQuery
                         ->select('id', 'table_id', 'date', 'start_time', 'end_time', 'status')
                         ->whereDate('date', $today)
@@ -288,12 +309,15 @@ class OrderController extends Controller
 
     public function orderManagement(Request $request)
     {
-        $filters = $request->only('search_id', 'search_name', 'search_membership', 'time', 'type', 'start_date', 'end_date');
-        $allrestaurants = Auth::user()->getAccessibleTenants();
+        $filters = $request->only('search_id', 'search_name', 'search_membership', 'time', 'client_type', 'customer_type', 'order_type', 'type', 'order_status', 'tenant_id', 'start_date', 'end_date');
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
+        $canEditAfterBill = $this->canEditAfterBill($user);
 
         // Check if request expects JSON (Axios call)
         if ($request->wantsJson()) {
-            $query = Order::where('created_by', Auth::id())
+            $tenants = $allrestaurants ?? collect();
+            $query = Order::query()
                 ->with([
                     'table:id,table_no',
                     'tenant:id,name',  // ✅ Load Tenant Name
@@ -306,15 +330,22 @@ class OrderController extends Controller
                     'waiter:id,name',  // Waiter relation
                 ]);
 
-            // ✅ Exclude paid orders from Order Management (table is free after payment)
-            // But INCLUDE 'awaiting' payment status (so generated invoices show up)
-            $query->where(function ($q) {
-                $q
-                    ->whereNull('payment_status')
-                    ->orWhere('payment_status', '!=', 'paid');
-            });
+            if (!$canEditAfterBill) {
+                $query->where('created_by', Auth::id());
+                // ✅ Exclude paid orders from Order Management (table is free after payment)
+                // But INCLUDE 'awaiting' payment status (so generated invoices show up)
+                $query->where(function ($q) {
+                    $q
+                        ->whereNull('payment_status')
+                        ->orWhere('payment_status', '!=', 'paid');
+                });
+            }
 
             $query->where('status', '!=', 'saved');
+
+            if ($request->filled('tenant_id') && $tenants->contains(fn($t) => (string) $t->id === (string) $request->tenant_id)) {
+                $query->where('tenant_id', $request->tenant_id);
+            }
 
             // 🔍 Search By ID
             if ($request->filled('search_id')) {
@@ -364,23 +395,43 @@ class OrderController extends Controller
                 $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
             }
 
-            // 🍽 Order type (Smart Filter)
-            if ($request->type && $request->type !== 'all') {
-                if ($request->type === 'member') {
+            $clientType = $request->input('client_type') ?? $request->input('customer_type');
+            if (!$clientType && in_array($request->type, ['member', 'corporate', 'employee', 'guest'], true)) {
+                $clientType = $request->type;
+            }
+
+            if ($clientType && $clientType !== 'all') {
+                if ($clientType === 'member') {
                     $query->whereNotNull('member_id');
-                } elseif ($request->type === 'employee') {
+                } elseif ($clientType === 'employee') {
                     $query->whereNotNull('employee_id');
-                } elseif ($request->type === 'guest') {
+                } elseif ($clientType === 'guest') {
                     $query
                         ->whereNotNull('customer_id')
                         ->whereNull('member_id')
                         ->whereNull('employee_id');
-                } elseif ($request->type === 'corporate') {
+                } elseif ($clientType === 'corporate') {
                     $query->whereHas('member.memberType', function ($q) {
                         $q->where('name', 'Corporate');
                     });
+                }
+            }
+
+            $orderType = $request->input('order_type');
+            if (!$orderType && $request->type && !in_array($request->type, ['all', 'member', 'corporate', 'employee', 'guest'], true)) {
+                $orderType = $request->type;
+            }
+            if ($orderType && $orderType !== 'all') {
+                $query->where('order_type', $orderType);
+            }
+
+            if ($request->filled('order_status') && $request->order_status !== 'all') {
+                if ($request->order_status === 'waiting_for_payment') {
+                    $query->where('payment_status', 'awaiting');
+                } elseif ($request->order_status === 'in_progress') {
+                    $query->whereIn('status', ['pending', 'in_progress']);
                 } else {
-                    $query->where('order_type', $request->type);
+                    $query->where('status', $request->order_status);
                 }
             }
 
@@ -402,8 +453,136 @@ class OrderController extends Controller
         return Inertia::render('App/Order/Management/Dashboard', [
             'initialOrders' => null,  // Frontend will fetch
             'allrestaurants' => $allrestaurants,
-            'filters' => $filters  // Pass filters to populate inputs
+            'filters' => $filters,  // Pass filters to populate inputs
+            'canEditAfterBill' => $canEditAfterBill,
         ]);
+    }
+
+    public function moveTable(Request $request, $id)
+    {
+        if (!$this->checkActiveShift()) {
+            return response()->json([
+                'message' => 'You must have an active shift to move tables.',
+                'error_code' => 'NO_ACTIVE_SHIFT'
+            ], 403);
+        }
+
+        $request->validate([
+            'restaurant_id' => 'required',
+            'table_id' => 'required|exists:tables,id',
+        ]);
+
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $tenants = $user ? $user->getAccessibleTenants() : collect();
+
+        $restaurantId = (string) $request->restaurant_id;
+        if (!$tenants->contains(fn($t) => (string) $t->id === $restaurantId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid restaurant.',
+            ], 422);
+        }
+
+        $order = Order::where('created_by', Auth::id())->with('table:id,table_no')->findOrFail($id);
+
+        if ($order->status === 'completed' || $order->status === 'cancelled' || $order->status === 'refund' || $order->payment_status === 'awaiting') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This order cannot be moved.',
+            ], 422);
+        }
+
+        $invoiceExists = FinancialInvoice::where(function ($q) use ($order) {
+            $q
+                ->where(function ($sq) use ($order) {
+                    $sq->where('invoiceable_type', Order::class)->where('invoiceable_id', $order->id);
+                })
+                ->orWhereJsonContains('data->order_id', $order->id);
+        })->exists();
+
+        if ($invoiceExists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invoice already generated for this order.',
+            ], 422);
+        }
+
+        $tableId = (int) $request->table_id;
+        $table = Table::select('id', 'tenant_id', 'location_id', 'table_no')->whereKey($tableId)->firstOrFail();
+
+        if ((string) $table->tenant_id !== $restaurantId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected table does not belong to selected restaurant.',
+            ], 422);
+        }
+
+        $activeShift = $this->getActiveShift();
+        $shiftDate = $activeShift?->start_date ?? Carbon::today()->toDateString();
+
+        $conflictingOrder = Order::where('id', '!=', $order->id)
+            ->where('tenant_id', $restaurantId)
+            ->where('table_id', $tableId)
+            ->whereDate('start_date', $shiftDate)
+            ->whereIn('status', ['pending', 'in_progress', 'completed'])
+            ->where(function ($q) {
+                $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
+            })
+            ->latest('id')
+            ->first();
+
+        if ($conflictingOrder) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected table already has an active order (#' . $conflictingOrder->id . ').',
+            ], 409);
+        }
+
+        $conflictingReservation = Reservation::where('tenant_id', $restaurantId)
+            ->where('table_id', $tableId)
+            ->whereDate('date', $shiftDate)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->exists();
+
+        if ($conflictingReservation) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected table is reserved today.',
+            ], 409);
+        }
+
+        DB::beginTransaction();
+        try {
+            $posLocationId = (int) ($request->session()->get('active_pos_location_id') ?? $order->location_id ?? $activeShift?->location_id);
+
+            $order->update([
+                'tenant_id' => $restaurantId,
+                'location_id' => $posLocationId ?: $order->location_id,
+                'table_id' => $tableId,
+            ]);
+
+            OrderItem::where('order_id', $order->id)->update([
+                'tenant_id' => $restaurantId,
+                'location_id' => $posLocationId ?: null,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order moved successfully.',
+                'order_id' => $order->id,
+                'table_id' => $tableId,
+                'restaurant_id' => $restaurantId,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to move order.',
+            ], 500);
+        }
     }
 
     public function generateInvoice($id)
@@ -601,15 +780,15 @@ class OrderController extends Controller
 
     public function orderMenu(Request $request)
     {
-        $restaurantId = $this->selectedRestaurantId($request);
+        $restaurantId = $request->routeIs('pos.*') ? null : $this->selectedRestaurantId($request);
         $totalSavedOrders = Order::where('status', 'saved')
             ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
             ->count();
 
-        $user = Auth::guard('tenant')->user() ?? Auth::user();
-        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
-        $activeTenantId = $restaurantId;
-        $latestCategory = Category::where('tenant_id', $restaurantId)->latest()->first();
+        $latestCategory = Category::query()
+            ->when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
+            ->latest()
+            ->first();
         $firstCategoryId = $latestCategory->id ?? null;
 
         $orderContext = null;
@@ -796,8 +975,6 @@ class OrderController extends Controller
 
         return Inertia::render('App/Order/OrderMenu', [
             'totalSavedOrders' => $totalSavedOrders,
-            'allrestaurants' => $allrestaurants,
-            'activeTenantId' => $activeTenantId,
             'firstCategoryId' => $firstCategoryId,
             'reservation' => $reservation,  // Reservation flow
             'is_new_order' => $request->boolean('is_new_order'),  // Flag to distinguish New Reservation flow
@@ -1650,11 +1827,10 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
-        // Enforce Active Shift for updates too (mostly adding items)
-        // If just changing status to paid, maybe allow?
-        // User said "start shift... everyday before taking his first order".
-        // Let's enforce for safety.
-        if (!$this->checkActiveShift()) {
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $canEditAfterBill = $this->canEditAfterBill($user);
+
+        if (!$this->checkActiveShift() && !$canEditAfterBill) {
             return response()->json([
                 'message' => 'You must have an active shift to update orders.',
                 'error_code' => 'NO_ACTIVE_SHIFT'
@@ -1684,6 +1860,13 @@ class OrderController extends Controller
 
         try {
             $order = Order::findOrFail($id);
+            if (!$canEditAfterBill && (string) $order->created_by !== (string) Auth::id()) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'You are not allowed to update this order.',
+                    'error_code' => 'FORBIDDEN',
+                ], 403);
+            }
 
             $getItemId = function ($rawId) {
                 if (is_int($rawId) || (is_string($rawId) && ctype_digit($rawId))) {
@@ -2111,7 +2294,7 @@ class OrderController extends Controller
                         }
                     }
                 }
-            } elseif ($financialInvoice && $financialInvoice->status !== 'paid') {
+            } elseif ($financialInvoice && ($financialInvoice->status !== 'paid' || $canEditAfterBill)) {
                 if ($validated['status'] === 'cancelled' || $validated['status'] === 'refund') {
                     // Mark invoice as cancelled
                     $financialInvoice->update(['status' => 'cancelled']);
@@ -2122,20 +2305,7 @@ class OrderController extends Controller
                         'total_price' => $computedTotal,
                     ]);
 
-                    // ✅ Sync Ledger (Debit) if unpaid
-                    $transaction = Transaction::where('reference_type', FinancialInvoice::class)
-                        ->where('reference_id', $financialInvoice->id)
-                        ->where('type', 'debit')
-                        ->first();
-
-                    if ($transaction) {
-                        $transaction->update([
-                            'amount' => $computedTotal,
-                            'description' => 'Food Order Invoice #' . $financialInvoice->invoice_no . ' (Updated)',
-                        ]);
-                    }
-
-                    // ✅ Sync Ledger (Debit) if unpaid
+                    // ✅ Sync Ledger (Debit)
                     $transaction = Transaction::where('reference_type', FinancialInvoice::class)
                         ->where('reference_id', $financialInvoice->id)
                         ->where('type', 'debit')
@@ -2178,20 +2348,22 @@ class OrderController extends Controller
         }
 
         $productsQuery = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id);
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
-        $requestedId = $request->query('restaurant_id');
+        if (! $request->routeIs('pos.*')) {
+            $restaurantId = session('active_restaurant_id') ?? tenant('id');
+            $requestedId = $request->query('restaurant_id');
 
-        if ($requestedId !== null && $requestedId !== '') {
-            $user = Auth::guard('tenant')->user() ?? Auth::user();
-            $tenants = $user ? $user->getAccessibleTenants() : collect();
+            if ($requestedId !== null && $requestedId !== '') {
+                $user = Auth::guard('tenant')->user() ?? Auth::user();
+                $tenants = $user ? $user->getAccessibleTenants() : collect();
 
-            if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
-                $restaurantId = $requestedId;
+                if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
+                    $restaurantId = $requestedId;
+                }
             }
-        }
 
-        if ($restaurantId) {
-            $productsQuery->where('tenant_id', $restaurantId);
+            if ($restaurantId) {
+                $productsQuery->where('tenant_id', $restaurantId);
+            }
         }
 
         // Only filter by order_type if it exists and is not 'room_service'
@@ -2215,21 +2387,27 @@ class OrderController extends Controller
 
     public function getCategories(Request $request)
     {
-        $restaurantId = session('active_restaurant_id') ?? tenant('id');
-        $requestedId = $request->query('restaurant_id');
+        $categoriesQuery = Category::query();
 
-        if ($requestedId !== null && $requestedId !== '') {
-            $user = Auth::guard('tenant')->user() ?? Auth::user();
-            $tenants = $user ? $user->getAccessibleTenants() : collect();
+        if (! $request->routeIs('pos.*')) {
+            $restaurantId = session('active_restaurant_id') ?? tenant('id');
+            $requestedId = $request->query('restaurant_id');
 
-            if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
-                $restaurantId = $requestedId;
+            if ($requestedId !== null && $requestedId !== '') {
+                $user = Auth::guard('tenant')->user() ?? Auth::user();
+                $tenants = $user ? $user->getAccessibleTenants() : collect();
+
+                if ($tenants->contains(fn($t) => (string) $t->id === (string) $requestedId)) {
+                    $restaurantId = $requestedId;
+                }
+            }
+
+            if ($restaurantId) {
+                $categoriesQuery->where('tenant_id', $restaurantId);
             }
         }
 
-        $categories = Category::when($restaurantId, fn($q) => $q->where('tenant_id', $restaurantId))
-            ->latest()
-            ->get();
+        $categories = $categoriesQuery->latest()->get();
 
         return response()->json(['categories' => $categories]);
     }
@@ -2390,6 +2568,8 @@ class OrderController extends Controller
      */
     public function orderHistory(Request $request)
     {
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $canEditAfterBill = $this->canEditAfterBill($user);
         $query = Order::with([
             'table:id,table_no',
             'tenant:id,name',  // ✅ Load Tenant Name
@@ -2547,12 +2727,16 @@ class OrderController extends Controller
             ->get();
         $cashiers = User::select('id', 'name')->get();
 
+        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
+
         return Inertia::render('App/Order/History/Dashboard', [
             'orders' => $orders,
             'filters' => $request->all(),
             'tables' => $tables,
             'waiters' => $waiters,
             'cashiers' => $cashiers,
+            'canEditAfterBill' => $canEditAfterBill,
+            'allrestaurants' => $allrestaurants,
         ]);
     }
 }
