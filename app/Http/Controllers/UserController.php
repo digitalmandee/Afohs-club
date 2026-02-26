@@ -243,7 +243,9 @@ class UserController extends Controller
                 'members.personal_email',
                 'members.mobile_number_a',
                 'members.status',
+                'members.reason',
                 'member_categories.name as category_name',
+                DB::raw('(SELECT msh.reason FROM member_status_histories msh WHERE msh.member_id = members.id ORDER BY msh.id DESC LIMIT 1) as status_reason'),
             ];
             if ($includeKinships) {
                 $selectColumns[] = DB::raw('(SELECT COUNT(*) FROM members AS fm WHERE fm.kinship = members.id) as total_kinships');
@@ -272,6 +274,7 @@ class UserController extends Controller
                     'phone' => $user->mobile_number_a,
                     'address' => $user->current_address,
                     'status' => $user->status ?? 'active',
+                    'status_reason' => $user->status_reason ?: ($user->reason ?? null),
                 ];
                 if ($includeKinships) {
                     $payload['total_kinships'] = $user->total_kinships;
@@ -288,7 +291,9 @@ class UserController extends Controller
                 'corporate_members.personal_email',
                 'corporate_members.mobile_number_a',
                 'corporate_members.status',
+                'corporate_members.reason',
                 'member_categories.name as category_name',
+                DB::raw('(SELECT msh.reason FROM member_status_histories msh WHERE msh.corporate_member_id = corporate_members.id ORDER BY msh.id DESC LIMIT 1) as status_reason'),
             ];
             if ($includeKinships) {
                 $selectColumns[] = DB::raw('(SELECT COUNT(*) FROM corporate_members AS fm WHERE fm.kinship = corporate_members.id) as total_kinships');
@@ -318,6 +323,7 @@ class UserController extends Controller
                     'phone' => $user->mobile_number_a,
                     'address' => $user->current_address,
                     'status' => $user->status ?? 'active',
+                    'status_reason' => $user->status_reason ?: ($user->reason ?? null),
                 ];
                 if ($includeKinships) {
                     $payload['total_kinships'] = $user->total_kinships;

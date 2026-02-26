@@ -9,12 +9,19 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import VariantSelectorDialog from '../VariantSelectorDialog';
 
-const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, initialRestaurantId, orderType }) => {
+const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, initialRestaurantId, orderType, disableRestaurantSelect = false }) => {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedRestaurant, setSelectedRestaurant] = useState(initialRestaurantId || allrestaurants[0]?.id || '');
+
+    useEffect(() => {
+        if (!disableRestaurantSelect) return;
+        const next = initialRestaurantId || allrestaurants[0]?.id || '';
+        if (!next) return;
+        setSelectedRestaurant(next);
+    }, [disableRestaurantSelect, initialRestaurantId, allrestaurants]);
 
     const handleCategoryClick = (categoryId) => {
         setSelectedCategory(categoryId);
@@ -216,19 +223,21 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, i
                             </Button>
                         </Box>
 
-                        <Box>
-                            <FormControl fullWidth>
-                                <InputLabel id="restuarant-label">Restuarants</InputLabel>
-                                <Select labelId="restuarant-label" size="small" value={selectedRestaurant} label="Restuarants" onChange={(e) => setSelectedRestaurant(e.target.value)}>
-                                    {allrestaurants.length > 0 &&
-                                        allrestaurants.map((item, index) => (
-                                            <MenuItem value={item.id} key={index}>
-                                                {item.name}
-                                            </MenuItem>
-                                        ))}
-                                </Select>
-                            </FormControl>
-                        </Box>
+                        {!disableRestaurantSelect && (
+                            <Box>
+                                <FormControl fullWidth>
+                                    <InputLabel id="restuarant-label">Restuarants</InputLabel>
+                                    <Select labelId="restuarant-label" size="small" value={selectedRestaurant} label="Restuarants" onChange={(e) => setSelectedRestaurant(e.target.value)}>
+                                        {allrestaurants.length > 0 &&
+                                            allrestaurants.map((item, index) => (
+                                                <MenuItem value={item.id} key={index}>
+                                                    {item.name}
+                                                </MenuItem>
+                                            ))}
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        )}
                     </Box>
 
                     {variantPopupOpen && variantProduct && (

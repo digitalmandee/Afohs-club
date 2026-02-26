@@ -998,21 +998,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                     >
                         Pay Now
                     </Button>
-                ) : (
-                    <Button
-                        variant="contained"
-                        startIcon={<PrintIcon />}
-                        disabled={orderDetails.order_items.length === 0 || !orderDetails.member}
-                        sx={{
-                            flex: 2,
-                            bgcolor: '#063455',
-                            '&:hover': { bgcolor: '#063455' },
-                            textTransform: 'none',
-                        }}
-                    >
-                        Print Receipt
-                    </Button>
-                )}
+                ) : ('')}
             </Box>
 
             {/* Reservation Popup */}

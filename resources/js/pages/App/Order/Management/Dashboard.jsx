@@ -18,7 +18,7 @@ import { routeNameForContext } from '@/lib/utils';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
+const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill }) => {
     // Orders State loaded via Axios
     const [orders, setOrders] = useState(initialOrders || { data: [], current_page: 1, last_page: 1 });
     const [loading, setLoading] = useState(true);
@@ -238,7 +238,9 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                 onSuccess: () => {
                     enqueueSnackbar('Order updated successfully!', { variant: 'success' });
                     setOpenModal(false);
-                    resolve(); // <-- resolve the promise
+                    fetchOrders(orders.current_page || 1)
+                        .then((res) => resolve(res))
+                        .catch(() => resolve(null));
                 },
                 onError: (errors) => {
                     enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
@@ -246,6 +248,15 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                 },
             });
         });
+    };
+
+    const onSaveAndPrint = async (status) => {
+        const res = await onSave(status);
+        const updatedOrder = res?.data?.data?.find((o) => String(o.id) === String(selectedCard?.id));
+        if (updatedOrder) {
+            setSelectedCard(updatedOrder);
+        }
+        setBillModalOpen(true);
     };
 
     // Fetch Suggestions
@@ -274,7 +285,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
 
     const fetchOrders = (page = 1) => {
         setLoading(true);
-        axios
+        return axios
             .get(route(routeNameForContext('order.management')), {
                 params: {
                     page,
@@ -296,11 +307,13 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
             .then((res) => {
                 setOrders(res.data);
                 setLoading(false);
+                return res;
             })
             .catch((err) => {
                 console.error(err);
                 setLoading(false);
                 enqueueSnackbar('Failed to load orders', { variant: 'error' });
+                throw err;
             });
     };
 
@@ -921,7 +934,11 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                     <Button
                                                         variant="contained"
                                                         fullWidth
-                                                        disabled={card.status === 'completed' || card.status === 'cancelled'} // Disable Edit if completed/cancelled
+                                                        disabled={
+                                                            card.status === 'cancelled' ||
+                                                            card.status === 'refund' ||
+                                                            (!canEditAfterBill && (card.status === 'completed' || Boolean(card.invoice) || card.payment_status === 'awaiting' || card.payment_status === 'paid'))
+                                                        }
                                                         sx={{
                                                             px: 0,
                                                             bgcolor: '#003153',
@@ -1004,6 +1021,8 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                         orderItems={orderItems}
                         setOrderItems={setOrderItems}
                         onSave={(status) => onSave(status)}
+                        onSaveAndPrint={(status) => onSaveAndPrint(status)}
+                        allowUpdateAndPrint={Boolean(canEditAfterBill && (selectedCard?.invoice || selectedCard?.payment_status))}
                     />
 
                     {/* PaymentModal */}

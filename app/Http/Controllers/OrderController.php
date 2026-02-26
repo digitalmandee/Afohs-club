@@ -45,6 +45,29 @@ use Mike42\Escpos\Printer;
 
 class OrderController extends Controller
 {
+    private function canEditAfterBill(User $user = null): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        try {
+            if (method_exists($user, 'can') && ($user->can('pos.orders.edit-after-bill') || $user->can('orders.edit_after_bill'))) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+        }
+
+        try {
+            if (method_exists($user, 'hasRole') && ($user->hasRole('Super Admin') || $user->hasRole('super-admin') || $user->hasRole('super admin'))) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+        }
+
+        return false;
+    }
+
     private function activeTenantId(Request $request = null)
     {
         $request = $request ?? request();
@@ -287,12 +310,14 @@ class OrderController extends Controller
     public function orderManagement(Request $request)
     {
         $filters = $request->only('search_id', 'search_name', 'search_membership', 'time', 'client_type', 'customer_type', 'order_type', 'type', 'order_status', 'tenant_id', 'start_date', 'end_date');
-        $allrestaurants = Auth::user()->getAccessibleTenants();
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
+        $canEditAfterBill = $this->canEditAfterBill($user);
 
         // Check if request expects JSON (Axios call)
         if ($request->wantsJson()) {
             $tenants = $allrestaurants ?? collect();
-            $query = Order::where('created_by', Auth::id())
+            $query = Order::query()
                 ->with([
                     'table:id,table_no',
                     'tenant:id,name',  // ✅ Load Tenant Name
@@ -305,13 +330,16 @@ class OrderController extends Controller
                     'waiter:id,name',  // Waiter relation
                 ]);
 
-            // ✅ Exclude paid orders from Order Management (table is free after payment)
-            // But INCLUDE 'awaiting' payment status (so generated invoices show up)
-            $query->where(function ($q) {
-                $q
-                    ->whereNull('payment_status')
-                    ->orWhere('payment_status', '!=', 'paid');
-            });
+            if (!$canEditAfterBill) {
+                $query->where('created_by', Auth::id());
+                // ✅ Exclude paid orders from Order Management (table is free after payment)
+                // But INCLUDE 'awaiting' payment status (so generated invoices show up)
+                $query->where(function ($q) {
+                    $q
+                        ->whereNull('payment_status')
+                        ->orWhere('payment_status', '!=', 'paid');
+                });
+            }
 
             $query->where('status', '!=', 'saved');
 
@@ -425,7 +453,8 @@ class OrderController extends Controller
         return Inertia::render('App/Order/Management/Dashboard', [
             'initialOrders' => null,  // Frontend will fetch
             'allrestaurants' => $allrestaurants,
-            'filters' => $filters  // Pass filters to populate inputs
+            'filters' => $filters,  // Pass filters to populate inputs
+            'canEditAfterBill' => $canEditAfterBill,
         ]);
     }
 
@@ -1798,11 +1827,10 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
-        // Enforce Active Shift for updates too (mostly adding items)
-        // If just changing status to paid, maybe allow?
-        // User said "start shift... everyday before taking his first order".
-        // Let's enforce for safety.
-        if (!$this->checkActiveShift()) {
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $canEditAfterBill = $this->canEditAfterBill($user);
+
+        if (!$this->checkActiveShift() && !$canEditAfterBill) {
             return response()->json([
                 'message' => 'You must have an active shift to update orders.',
                 'error_code' => 'NO_ACTIVE_SHIFT'
@@ -1832,6 +1860,13 @@ class OrderController extends Controller
 
         try {
             $order = Order::findOrFail($id);
+            if (!$canEditAfterBill && (string) $order->created_by !== (string) Auth::id()) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'You are not allowed to update this order.',
+                    'error_code' => 'FORBIDDEN',
+                ], 403);
+            }
 
             $getItemId = function ($rawId) {
                 if (is_int($rawId) || (is_string($rawId) && ctype_digit($rawId))) {
@@ -2259,7 +2294,7 @@ class OrderController extends Controller
                         }
                     }
                 }
-            } elseif ($financialInvoice && $financialInvoice->status !== 'paid') {
+            } elseif ($financialInvoice && ($financialInvoice->status !== 'paid' || $canEditAfterBill)) {
                 if ($validated['status'] === 'cancelled' || $validated['status'] === 'refund') {
                     // Mark invoice as cancelled
                     $financialInvoice->update(['status' => 'cancelled']);
@@ -2270,20 +2305,7 @@ class OrderController extends Controller
                         'total_price' => $computedTotal,
                     ]);
 
-                    // ✅ Sync Ledger (Debit) if unpaid
-                    $transaction = Transaction::where('reference_type', FinancialInvoice::class)
-                        ->where('reference_id', $financialInvoice->id)
-                        ->where('type', 'debit')
-                        ->first();
-
-                    if ($transaction) {
-                        $transaction->update([
-                            'amount' => $computedTotal,
-                            'description' => 'Food Order Invoice #' . $financialInvoice->invoice_no . ' (Updated)',
-                        ]);
-                    }
-
-                    // ✅ Sync Ledger (Debit) if unpaid
+                    // ✅ Sync Ledger (Debit)
                     $transaction = Transaction::where('reference_type', FinancialInvoice::class)
                         ->where('reference_id', $financialInvoice->id)
                         ->where('type', 'debit')
@@ -2546,6 +2568,8 @@ class OrderController extends Controller
      */
     public function orderHistory(Request $request)
     {
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        $canEditAfterBill = $this->canEditAfterBill($user);
         $query = Order::with([
             'table:id,table_no',
             'tenant:id,name',  // ✅ Load Tenant Name
@@ -2703,12 +2727,16 @@ class OrderController extends Controller
             ->get();
         $cashiers = User::select('id', 'name')->get();
 
+        $allrestaurants = $user ? $user->getAccessibleTenants() : collect();
+
         return Inertia::render('App/Order/History/Dashboard', [
             'orders' => $orders,
             'filters' => $request->all(),
             'tables' => $tables,
             'waiters' => $waiters,
             'cashiers' => $cashiers,
+            'canEditAfterBill' => $canEditAfterBill,
+            'allrestaurants' => $allrestaurants,
         ]);
     }
 }

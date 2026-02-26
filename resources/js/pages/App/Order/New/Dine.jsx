@@ -48,6 +48,39 @@ const DineDialog = ({ guestTypes, floorTables, allrestaurants, selectedRestauran
         handleOrderDetailChange('member', {});
     };
 
+    const handleMemberSelection = (newValue) => {
+        if (!newValue) {
+            handleOrderDetailChange('member', {});
+            return;
+        }
+
+        if (newValue.booking_type !== 'member') {
+            handleOrderDetailChange('member', newValue);
+            return;
+        }
+
+        const status = String(newValue.status || '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '_');
+        const reason = newValue.status_reason || newValue.reason || '';
+
+        if (status === 'expired') {
+            enqueueSnackbar(`The membership has EXPIRED!${reason ? ` Reason: ${reason}` : ''}`, { variant: 'warning' });
+            handleOrderDetailChange('member', newValue);
+            return;
+        }
+
+        const blocked = new Set(['absent', 'suspended', 'terminated', 'not_assign', 'not_assigned', 'cancelled', 'inactive', 'in_suspension_process']);
+        if (blocked.has(status)) {
+            enqueueSnackbar(`Please consult Accounts Manager in order to continue with this Order.${reason ? ` Reason: ${reason}` : ''}`, { variant: 'error' });
+            handleOrderDetailChange('member', {});
+            return;
+        }
+
+        handleOrderDetailChange('member', newValue);
+    };
+
     const handleFilterOptionChange = (event, newFilterOption) => {
         if (newFilterOption !== null) {
             setFilterOption(newFilterOption);
@@ -173,7 +206,7 @@ const DineDialog = ({ guestTypes, floorTables, allrestaurants, selectedRestauran
                     </Typography>
                     <Box display="flex" alignItems="center" gap={1}>
                         <Box sx={{ flexGrow: 1 }}>
-                            <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                            <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleMemberSelection(newValue)} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                         </Box>
                         <Button variant="contained" onClick={() => setShowGuestModal(true)} sx={{ backgroundColor: '#063455', color: '#fff', height: '40px' }}>
                             + Add

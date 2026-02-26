@@ -7,6 +7,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Box, Button, FormControl, FormControlLabel, Grid, Radio, RadioGroup, TextField, Typography, Autocomplete } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
+import { enqueueSnackbar } from 'notistack';
 
 const TakeAwayDialog = ({ guestTypes, selectedRestaurant }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
@@ -59,6 +60,32 @@ const TakeAwayDialog = ({ guestTypes, selectedRestaurant }) => {
     };
 
     const handleMemberChange = (value) => {
+        if (!value) {
+            handleOrderDetailChange('member', {});
+            handleOrderDetailChange('address', '');
+            return;
+        }
+
+        if (value.booking_type === 'member') {
+            const status = String(value.status || '')
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, '_');
+            const reason = value.status_reason || value.reason || '';
+
+            if (status === 'expired') {
+                enqueueSnackbar(`The membership has EXPIRED!${reason ? ` Reason: ${reason}` : ''}`, { variant: 'warning' });
+            } else {
+                const blocked = new Set(['absent', 'suspended', 'terminated', 'not_assign', 'not_assigned', 'cancelled', 'inactive', 'in_suspension_process']);
+                if (blocked.has(status)) {
+                    enqueueSnackbar(`Please consult Accounts Manager in order to continue with this Order.${reason ? ` Reason: ${reason}` : ''}`, { variant: 'error' });
+                    handleOrderDetailChange('member', {});
+                    handleOrderDetailChange('address', '');
+                    return;
+                }
+            }
+        }
+
         handleOrderDetailChange('member', value);
         handleOrderDetailChange('address', value?.address || '');
     };
@@ -141,7 +168,7 @@ const TakeAwayDialog = ({ guestTypes, selectedRestaurant }) => {
                         <Grid item xs={12}>
                             <Box display="flex" alignItems="center" gap={1}>
                                 <Box sx={{ flexGrow: 1 }}>
-                                    <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                                    <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleMemberChange(newValue || null)} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                                 </Box>
                                 <Button variant="contained" onClick={() => setShowGuestModal(true)} sx={{ backgroundColor: '#063455', color: '#fff', height: '40px' }}>
                                     + Add
