@@ -107,12 +107,12 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                         height: '100%',
                                         boxSizing: 'border-box',
                                     },
-                                    '& legend': {
-                                        display: 'none', // hides outline label gap
-                                    },
-                                    '& label': {
-                                        top: '-10px', // tweak this to move label vertically
-                                    },
+                                    // '& legend': {
+                                    //     display: 'none', // hides outline label gap
+                                    // },
+                                    // '& label': {
+                                    //     top: '-10px', // tweak this to move label vertically
+                                    // },
                                 }}
                             />
                         </Grid>
@@ -126,25 +126,39 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                 onChange={(e) => setData('name', e.target.value)}
                                 error={!!errors.name}
                                 helperText={errors.name}
+                                // sx={{
+                                //     width: '100%',
+                                //     '& .MuiInputBase-root': {
+                                //         height: 35,
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //     },
+                                //     '& .MuiSelect-select': {
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //         padding: '0 14px !important', // override MUI default
+                                //         height: '100%',
+                                //         boxSizing: 'border-box',
+                                //     },
+                                //     '& legend': {
+                                //         display: 'none', // hides outline label gap
+                                //     },
+                                //     '& label': {
+                                //         top: '-5px', // tweak this to move label vertically
+                                //     },
+                                // }}
                                 sx={{
-                                    width: '100%',
-                                    '& .MuiInputBase-root': {
+                                    '& .MuiOutlinedInput-root': {
                                         height: 35,
-                                        display: 'flex',
-                                        alignItems: 'center',
+                                        '& input': {
+                                            padding: '8px 14px',
+                                        },
                                     },
-                                    '& .MuiSelect-select': {
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: '0 14px !important', // override MUI default
-                                        height: '100%',
-                                        boxSizing: 'border-box',
+                                    '& .MuiInputLabel-root': {
+                                        transform: 'translate(14px, 9px) scale(1)',
                                     },
-                                    '& legend': {
-                                        display: 'none', // hides outline label gap
-                                    },
-                                    '& label': {
-                                        top: '-10px', // tweak this to move label vertically
+                                    '& .MuiInputLabel-shrink': {
+                                        transform: 'translate(14px, -6px) scale(0.75)',
                                     },
                                 }}
                             />
@@ -160,25 +174,39 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                 onChange={(e) => setData('contact', e.target.value.replace(/[^0-9+\-]/g, ''))}
                                 error={!!errors.contact}
                                 helperText={errors.contact}
+                                // sx={{
+                                //     width: '100%',
+                                //     '& .MuiInputBase-root': {
+                                //         height: 35,
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //     },
+                                //     '& .MuiSelect-select': {
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //         padding: '0 14px !important', // override MUI default
+                                //         height: '100%',
+                                //         boxSizing: 'border-box',
+                                //     },
+                                //     '& legend': {
+                                //         display: 'none', // hides outline label gap
+                                //     },
+                                //     '& label': {
+                                //         top: '-10px', // tweak this to move label vertically
+                                //     },
+                                // }}
                                 sx={{
-                                    width: '100%',
-                                    '& .MuiInputBase-root': {
+                                    '& .MuiOutlinedInput-root': {
                                         height: 35,
-                                        display: 'flex',
-                                        alignItems: 'center',
+                                        '& input': {
+                                            padding: '8px 14px',
+                                        },
                                     },
-                                    '& .MuiSelect-select': {
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: '0 14px !important', // override MUI default
-                                        height: '100%',
-                                        boxSizing: 'border-box',
+                                    '& .MuiInputLabel-root': {
+                                        transform: 'translate(14px, 9px) scale(1)',
                                     },
-                                    '& legend': {
-                                        display: 'none', // hides outline label gap
-                                    },
-                                    '& label': {
-                                        top: '-10px', // tweak this to move label vertically
+                                    '& .MuiInputLabel-shrink': {
+                                        transform: 'translate(14px, -6px) scale(0.75)',
                                     },
                                 }}
                             />
@@ -194,30 +222,65 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                 onChange={(e) => setData('gender', e.target.value)}
                                 error={!!errors.gender}
                                 helperText={errors.gender}
+                                // sx={{
+                                //     width: '100%',
+                                //     '& .MuiInputBase-root': {
+                                //         height: 35,
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //     },
+                                //     '& .MuiSelect-select': {
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //         padding: '0 14px !important', // override MUI default
+                                //         height: '100%',
+                                //         boxSizing: 'border-box',
+                                //     },
+                                //     '& legend': {
+                                //         display: 'none', // hides outline label gap
+                                //     },
+                                //     '& label': {
+                                //         top: '-10px', // tweak this to move label vertically
+                                //     },
+                                // }}
                                 sx={{
-                                    width: '100%',
-                                    '& .MuiInputBase-root': {
+                                    '& .MuiOutlinedInput-root': {
                                         height: 35,
-                                        display: 'flex',
-                                        alignItems: 'center',
+                                        '& input': {
+                                            padding: '8px 14px',
+                                        },
                                     },
-                                    '& .MuiSelect-select': {
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: '0 14px !important', // override MUI default
-                                        height: '100%',
-                                        boxSizing: 'border-box',
+                                    '& .MuiInputLabel-root': {
+                                        transform: 'translate(14px, 9px) scale(1)',
                                     },
-                                    '& legend': {
-                                        display: 'none', // hides outline label gap
-                                    },
-                                    '& label': {
-                                        top: '-10px', // tweak this to move label vertically
+                                    '& .MuiInputLabel-shrink': {
+                                        transform: 'translate(14px, -6px) scale(0.75)',
                                     },
                                 }}
                             >
                                 {genderOptions.map((option) => (
-                                    <MenuItem key={option} value={option}>
+                                    <MenuItem key={option} value={option}
+                                        sx={{
+                                            borderRadius: "16px",
+                                            mx: 1,
+                                            my: 0.5,
+
+                                            "&:hover": {
+                                                backgroundColor: "#063455",
+                                                color: "#fff",
+                                            },
+
+                                            "&.Mui-selected": {
+                                                backgroundColor: "#063455",
+                                                color: "#fff",
+                                            },
+
+                                            "&.Mui-selected:hover": {
+                                                backgroundColor: "#063455",
+                                                color: "#fff",
+                                            },
+                                        }}
+                                    >
                                         {option}
                                     </MenuItem>
                                 ))}
@@ -231,25 +294,39 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                 margin="normal"
                                 value={data.address}
                                 onChange={(e) => setData('address', e.target.value)}
+                                // sx={{
+                                //     width: '100%',
+                                //     '& .MuiInputBase-root': {
+                                //         height: 35,
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //     },
+                                //     '& .MuiSelect-select': {
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //         padding: '0 14px !important', // override MUI default
+                                //         height: '100%',
+                                //         boxSizing: 'border-box',
+                                //     },
+                                //     '& legend': {
+                                //         display: 'none', // hides outline label gap
+                                //     },
+                                //     '& label': {
+                                //         top: '-10px', // tweak this to move label vertically
+                                //     },
+                                // }}
                                 sx={{
-                                    width: '100%',
-                                    '& .MuiInputBase-root': {
+                                    '& .MuiOutlinedInput-root': {
                                         height: 35,
-                                        display: 'flex',
-                                        alignItems: 'center',
+                                        '& input': {
+                                            padding: '8px 14px',
+                                        },
                                     },
-                                    '& .MuiSelect-select': {
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: '0 14px !important', // override MUI default
-                                        height: '100%',
-                                        boxSizing: 'border-box',
+                                    '& .MuiInputLabel-root': {
+                                        transform: 'translate(14px, 9px) scale(1)',
                                     },
-                                    '& legend': {
-                                        display: 'none', // hides outline label gap
-                                    },
-                                    '& label': {
-                                        top: '-10px', // tweak this to move label vertically
+                                    '& .MuiInputLabel-shrink': {
+                                        transform: 'translate(14px, -6px) scale(0.75)',
                                     },
                                 }}
                             />
@@ -269,25 +346,39 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                     if (value.length > 15) value = value.slice(0, 15);
                                     setData('cnic', value);
                                 }}
+                                // sx={{
+                                //     width: '100%',
+                                //     '& .MuiInputBase-root': {
+                                //         height: 35,
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //     },
+                                //     '& .MuiSelect-select': {
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //         padding: '0 14px !important', // override MUI default
+                                //         height: '100%',
+                                //         boxSizing: 'border-box',
+                                //     },
+                                //     '& legend': {
+                                //         display: 'none', // hides outline label gap
+                                //     },
+                                //     '& label': {
+                                //         top: '-10px', // tweak this to move label vertically
+                                //     },
+                                // }}
                                 sx={{
-                                    width: '100%',
-                                    '& .MuiInputBase-root': {
+                                    '& .MuiOutlinedInput-root': {
                                         height: 35,
-                                        display: 'flex',
-                                        alignItems: 'center',
+                                        '& input': {
+                                            padding: '8px 14px',
+                                        },
                                     },
-                                    '& .MuiSelect-select': {
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: '0 14px !important', // override MUI default
-                                        height: '100%',
-                                        boxSizing: 'border-box',
+                                    '& .MuiInputLabel-root': {
+                                        transform: 'translate(14px, 9px) scale(1)',
                                     },
-                                    '& legend': {
-                                        display: 'none', // hides outline label gap
-                                    },
-                                    '& label': {
-                                        top: '-10px', // tweak this to move label vertically
+                                    '& .MuiInputLabel-shrink': {
+                                        transform: 'translate(14px, -6px) scale(0.75)',
                                     },
                                 }}
                             />
@@ -300,25 +391,39 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                 margin="normal"
                                 value={data.email}
                                 onChange={(e) => setData('email', e.target.value)}
+                                // sx={{
+                                //     width: '100%',
+                                //     '& .MuiInputBase-root': {
+                                //         height: 35,
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //     },
+                                //     '& .MuiSelect-select': {
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //         padding: '0 14px !important', // override MUI default
+                                //         height: '100%',
+                                //         boxSizing: 'border-box',
+                                //     },
+                                //     '& legend': {
+                                //         display: 'none', // hides outline label gap
+                                //     },
+                                //     '& label': {
+                                //         top: '-10px', // tweak this to move label vertically
+                                //     },
+                                // }}
                                 sx={{
-                                    width: '100%',
-                                    '& .MuiInputBase-root': {
+                                    '& .MuiOutlinedInput-root': {
                                         height: 35,
-                                        display: 'flex',
-                                        alignItems: 'center',
+                                        '& input': {
+                                            padding: '8px 14px',
+                                        },
                                     },
-                                    '& .MuiSelect-select': {
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: '0 14px !important', // override MUI default
-                                        height: '100%',
-                                        boxSizing: 'border-box',
+                                    '& .MuiInputLabel-root': {
+                                        transform: 'translate(14px, 9px) scale(1)',
                                     },
-                                    '& legend': {
-                                        display: 'none', // hides outline label gap
-                                    },
-                                    '& label': {
-                                        top: '-10px', // tweak this to move label vertically
+                                    '& .MuiInputLabel-shrink': {
+                                        transform: 'translate(14px, -6px) scale(0.75)',
                                     },
                                 }}
                             />
@@ -334,32 +439,67 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                 onChange={(e) => setData('guest_type_id', e.target.value)}
                                 error={!!errors.guest_type_id}
                                 helperText={errors.guest_type_id}
+                                // sx={{
+                                //     width: '100%',
+                                //     '& .MuiInputBase-root': {
+                                //         height: 35,
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //     },
+                                //     '& .MuiSelect-select': {
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //         padding: '0 14px !important', // override MUI default
+                                //         height: '100%',
+                                //         boxSizing: 'border-box',
+                                //     },
+                                //     '& legend': {
+                                //         display: 'none', // hides outline label gap
+                                //     },
+                                //     '& label': {
+                                //         top: '-10px', // tweak this to move label vertically
+                                //     },
+                                // }}
                                 sx={{
-                                    width: '100%',
-                                    '& .MuiInputBase-root': {
+                                    '& .MuiOutlinedInput-root': {
                                         height: 35,
-                                        display: 'flex',
-                                        alignItems: 'center',
+                                        '& input': {
+                                            padding: '8px 14px',
+                                        },
                                     },
-                                    '& .MuiSelect-select': {
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: '0 14px !important', // override MUI default
-                                        height: '100%',
-                                        boxSizing: 'border-box',
+                                    '& .MuiInputLabel-root': {
+                                        transform: 'translate(14px, 9px) scale(1)',
                                     },
-                                    '& legend': {
-                                        display: 'none', // hides outline label gap
-                                    },
-                                    '& label': {
-                                        top: '-10px', // tweak this to move label vertically
+                                    '& .MuiInputLabel-shrink': {
+                                        transform: 'translate(14px, -6px) scale(0.75)',
                                     },
                                 }}
                             >
                                 {guestTypes.map((type) => (
-                                    <MenuItem key={type.id} value={type.id}>
+                                    <MenuItem key={type.id} value={type.id}
+                                        sx={{
+                                            borderRadius: "16px",
+                                            mx: 1,
+                                            my: 0.5,
+
+                                            "&:hover": {
+                                                backgroundColor: "#063455",
+                                                color: "#fff",
+                                            },
+
+                                            "&.Mui-selected": {
+                                                backgroundColor: "#063455",
+                                                color: "#fff",
+                                            },
+
+                                            "&.Mui-selected:hover": {
+                                                backgroundColor: "#063455",
+                                                color: "#fff",
+                                            },
+                                        }}>
                                         {type.name}
                                     </MenuItem>
+
                                 ))}
                             </TextField>
                         </Grid>
@@ -375,7 +515,31 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                     },
                                 }}
                             >
-                                <AsyncSearchTextField label="Member Name" name="guest" value={data.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: '0' }} placeholder="Search members..." fullWidth renderItem={renderMemberWithStatus} />
+                                <AsyncSearchTextField
+                                    label="Member Name"
+                                    name="guest"
+                                    value={data.guest}
+                                    onChange={handleChange}
+                                    endpoint="admin.api.search-users"
+                                    params={{ type: '0' }}
+                                    placeholder="Search members..."
+                                    fullWidth
+                                    renderItem={renderMemberWithStatus}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            height: 35,
+                                            '& input': {
+                                                padding: '8px 14px',
+                                            },
+                                        },
+                                        '& .MuiInputLabel-root': {
+                                            transform: 'translate(14px, 9px) scale(1)',
+                                        },
+                                        '& .MuiInputLabel-shrink': {
+                                            transform: 'translate(14px, -6px) scale(0.75)',
+                                        },
+                                    }}
+                                />
                             </Box>
                         </Grid>
 
@@ -387,25 +551,39 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                 value={data.member_no}
                                 onChange={(e) => setData('member_no', e.target.value)}
                                 disabled
+                                // sx={{
+                                //     width: '100%',
+                                //     '& .MuiInputBase-root': {
+                                //         height: 35,
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //     },
+                                //     '& .MuiSelect-select': {
+                                //         display: 'flex',
+                                //         alignItems: 'center',
+                                //         padding: '0 14px !important', // override MUI default
+                                //         height: '100%',
+                                //         boxSizing: 'border-box',
+                                //     },
+                                //     '& legend': {
+                                //         display: 'none', // hides outline label gap
+                                //     },
+                                //     '& label': {
+                                //         top: '-10px', // tweak this to move label vertically
+                                //     },
+                                // }}
                                 sx={{
-                                    width: '100%',
-                                    '& .MuiInputBase-root': {
+                                    '& .MuiOutlinedInput-root': {
                                         height: 35,
-                                        display: 'flex',
-                                        alignItems: 'center',
+                                        '& input': {
+                                            padding: '8px 14px',
+                                        },
                                     },
-                                    '& .MuiSelect-select': {
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: '0 14px !important', // override MUI default
-                                        height: '100%',
-                                        boxSizing: 'border-box',
+                                    '& .MuiInputLabel-root': {
+                                        transform: 'translate(14px, 9px) scale(1)',
                                     },
-                                    '& legend': {
-                                        display: 'none', // hides outline label gap
-                                    },
-                                    '& label': {
-                                        top: '-10px', // tweak this to move label vertically
+                                    '& .MuiInputLabel-shrink': {
+                                        transform: 'translate(14px, -6px) scale(0.75)',
                                     },
                                 }}
                             />
@@ -413,11 +591,13 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                     </Grid>
 
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button 
-                        type="submit" 
-                        variant="contained" 
-                        disabled={processing}
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={processing}
+                            sx={{textTransform:'none'}}
                         >
+                            
                             {isEdit ? 'Update' : 'Save'}
                         </Button>
                     </Box>

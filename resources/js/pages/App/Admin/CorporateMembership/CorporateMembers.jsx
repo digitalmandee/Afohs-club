@@ -132,18 +132,18 @@ const CorporateMembers = ({ members }) => {
                         <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Category</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership Date</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
+                                    <TableRow style={{ backgroundColor: '#063455' }}>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Member</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Category</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CNIC</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Contact</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership Date</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Card</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Action</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

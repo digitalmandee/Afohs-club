@@ -41,7 +41,7 @@ const TrashedMemberCategories = ({ categories, filters: initialFilters }) => {
 
     return (
         <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-            <div className="mx-3">
+            <div>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <IconButton onClick={() => router.get(route('member-categories.index'))}>
@@ -80,11 +80,11 @@ const TrashedMemberCategories = ({ categories, filters: initialFilters }) => {
                 <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius:'16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Description</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Deleted At</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455' }}>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Description</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Deleted At</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -95,7 +95,13 @@ const TrashedMemberCategories = ({ categories, filters: initialFilters }) => {
                                         <TableCell sx={{ color: '#7F7F7F' }}>{category.description}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F' }}>{dayjs(category.deleted_at).format('DD-MM-YYYY HH:mm')}</TableCell>
                                         <TableCell>
-                                            <Button variant="outlined" color="primary" startIcon={<RestoreFromTrash />} onClick={() => handleRestore(category.id)} disabled={processingId === category.id}>
+                                            <Button 
+                                            variant="outlined" 
+                                            color="primary" 
+                                            startIcon={<RestoreFromTrash />} 
+                                            onClick={() => handleRestore(category.id)} 
+                                            disabled={processingId === category.id}
+                                            sx={{textTransform:'none'}}>
                                                 {processingId === category.id ? 'Restoring...' : 'Restore'}
                                             </Button>
                                         </TableCell>

@@ -93,19 +93,19 @@ const TrashedCorporateMembers = ({ members }) => {
                 </Box>
 
             </Box>
-            <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', m: 0, p: 0 }}>View and restore deleted corporate members</Typography>
+            <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft:15 }}>View and restore deleted corporate members</Typography>
 
             {/* Trashed Members Table */}
             <TableContainer style={{ overflowX: 'auto', marginTop: '1rem', borderRadius: '12px' }}>
                 <Table>
                     <TableHead>
                         <TableRow style={{ backgroundColor: '#063455' }}>
-                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
-                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
-                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
-                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Deleted At</TableCell>
-                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
+                            <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                            <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Member</TableCell>
+                            <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
+                            <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CNIC</TableCell>
+                            <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Deleted At</TableCell>
+                            <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Action</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>

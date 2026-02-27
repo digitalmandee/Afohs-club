@@ -80,13 +80,13 @@ const TrashedMembers = ({ members, filters: initialFilters }) => {
                 <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Email</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Deleted At</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455' }}>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Membership No</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Member</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CNIC</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Email</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Deleted At</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -104,7 +104,14 @@ const TrashedMembers = ({ members, filters: initialFilters }) => {
                                         <TableCell sx={{ color: '#7F7F7F' }}>{member.personal_email || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F' }}>{dayjs(member.deleted_at).format('DD-MM-YYYY HH:mm')}</TableCell>
                                         <TableCell>
-                                            <Button variant="outlined" color="primary" startIcon={<RestoreFromTrash />} onClick={() => handleRestore(member.id)} disabled={processingId === member.id}>
+                                            <Button 
+                                            variant="outlined" 
+                                            color="primary" 
+                                            startIcon={<RestoreFromTrash />} 
+                                            onClick={() => 
+                                            handleRestore(member.id)} 
+                                            disabled={processingId === member.id}
+                                            sx={{textTransform:'none'}}>
                                                 {processingId === member.id ? 'Restoring...' : 'Restore'}
                                             </Button>
                                         </TableCell>

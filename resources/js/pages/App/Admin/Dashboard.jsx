@@ -136,8 +136,8 @@ const Dashboard = () => {
 
         const months = [];
         for (let i = 0; i < 12; i++) {
-            const monthIndex = (currentMonth + i) % 12;
-            const year = currentMonth + i >= 12 ? currentYear + 1 : currentYear;
+            const monthIndex = (currentMonth - i + 12) % 12; // Subtract i instead of adding
+            const year = currentMonth - i < 0 ? currentYear - 1 : currentYear; // Go back a year if needed
             months.push(`${monthNames[monthIndex]}-${year}`);
         }
         return months;
@@ -513,7 +513,7 @@ const Dashboard = () => {
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                                 <Box>
                                                     <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#1D1F2C' }}>Revenue</Typography>
-                                                    <Typography sx={{ color: '#777980', fontWeight: 500, fontSize: '14px' }}>Your Revenue 2025 Year</Typography>
+                                                    <Typography sx={{ color: '#777980', fontWeight: 500, fontSize: '14px' }}>Your Revenue 2026 Year</Typography>
                                                 </Box>
                                                 <Box sx={{ display: 'flex', gap: 2 }}>
                                                     {/* <TextField select size="small" value={revenueType} onChange={(e) => setRevenueType(e.target.value)} sx={{ width: '160px' }}>
