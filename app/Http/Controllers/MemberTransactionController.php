@@ -608,6 +608,7 @@ class MemberTransactionController extends Controller
                 // D. Update Invoice Status
                 $invoice->status = 'paid';
                 $invoice->paid_amount = $paidAmount;
+                $invoice->customer_charges = 0;
                 $invoice->payment_method = $request->payment_method;
                 $invoice->payment_date = now();
 
@@ -1398,6 +1399,34 @@ class MemberTransactionController extends Controller
             }
         });
 
+        $itemsBaseTotal = $invoice->items->sum(function ($item) {
+            return (float) ($item->total ?? 0);
+        });
+        $invoiceTotal = (float) ($invoice->total_price ?? 0);
+        $delta = $invoiceTotal - $itemsBaseTotal;
+
+        if (abs($delta) >= 0.01 && $invoice->items->count() > 0) {
+            $remaining = $delta;
+            $count = $invoice->items->count();
+            $idx = 0;
+            foreach ($invoice->items as $item) {
+                $idx++;
+                $base = (float) ($item->total ?? 0);
+                $share = 0;
+                if ($count === 1) {
+                    $share = $remaining;
+                } elseif ($itemsBaseTotal > 0) {
+                    $share = round(($delta * ($base / $itemsBaseTotal)), 0);
+                }
+                if ($idx === $count) {
+                    $share = $remaining;
+                } else {
+                    $remaining -= $share;
+                }
+                $item->total = round($base + $share, 0);
+            }
+        }
+
         // Attach Ledger Balance to the relevant member entity
         $memberEntity = $invoice->member ?? $invoice->corporateMember ?? $invoice->customer;
         if ($memberEntity) {
@@ -1457,6 +1486,14 @@ class MemberTransactionController extends Controller
                 return response()->json(['error' => 'No payment amount specified.'], 422);
             }
 
+            $alreadyPaid = \App\Models\Transaction::where('invoice_id', $invoice->id)
+                ->where('type', 'credit')
+                ->sum('amount');
+            $remaining = (float) ($invoice->total_price ?? 0) - (float) $alreadyPaid;
+            if ($totalPayment > ($remaining + 5)) {
+                return response()->json(['error' => 'Payment amount exceeds remaining invoice balance.'], 422);
+            }
+
             // Create Receipt
             // Resolve Payer from Invoice
             $payerType = $invoice->invoiceable_type ?: Member::class;
@@ -1510,9 +1547,12 @@ class MemberTransactionController extends Controller
                 ->sum('amount');
 
             $invoice->paid_amount = $totalPaid;
+            $invoice->customer_charges = max(0, (float) ($invoice->total_price ?? 0) - (float) $totalPaid);
             // Use 5 rupee tolerance for rounding issues
             if ($totalPaid >= ($invoice->total_price - 5)) {
                 $invoice->status = 'paid';
+            } elseif ($totalPaid > 0) {
+                $invoice->status = 'unpaid';
             } else {
                 $invoice->status = 'unpaid';
             }

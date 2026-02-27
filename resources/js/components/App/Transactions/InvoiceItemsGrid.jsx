@@ -8,7 +8,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useSnackbar } from 'notistack';
 import { TRANSACTION_TYPES } from '@/constants';
 
-export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], bookingType = '', paymentMode = false }) {
+export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], bookingType = '', paymentMode = false, invoice = null }) {
     const { enqueueSnackbar } = useSnackbar();
     const [openPickers, setOpenPickers] = useState({});
 
@@ -267,6 +267,38 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
 
     // Calculate Grand Total
     const grandTotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
+    const invoiceTotal = invoice ? parseFloat(String(invoice.total_price || 0).replace(/,/g, '')) || 0 : 0;
+
+    const num = (val) => {
+        if (val === null || val === undefined || val === '') return 0;
+        const n = parseFloat(String(val).replace(/,/g, ''));
+        return Number.isFinite(n) ? n : 0;
+    };
+
+    const summarySubtotal = items.reduce((sum, item) => sum + num(item.sub_total ?? item.amount), 0);
+    const summaryDiscount = Math.max(
+        items.reduce((sum, item) => sum + num(item.discount_amount), 0),
+        num(invoice?.discount_amount),
+    );
+    const summaryTax = Math.max(
+        items.reduce((sum, item) => sum + num(item.tax_amount), 0),
+        num(invoice?.tax_amount),
+    );
+    const summaryOverdue = Math.max(
+        items.reduce((sum, item) => sum + num(item.overdue_amount), 0),
+        num(invoice?.overdue_amount),
+    );
+    const summaryAdditional = Math.max(
+        items.reduce((sum, item) => sum + num(item.additional_charges), 0),
+        num(invoice?.additional_charges),
+    );
+    const summaryPaid = num(invoice?.paid_amount) || items.reduce((sum, item) => sum + num(item.paid_amount), 0);
+    const computedRemaining = Math.max(0, (invoiceTotal || grandTotal) - summaryPaid);
+    const rawCustomerCharges = invoice?.customer_charges !== null && invoice?.customer_charges !== undefined ? num(invoice.customer_charges) : null;
+    const summaryRemaining = invoice?.status === 'paid' ? 0 : rawCustomerCharges === null ? computedRemaining : rawCustomerCharges === 0 && computedRemaining > 0 ? computedRemaining : rawCustomerCharges;
+    const payingNow = items.reduce((sum, item) => sum + (parseFloat(item.payment_amount) || 0), 0);
+
+    const formatMoney = (value) => new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(Math.round(value || 0));
 
     const RoundedTextField = styled(TextField)(() => ({
         '& .MuiOutlinedInput-root': {
@@ -810,21 +842,61 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                             <Typography fontWeight="600">{items.length}</Typography>
                         </Box>
                         {paymentMode && (
-                            <Box display="flex" justifyContent="space-between" mb={1}>
-                                <Typography color="text.secondary" fontWeight="bold">
-                                    Paid Amount:
-                                </Typography>
-                                <Typography fontWeight="bold" color="success.main">
-                                    {new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(items.reduce((sum, item) => sum + (parseFloat(item.payment_amount) || 0), 0))}
-                                </Typography>
-                            </Box>
+                            <>
+                                <Box display="flex" justifyContent="space-between" mb={1}>
+                                    <Typography color="text.secondary">Subtotal:</Typography>
+                                    <Typography fontWeight="600">{formatMoney(summarySubtotal)}</Typography>
+                                </Box>
+                                {summaryDiscount > 0 && (
+                                    <Box display="flex" justifyContent="space-between" mb={1}>
+                                        <Typography color="text.secondary">Discount:</Typography>
+                                        <Typography fontWeight="600" color="error.main">
+                                            - {formatMoney(summaryDiscount)}
+                                        </Typography>
+                                    </Box>
+                                )}
+                                {summaryTax > 0 && (
+                                    <Box display="flex" justifyContent="space-between" mb={1}>
+                                        <Typography color="text.secondary">Tax:</Typography>
+                                        <Typography fontWeight="600">{formatMoney(summaryTax)}</Typography>
+                                    </Box>
+                                )}
+                                {summaryOverdue > 0 && (
+                                    <Box display="flex" justifyContent="space-between" mb={1}>
+                                        <Typography color="text.secondary">Overdue:</Typography>
+                                        <Typography fontWeight="600">{formatMoney(summaryOverdue)}</Typography>
+                                    </Box>
+                                )}
+                                {summaryAdditional > 0 && (
+                                    <Box display="flex" justifyContent="space-between" mb={1}>
+                                        <Typography color="text.secondary">Additional:</Typography>
+                                        <Typography fontWeight="600">{formatMoney(summaryAdditional)}</Typography>
+                                    </Box>
+                                )}
+                                <Box display="flex" justifyContent="space-between" mb={1}>
+                                    <Typography color="text.secondary">Remaining:</Typography>
+                                    <Typography fontWeight="700">{formatMoney(summaryRemaining)}</Typography>
+                                </Box>
+                                <Box display="flex" justifyContent="space-between" mb={1}>
+                                    <Typography color="text.secondary" fontWeight="bold">
+                                        Paying Now:
+                                    </Typography>
+                                    <Typography fontWeight="bold" color="success.main">
+                                        {formatMoney(payingNow)}
+                                    </Typography>
+                                </Box>
+                                <Box display="flex" justifyContent="space-between" mb={1}>
+                                    <Typography color="text.secondary">Already Paid:</Typography>
+                                    <Typography fontWeight="600">{formatMoney(summaryPaid)}</Typography>
+                                </Box>
+                            </>
                         )}
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                             <Typography variant="h6" fontWeight="bold" color="#0a3d62">
                                 Grand Total:
                             </Typography>
                             <Typography variant="h6" fontWeight="bold" color="#0a3d62">
-                                {new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(grandTotal)}
+                                {formatMoney(invoiceTotal || grandTotal)}
                             </Typography>
                         </Box>
                     </Box>

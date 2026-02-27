@@ -637,6 +637,60 @@ class FinancialController extends Controller
         return $invoiceNo;
     }
 
+    private function syncInvoiceLedgerDebits(FinancialInvoice $invoice): void
+    {
+        $debits = Transaction::where('invoice_id', $invoice->id)
+            ->where('type', 'debit')
+            ->orderBy('id')
+            ->get();
+
+        $target = (float) ($invoice->total_price ?? 0);
+        $current = (float) $debits->sum('amount');
+        $delta = $target - $current;
+
+        if (abs($delta) < 0.01) {
+            return;
+        }
+
+        if ($debits->isEmpty()) {
+            Transaction::create([
+                'payable_type' => $invoice->invoiceable_type ?: \App\Models\Member::class,
+                'payable_id' => $invoice->invoiceable_id ?: $invoice->member_id,
+                'type' => 'debit',
+                'amount' => $target,
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
+                'invoice_id' => $invoice->id,
+                'description' => "Invoice #{$invoice->invoice_no} - Ledger Sync",
+                'date' => now(),
+                'created_by' => Auth::id(),
+            ]);
+            return;
+        }
+
+        if ($delta > 0) {
+            $last = $debits->last();
+            $last->amount = (float) $last->amount + $delta;
+            $last->save();
+            return;
+        }
+
+        $reduction = -$delta;
+        foreach ($debits->reverse() as $debit) {
+            if ($reduction <= 0.01) {
+                break;
+            }
+            $amt = (float) $debit->amount;
+            if ($amt <= 0) {
+                continue;
+            }
+            $cut = min($amt, $reduction);
+            $debit->amount = $amt - $cut;
+            $debit->save();
+            $reduction -= $cut;
+        }
+    }
+
     public function bulkApplyDiscount(Request $request)
     {
         $request->validate([
@@ -711,24 +765,23 @@ class FinancialController extends Controller
 
                 $invoice->save();
 
-                // Update Ledger Transaction (Debit)
-                // We need to find the main debit transaction for this invoice.
-                $transaction = Transaction::where('reference_type', FinancialInvoice::class)
-                    ->where('reference_id', $invoice->id)
-                    ->where('type', 'debit')
-                    ->first();
+                $this->syncInvoiceLedgerDebits($invoice);
 
-                if ($transaction) {
-                    $transaction->amount = $invoice->total_price;
-                    $transaction->save();
-                }
+                $paid = Transaction::where('invoice_id', $invoice->id)
+                    ->where('type', 'credit')
+                    ->sum('amount');
+                $invoice->paid_amount = $paid;
+                $invoice->customer_charges = max(0, (float) ($invoice->total_price ?? 0) - (float) $paid);
 
                 // If paid_amount > total_price (due to discount), status becomes Paid?
                 // Or is there a "Credit" balance?
                 // Logic:
-                $paid = $invoice->transactions()->where('type', 'credit')->sum('amount');
                 if ($paid >= $invoice->total_price) {
                     $invoice->status = 'paid';
+                    $invoice->customer_charges = 0;
+                    $invoice->save();
+                } elseif ($paid > 0) {
+                    $invoice->status = 'partial';
                     $invoice->save();
                 }
 
@@ -779,16 +832,20 @@ class FinancialController extends Controller
 
                 $invoice->save();
 
-                // Update Ledger
-                $transaction = Transaction::where('reference_type', FinancialInvoice::class)
-                    ->where('reference_id', $invoice->id)
-                    ->where('type', 'debit')
-                    ->first();
+                $this->syncInvoiceLedgerDebits($invoice);
 
-                if ($transaction) {
-                    $transaction->amount = $invoice->total_price;
-                    $transaction->save();
+                $paid = Transaction::where('invoice_id', $invoice->id)
+                    ->where('type', 'credit')
+                    ->sum('amount');
+                $invoice->paid_amount = $paid;
+                $invoice->customer_charges = max(0, (float) ($invoice->total_price ?? 0) - (float) $paid);
+                if ($paid >= $invoice->total_price) {
+                    $invoice->status = 'paid';
+                    $invoice->customer_charges = 0;
+                } elseif ($paid > 0) {
+                    $invoice->status = 'partial';
                 }
+                $invoice->save();
 
                 $updatedCount++;
             }
