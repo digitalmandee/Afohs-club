@@ -494,6 +494,15 @@ class MemberTransactionController extends Controller
                 // Determine if it is a subscription fee based on the TransactionType 'type' column
                 $isSubscription = $transactionType && $transactionType->type == AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION;
 
+                $subscriptionCategoryId = $itemData['subscription_category_id'] ?? null;
+                $subscriptionTypeId = $itemData['subscription_type_id'] ?? null;
+                if ($isSubscription && !$subscriptionTypeId && $subscriptionCategoryId) {
+                    $category = SubscriptionCategory::find($subscriptionCategoryId);
+                    if ($category) {
+                        $subscriptionTypeId = $category->subscription_type_id;
+                    }
+                }
+
                 $invoiceItem = new \App\Models\FinancialInvoiceItem([
                     'invoice_id' => $invoice->id,
                     'fee_type' => $feeTypeIdToStore,  // Storing the Category ID (3, 4, 5, 6)
@@ -515,8 +524,8 @@ class MemberTransactionController extends Controller
                     'start_date' => $itemData['valid_from'] ?? null,
                     'end_date' => $itemData['valid_to'] ?? null,
                     // Linking
-                    'subscription_type_id' => $itemData['subscription_type_id'] ?? null,
-                    'subscription_category_id' => $itemData['subscription_category_id'] ?? null,
+                    'subscription_type_id' => $subscriptionTypeId,
+                    'subscription_category_id' => $subscriptionCategoryId,
                     'family_member_id' => $itemData['family_member_id'] ?? null,
                     'financial_charge_type_id' => $itemData['financial_charge_type_id'] ?? null,
                 ]);
@@ -538,7 +547,11 @@ class MemberTransactionController extends Controller
 
                 // Side Effects (Subscription/Maintenance creation) logic here...
                 if ($isSubscription) {
-                    $this->createSubscriptionRecord($itemData, $invoice, $member, $request->booking_type);
+                    $this->createSubscriptionRecord([
+                        ...$itemData,
+                        'subscription_type_id' => $subscriptionTypeId,
+                        'subscription_category_id' => $subscriptionCategoryId,
+                    ], $invoice, $member, $request->booking_type);
                 }
             }
 
@@ -631,10 +644,22 @@ class MemberTransactionController extends Controller
         $validFrom = $data['valid_from'] ?? $data['start_date'] ?? now()->toDateString();
         $validTo = $data['valid_to'] ?? $data['end_date'] ?? now()->addMonth()->toDateString();
 
+        $subscriptionCategoryId = $data['subscription_category_id'] ?? null;
+        $subscriptionTypeId = $data['subscription_type_id'] ?? null;
+        if (!$subscriptionTypeId && $subscriptionCategoryId) {
+            $category = SubscriptionCategory::find($subscriptionCategoryId);
+            if ($category) {
+                $subscriptionTypeId = $category->subscription_type_id;
+            }
+        }
+        if (!$subscriptionTypeId || !$subscriptionCategoryId) {
+            return;
+        }
+
         $sub = new Subscription([
             'invoice_id' => $invoice->id,
-            'subscription_type_id' => $data['subscription_type_id'],
-            'subscription_category_id' => $data['subscription_category_id'],
+            'subscription_type_id' => $subscriptionTypeId,
+            'subscription_category_id' => $subscriptionCategoryId,
             'family_member_id' => $data['family_member_id'] ?? null,
             'valid_from' => $validFrom,
             'valid_to' => $validTo,

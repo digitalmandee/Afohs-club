@@ -31,29 +31,31 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
     // New State for Invoice Grid
     const [transactionTypes, setTransactionTypes] = useState([]);
-    const [invoiceItems, setInvoiceItems] = useState([
-        {
-            id: Date.now(),
-            fee_type: '',
-            fee_type_name: '',
-            description: '',
-            qty: 1,
-            amount: '',
-            tax_percentage: 0,
-            overdue_percentage: 0,
-            discount_type: 'fixed',
-            discount_value: 0,
-            discount_amount: 0,
-            additional_charges: 0,
-            valid_from: null,
-            valid_to: null,
-            remarks: '',
-            subscription_type_id: '',
-            subscription_category_id: '',
-            family_member_id: '',
-            total: 0,
-        },
-    ]);
+    const createBlankInvoiceItem = () => ({
+        id: Date.now(),
+        fee_type: '',
+        fee_type_name: '',
+        description: '',
+        qty: 1,
+        amount: '',
+        tax_percentage: 0,
+        overdue_percentage: 0,
+        discount_type: 'fixed',
+        discount_value: 0,
+        discount_amount: 0,
+        additional_charges: 0,
+        extra_percentage: 0,
+        valid_from: null,
+        valid_to: null,
+        days: '',
+        remarks: '',
+        subscription_type_id: '',
+        subscription_category_id: '',
+        family_member_id: '',
+        financial_charge_type_id: '',
+        total: 0,
+    });
+    const [invoiceItems, setInvoiceItems] = useState([createBlankInvoiceItem()]);
 
     // Pagination and search states
     const [searchInvoice, setSearchInvoice] = useState('');
@@ -596,6 +598,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         setSelectedMember(null);
         setSearchResults([]);
         setMemberTransactions([]);
+        setInvoiceItems([createBlankInvoiceItem()]);
 
         // Map UI values to Backend types
         // 0 -> member
@@ -1022,7 +1025,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                         receipt_file: null,
                         remarks: '',
                     });
-                    setInvoiceItems([]);
+                    setInvoiceItems([createBlankInvoiceItem()]);
                     // preSelectedMember is a prop, cannot set it.
                     setSearchResults([]);
                     if (!preSelectedMember) {
@@ -1031,7 +1034,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 }
 
                 // Clear items
-                setInvoiceItems([]);
+                setInvoiceItems([createBlankInvoiceItem()]);
 
                 if (!preSelectedMember) {
                     // Reset member selection
@@ -1150,7 +1153,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
     const resetForm = () => {
         reset();
-        setInvoiceItems([]);
+        setInvoiceItems([createBlankInvoiceItem()]);
         setFormErrors({});
         setSearchResults([]);
         if (!preSelectedMember) {
@@ -1166,7 +1169,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
         setPaymentMode(false);
         setActiveInvoice(null);
-        setInvoiceItems([]);
+        setInvoiceItems([createBlankInvoiceItem()]);
         resetForm();
     };
 
@@ -1509,7 +1512,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                     {/* Invoice Items Grid */}
                                                     <Grid item xs={12}>
-                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} subscriptionTypes={subscriptionTypes} onQuickSelectMaintenance={suggestMaintenancePeriod} membershipCharges={membershipCharges} maintenanceCharges={maintenanceCharges} subscriptionCharges={subscriptionCharges} otherCharges={otherCharges} financialChargeTypes={financialChargeTypes} bookingType={bookingType} paymentMode={paymentMode} />
+                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} onQuickSelectMaintenance={suggestMaintenancePeriod} membershipCharges={membershipCharges} maintenanceCharges={maintenanceCharges} subscriptionCharges={subscriptionCharges} otherCharges={otherCharges} financialChargeTypes={financialChargeTypes} bookingType={bookingType} paymentMode={paymentMode} />
                                                     </Grid>
 
                                                     {/* Remarks Section */}

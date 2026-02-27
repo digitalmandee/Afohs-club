@@ -404,7 +404,7 @@ class FinancialController extends Controller
             'subscriptionType',
             'subscriptionCategory',
             'invoiceable',
-            'items',
+            'items.transactions',
         ];
 
         // 1. Try to find by invoice ID directly
@@ -428,6 +428,20 @@ class FinancialController extends Controller
             $invoice->member->loadCount('familyMembers');
         } elseif ($invoice->corporateMember) {
             $invoice->corporateMember->loadCount('familyMembers');
+        }
+
+        if ($invoice->items) {
+            $invoice->items->each(function ($item) {
+                $item->paid_amount = $item->transactions
+                    ->where('type', 'credit')
+                    ->sum('amount');
+            });
+
+            $paid = $invoice->items->sum(function ($item) {
+                return $item->transactions->where('type', 'credit')->sum('amount');
+            });
+            $invoice->paid_amount = $paid;
+            $invoice->customer_charges = max(0, (float) ($invoice->total_price ?? 0) - (float) $paid);
         }
 
         return response()->json(['invoice' => $invoice]);

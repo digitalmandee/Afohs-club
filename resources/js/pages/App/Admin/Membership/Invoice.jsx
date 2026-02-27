@@ -37,7 +37,8 @@ const handlePrintReceipt = (invoice) => {
         if (hasInvoiceItems) {
             // New System
             subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.sub_total || item.amount) || 0), 0);
-            discountTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
+            const itemsDiscountSum = itemsList.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
+            discountTotal = Math.max(itemsDiscountSum, parseFloat(invoice.discount_amount || 0) || 0);
             taxTotal = parseFloat(invoice.tax_amount || 0);
             if (taxTotal === 0) {
                 taxTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
@@ -45,7 +46,7 @@ const handlePrintReceipt = (invoice) => {
 
             grandTotal = parseFloat(invoice.total_price || 0);
             paidTotal = parseFloat(invoice.paid_amount || 0);
-            remainingTotal = parseFloat(invoice.customer_charges || 0);
+            remainingTotal = invoice.customer_charges !== null && invoice.customer_charges !== undefined ? parseFloat(invoice.customer_charges || 0) : Math.max(0, grandTotal - paidTotal);
             overdueTotal = parseFloat(invoice.overdue_amount || 0);
             additionalTotal = parseFloat(invoice.additional_charges || 0);
         } else if (hasDataItems) {
@@ -356,10 +357,6 @@ const handlePrintReceipt = (invoice) => {
                 </div>`
                          : ''
                  }
-                <div class="summary-row summary-grand-total">
-                  <span class="summary-label">Grand Total</span>
-                  <span>Rs ${invoiceData.summary.grandTotal}</span>
-                </div>
                 <div class="summary-row">
                   <span class="summary-label">Remaining Amount</span>
                   <span>Rs ${invoiceData.summary.remainingAmount}</span>
@@ -367,6 +364,10 @@ const handlePrintReceipt = (invoice) => {
                 <div class="summary-row">
                   <span class="summary-label">Paid Amount</span>
                   <span>Rs ${invoiceData.summary.paidAmount}</span>
+                </div>
+                <div class="summary-row summary-grand-total">
+                  <span class="summary-label">Grand Total</span>
+                  <span>Rs ${invoiceData.summary.grandTotal}</span>
                 </div>
               </div>
             </div>
@@ -455,7 +456,8 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
         if (hasInvoiceItems) {
             // New System: FinancialInvoiceItem models
             subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.sub_total || item.amount) || 0), 0);
-            discountTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
+            const itemsDiscountSum = itemsList.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
+            discountTotal = Math.max(itemsDiscountSum, parseFloat(invoice.discount_amount || 0) || 0);
             taxTotal = parseFloat(invoice.tax_amount || 0); // Header tax is usually sum of items tax
 
             // If header tax is 0 but items have tax, sum them up
@@ -466,7 +468,7 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
             // Using header totals if available as they are authoritative
             grandTotal = parseFloat(invoice.total_price || 0);
             paidTotal = parseFloat(invoice.paid_amount || 0);
-            remainingTotal = parseFloat(invoice.customer_charges || 0); // Or header remaining column if exists
+            remainingTotal = invoice.customer_charges !== null && invoice.customer_charges !== undefined ? parseFloat(invoice.customer_charges || 0) : Math.max(0, grandTotal - paidTotal);
 
             overdueTotal = parseFloat(invoice.overdue_amount || 0);
             additionalTotal = parseFloat(invoice.additional_charges || 0);
@@ -795,14 +797,6 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                                 </Typography>
                                             </Box>
                                         )}
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
-                                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
-                                                Grand Total
-                                            </Typography>
-                                            <Typography variant="body2" sx={{ fontSize: '13px' }}>
-                                                Rs {grandTotal}
-                                            </Typography>
-                                        </Box>
                                         {taxTotal > 0 && (
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
                                                 <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
@@ -839,6 +833,14 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                             </Typography>
                                             <Typography variant="body2" sx={{ fontSize: '13px' }}>
                                                 Rs {remainingTotal}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
+                                                Grand Total
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontSize: '13px' }}>
+                                                Rs {grandTotal}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>

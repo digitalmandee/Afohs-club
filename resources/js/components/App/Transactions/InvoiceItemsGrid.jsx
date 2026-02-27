@@ -8,7 +8,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useSnackbar } from 'notistack';
 import { TRANSACTION_TYPES } from '@/constants';
 
-export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], bookingType = '', paymentMode = false }) {
+export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], bookingType = '', paymentMode = false }) {
     const { enqueueSnackbar } = useSnackbar();
     const [openPickers, setOpenPickers] = useState({});
 
@@ -186,7 +186,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                 }
             } else if (typeId === TRANSACTION_TYPES.SUBSCRIPTION && item.valid_from && item.valid_to && item.subscription_category_id) {
                 // Subscription Logic (Type 5)
-                const cat = subscriptionCategories.find((c) => c.id === item.subscription_category_id);
+                const cat = subscriptionCategories.find((c) => c.id == item.subscription_category_id);
                 if (cat && cat.fee) {
                     const from = dayjs(item.valid_from);
                     const to = dayjs(item.valid_to);
@@ -216,9 +216,9 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
             }
         } else if (field === 'subscription_category_id') {
             item[field] = value;
-            // Set amount from category
-            const cat = subscriptionCategories.find((c) => c.id === value);
+            const cat = subscriptionCategories.find((c) => c.id == value);
             if (cat) {
+                item.subscription_type_id = cat.subscription_type_id;
                 item.amount = cat.fee;
                 item.description = `${item.fee_type_name} - ${cat.name}`;
             }
@@ -539,30 +539,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                             select
                                                             fullWidth
                                                             size="small"
-                                                            label="Sub Type"
-                                                            value={item.subscription_type_id}
-                                                            onChange={(e) => handleChange(index, 'subscription_type_id', e.target.value)}
-                                                            sx={{
-                                                                // bgcolor: 'white',
-                                                                '& .MuiOutlinedInput-root': {
-                                                                    borderRadius: '16px',
-                                                                },
-                                                            }}
-                                                            disabled={paymentMode}
-                                                        >
-                                                            {subscriptionTypes.map((t) => (
-                                                                <MenuItem key={t.id} value={t.id}>
-                                                                    {t.name}
-                                                                </MenuItem>
-                                                            ))}
-                                                        </TextField>
-                                                    </Grid>
-                                                    <Grid item xs={12} md={3}>
-                                                        <TextField
-                                                            select
-                                                            fullWidth
-                                                            size="small"
-                                                            label="Sub Category"
+                                                            label="Category"
                                                             value={item.subscription_category_id}
                                                             onChange={(e) => handleChange(index, 'subscription_category_id', e.target.value)}
                                                             sx={{
@@ -573,7 +550,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                             }}
                                                             disabled={paymentMode}
                                                         >
-                                                            {(item.subscription_type_id ? subscriptionCategories.filter((c) => c.subscription_type_id == item.subscription_type_id) : subscriptionCategories).map((c) => (
+                                                            {subscriptionCategories.map((c) => (
                                                                 <MenuItem key={c.id} value={c.id}>
                                                                     {c.name}
                                                                 </MenuItem>
