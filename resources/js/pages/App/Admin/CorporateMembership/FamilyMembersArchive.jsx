@@ -40,34 +40,78 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
         return age;
     };
 
-    // Corporate Extension Handling not implemented yet
-    /*
     const handleExtendExpiry = async () => {
-        // ...
+        if (!selectedMemberForExtension || !extensionDate || !extensionReason) {
+            enqueueSnackbar('Please fill all required fields', { variant: 'error' });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await axios.post(`/admin/corporate-membership/family-members/member/${selectedMemberForExtension.id}/extend`, {
+                extension_date: extensionDate,
+                reason: extensionReason,
+            });
+
+            enqueueSnackbar('Expiry date extended successfully', { variant: 'success' });
+            setOpenExtensionModal(false);
+            setExtensionDate('');
+            setExtensionReason('');
+            setSelectedMemberForExtension(null);
+
+            router.reload();
+        } catch (error) {
+            enqueueSnackbar(error.response?.data?.error || 'Failed to extend expiry date', { variant: 'error' });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleBulkExpire = async () => {
-        // ...
+        if (selectedMembers.length === 0) {
+            enqueueSnackbar('Please select members to expire', { variant: 'error' });
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to expire ${selectedMembers.length} selected member(s)?`)) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await axios.post('/admin/corporate-membership/family-members/bulk-expire', {
+                member_ids: selectedMembers,
+            });
+
+            enqueueSnackbar(response.data.message, { variant: 'success' });
+            setSelectedMembers([]);
+            router.reload();
+        } catch (error) {
+            enqueueSnackbar(error.response?.data?.error || 'Failed to expire members', { variant: 'error' });
+        } finally {
+            setLoading(false);
+        }
     };
-    */
 
     const handleSelectMember = (memberId) => {
         setSelectedMembers((prev) => (prev.includes(memberId) ? prev.filter((id) => id !== memberId) : [...prev, memberId]));
     };
 
     const getAgeStatusColor = (age, shouldExpire, hasExtension, relation) => {
-        // Wives are not subject to age-based expiry
-        if (relation === 'Wife') return '#063455'; // Blue for normal
+        const relationKey = String(relation || '').toLowerCase();
+        const isAgeCapped = ['son', 'daughter'].includes(relationKey);
+        if (!isAgeCapped) return '#063455'; // Blue for normal
 
         if (hasExtension) return '#27ae60'; // Green for extended
-        if (age >= 25) return '#e74c3c'; // Red for should expire
+        if (shouldExpire || age >= 25) return '#e74c3c'; // Red for should expire
         if (age >= 24) return '#ff6b35'; // Orange for warning
         return '#063455'; // Blue for normal
     };
 
     const getAgeStatusIcon = (age, shouldExpire, hasExtension, relation) => {
-        // Wives are not subject to age-based expiry
-        if (relation === 'Wife') return <CheckCircle color="white" fontSize="small" />;
+        const relationKey = String(relation || '').toLowerCase();
+        const isAgeCapped = ['son', 'daughter'].includes(relationKey);
+        if (!isAgeCapped) return <CheckCircle color="white" fontSize="small" />;
 
         if (hasExtension) return <Extension color="white" fontSize="small" />;
         if (shouldExpire) return <Warning color="white" fontSize="small" />;
@@ -76,8 +120,9 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
     };
 
     const getAgeStatusText = (age, shouldExpire, hasExtension, relation) => {
-        // Wives are not subject to age-based expiry
-        if (relation === 'Wife') return 'Active';
+        const relationKey = String(relation || '').toLowerCase();
+        const isAgeCapped = ['son', 'daughter'].includes(relationKey);
+        if (!isAgeCapped) return 'Active';
 
         if (hasExtension) return 'Extended';
         if (shouldExpire) return 'Should Expire';
@@ -115,7 +160,7 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
     return (
         <>
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-                
+
                     {/* Stats Cards */}
                     {stats && (
                         <div className="row mb-3 mt-4">
@@ -256,22 +301,22 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                             Deleted Family Members
                         </Button>
                         */}
-                            {/* {isSuperAdmin && selectedMembers.length > 0 && (
-                            <Button
-                                variant="contained"
-                                onClick={handleBulkExpire}
-                                disabled={loading}
-                                startIcon={<PersonOff />}
-                                style={{
-                                    backgroundColor: '#e74c3c',
-                                    textTransform: 'none',
-                                    borderRadius: '4px',
-                                    height: 40,
-                                }}
-                            >
-                                Expire Selected ({selectedMembers.length})
-                            </Button>
-                        )} */}
+                            {isSuperAdmin && selectedMembers.length > 0 && (
+                                <Button
+                                    variant="contained"
+                                    onClick={handleBulkExpire}
+                                    disabled={loading}
+                                    startIcon={<PersonOff />}
+                                    style={{
+                                        backgroundColor: '#e74c3c',
+                                        textTransform: 'none',
+                                        borderRadius: '4px',
+                                        height: 40,
+                                    }}
+                                >
+                                    Expire Selected ({selectedMembers.length})
+                                </Button>
+                            )}
                         </div>
                     </div>
 
@@ -285,30 +330,30 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                             <Table>
                                 <TableHead style={{ backgroundColor: '#063455', height: '30px' }}>
                                     <TableRow>
-                                        {/* {isSuperAdmin && (
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, width: '50px' }}>
-                                            <Checkbox
-                                                checked={selectedMembers.length === familyGroups.data.length && familyGroups.data.length > 0}
-                                                indeterminate={selectedMembers.length > 0 && selectedMembers.length < familyGroups.data.length}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedMembers(familyGroups.data.map((member) => member.id));
-                                                    } else {
-                                                        setSelectedMembers([]);
-                                                    }
-                                                }}
-                                                sx={{
-                                                    color: '#fff', // unchecked color
-                                                    '&.Mui-checked': {
-                                                        color: '#fff', // checked color
-                                                    },
-                                                    '&.MuiCheckbox-indeterminate': {
-                                                        color: '#fff', // indeterminate color
-                                                    },
-                                                }}
-                                            />
-                                        </TableCell>
-                                    )} */}
+                                        {isSuperAdmin && (
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, width: '50px' }}>
+                                                <Checkbox
+                                                    checked={selectedMembers.length === familyGroups.data.filter((m) => m.should_expire).length && familyGroups.data.some((m) => m.should_expire)}
+                                                    indeterminate={selectedMembers.length > 0 && selectedMembers.length < familyGroups.data.filter((m) => m.should_expire).length}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedMembers(familyGroups.data.filter((member) => member.should_expire).map((member) => member.id));
+                                                        } else {
+                                                            setSelectedMembers([]);
+                                                        }
+                                                    }}
+                                                    sx={{
+                                                        color: '#fff',
+                                                        '&.Mui-checked': {
+                                                            color: '#fff',
+                                                        },
+                                                        '&.MuiCheckbox-indeterminate': {
+                                                            color: '#fff',
+                                                        },
+                                                    }}
+                                                />
+                                            </TableCell>
+                                        )}
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card No</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Name</TableCell>
@@ -337,13 +382,11 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                         return (
                                             <React.Fragment key={user.id}>
                                                 <TableRow style={{ borderBottom: '1px solid #eee', backgroundColor: shouldExpire ? '#fff3e0' : 'transparent' }}>
-                                                    {/* {isSuperAdmin && (
-                                                    <TableCell sx={{
-                                                        whiteSpace: 'nowrap',
-                                                    }}>
-                                                        <Checkbox checked={selectedMembers.includes(user.id)} onChange={() => handleSelectMember(user.id)} disabled={!shouldExpire} />
-                                                    </TableCell>
-                                                )} */}
+                                                    {isSuperAdmin && (
+                                                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                                            <Checkbox checked={selectedMembers.includes(user.id)} onChange={() => handleSelectMember(user.id)} disabled={!shouldExpire} />
+                                                        </TableCell>
+                                                    )}
                                                     <TableCell
                                                         sx={{
                                                             color: '#000',
@@ -443,7 +486,36 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                     </TableCell>
                                                     <TableCell>
                                                         <Box display="flex" gap={1}>
-                                                            {/* Extension button logic commented out */}
+                                                            {isSuperAdmin &&
+                                                                ['son', 'daughter'].includes(String(user.relation || '').toLowerCase()) &&
+                                                                (age >= 25 || shouldExpire || hasExtension) && (
+                                                                    <Button
+                                                                        size="small"
+                                                                        variant="contained"
+                                                                        startIcon={<Extension />}
+                                                                        onClick={() => {
+                                                                            setSelectedMemberForExtension(user);
+                                                                            setOpenExtensionModal(true);
+                                                                        }}
+                                                                        sx={{
+                                                                            textTransform: 'none',
+                                                                            background: 'linear-gradient(45deg, #27ae60 30%, #2ecc71 90%)',
+                                                                            color: 'white',
+                                                                            fontSize: '11px',
+                                                                            fontWeight: 'bold',
+                                                                            px: 2,
+                                                                            py: 0.5,
+                                                                            boxShadow: '0 2px 8px rgba(39, 174, 96, 0.3)',
+                                                                            '&:hover': {
+                                                                                background: 'linear-gradient(45deg, #229954 30%, #27ae60 90%)',
+                                                                                boxShadow: '0 4px 12px rgba(39, 174, 96, 0.4)',
+                                                                                transform: 'translateY(-1px)',
+                                                                            },
+                                                                        }}
+                                                                    >
+                                                                        Extend
+                                                                    </Button>
+                                                                )}
                                                         </Box>
                                                     </TableCell>
                                                 </TableRow>
@@ -481,7 +553,68 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
             <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={familyGroups} />
 
             {/* Extension Modal */}
-            {/* ... */}
+            <Dialog open={openExtensionModal} onClose={() => setOpenExtensionModal(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ backgroundColor: '#063455', color: 'white' }}>
+                    <Box display="flex" alignItems="center">
+                        <Extension sx={{ mr: 1 }} />
+                        <Typography variant="h6">Extend Family Member Expiry</Typography>
+                    </Box>
+                </DialogTitle>
+                <DialogContent sx={{ pt: 3 }}>
+                    {selectedMemberForExtension && (
+                        <Box sx={{ mb: 3 }}>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                <strong>Member:</strong> {selectedMemberForExtension.full_name}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                <strong>Membership No:</strong> {selectedMemberForExtension.membership_no}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                <strong>Age:</strong> {Math.floor(selectedMemberForExtension.calculated_age || calculateAge(selectedMemberForExtension.date_of_birth))} years
+                            </Typography>
+                            <Typography variant="body2">
+                                <strong>Current Status:</strong> {selectedMemberForExtension.status}
+                            </Typography>
+                        </Box>
+                    )}
+
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Extension Date"
+                            value={extensionDate ? dayjs(extensionDate, 'DD-MM-YYYY') : null}
+                            onChange={(newValue) => setExtensionDate(newValue ? newValue.format('DD-MM-YYYY') : '')}
+                            format="DD-MM-YYYY"
+                            slotProps={{
+                                textField: {
+                                    fullWidth: true,
+                                    margin: 'normal',
+                                },
+                            }}
+                        />
+                    </LocalizationProvider>
+
+                    <TextField fullWidth multiline rows={4} label="Reason for Extension" value={extensionReason} onChange={(e) => setExtensionReason(e.target.value)} placeholder="Please provide a detailed reason for extending this member's expiry date..." helperText="Minimum 10 characters required" sx={{ mt: 2 }} />
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button onClick={() => setOpenExtensionModal(false)} disabled={loading}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleExtendExpiry}
+                        variant="contained"
+                        disabled={loading}
+                        startIcon={<Extension />}
+                        sx={{
+                            background: 'linear-gradient(45deg, #27ae60 30%, #2ecc71 90%)',
+                            '&:hover': {
+                                background: 'linear-gradient(45deg, #229954 30%, #27ae60 90%)',
+                            },
+                        }}
+                    >
+                        {loading ? 'Extending...' : 'Extend Expiry'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };

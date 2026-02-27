@@ -1203,6 +1203,12 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
         Route::get('profile/{id}/all-family-members', [CorporateMembershipController::class, 'getAllFamilyMembers'])->name('corporate-membership.members.all-family-members')->middleware('permission:corporate-members.view');
         Route::get('profile/{id}/profession-info', [CorporateMembershipController::class, 'getProfessionInfo'])->name('corporate-membership.profession-info.get')->middleware('permission:corporate-members.view');
         Route::get('family-members', [CorporateMembershipController::class, 'familyMembersIndex'])->name('corporate-membership.family-members')->middleware('permission:corporate-members.view');
+
+        Route::group(['prefix' => 'family-members', 'middleware' => 'permission:family-members.view'], function () {
+            Route::post('member/{corporateMember}/extend', [CorporateMembershipController::class, 'extendFamilyExpiry'])->name('corporate-membership.family-expiry.extend');
+            Route::post('bulk-expire', [CorporateMembershipController::class, 'bulkExpireFamily'])->name('corporate-membership.family-expiry.bulk-expire');
+        });
+
         Route::post('store', [CorporateMembershipController::class, 'store'])->name('corporate-membership.store')->middleware('permission:corporate-members.create');
         Route::post('store-step-4', [CorporateMembershipController::class, 'storeStep4'])->name('corporate-membership.store-step-4')->middleware('permission:corporate-members.create');
         Route::post('update-status', [CorporateMembershipController::class, 'updateStatus'])->name('corporate-membership.update-status')->middleware('permission:corporate-members.edit');

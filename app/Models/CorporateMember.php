@@ -302,8 +302,8 @@ class CorporateMember extends BaseModel
      */
     public function shouldExpireByAge()
     {
-        // Exclude spouses from age-based expiry
-        if (in_array($this->relation, ['Wife', 'Second Wife', 'Husband'])) {
+        $relation = strtolower((string) ($this->relation ?? ''));
+        if (!in_array($relation, ['son', 'daughter'], true)) {
             return false;
         }
 
@@ -399,7 +399,7 @@ class CorporateMember extends BaseModel
             ->whereNotNull('date_of_birth')
             ->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 25')
             ->where('status', '!=', 'expired')
-            ->whereNotIn('relation', ['Wife', 'Second Wife', 'Husband'])  // Exclude spouses
+            ->whereIn('relation', ['Son', 'Daughter'])
             ->where(function ($q) {
                 $q
                     ->whereNull('expiry_extension_date')

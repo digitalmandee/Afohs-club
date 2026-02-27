@@ -198,6 +198,20 @@ const Transaction = ({ transactions, filters, users, transactionTypes, subscript
         }
     };
 
+    const pageTotals = (transactions?.data || []).reduce(
+        (acc, t) => {
+            const amount = Number(t?.total_price ?? t?.amount ?? 0) || 0;
+            const paid = Number(t?.paid_amount ?? 0) || 0;
+            const balance = Number(t?.balance ?? 0) || 0;
+            return {
+                amount: acc.amount + amount,
+                paid: acc.paid + paid,
+                balance: acc.balance + balance,
+            };
+        },
+        { amount: 0, paid: 0, balance: 0 },
+    );
+
     return (
         <>
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -489,11 +503,21 @@ const Transaction = ({ transactions, filters, users, transactionTypes, subscript
                                     })
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={10} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
+                                        <TableCell colSpan={13} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
                                             No transactions found
                                         </TableCell>
                                     </TableRow>
                                 )}
+                                <TableRow style={{ backgroundColor: '#e3f2fd' }}>
+                                    <TableCell padding="checkbox" />
+                                    <TableCell colSpan={3} sx={{ fontWeight: 700, color: '#063455' }}>
+                                        Grand Total
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: '#063455', whiteSpace: 'nowrap' }}>Rs {pageTotals.amount.toLocaleString()}</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: 'success.main', whiteSpace: 'nowrap' }}>Rs {pageTotals.paid.toLocaleString()}</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: 'error.main', whiteSpace: 'nowrap' }}>Rs {pageTotals.balance.toLocaleString()}</TableCell>
+                                    <TableCell colSpan={6} />
+                                </TableRow>
                             </TableBody>
                         </Table>
                     </TableContainer>

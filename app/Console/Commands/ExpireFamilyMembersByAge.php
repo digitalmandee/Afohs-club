@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\CorporateMember;
 use App\Models\Member;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +21,7 @@ class ExpireFamilyMembersByAge extends Command
      *
      * @var string
      */
-    protected $description = 'Automatically expire family members who have reached 25 years of age (excludes wives)';
+    protected $description = 'Automatically expire family members (son/daughter) who have reached 25 years of age';
 
     /**
      * Execute the console command.
@@ -28,8 +29,9 @@ class ExpireFamilyMembersByAge extends Command
     public function handle()
     {
         $isDryRun = $this->option('dry-run');
+        $expiredCount = 0;
 
-        $this->info('Starting family member age-based expiry process (excluding wives)...');
+        $this->info('Starting family member age-based expiry process (son/daughter only)...');
 
         // Get regular family members who should be expired by age
         $membersToExpire = Member::familyMembersToExpire()->get();
@@ -37,7 +39,7 @@ class ExpireFamilyMembersByAge extends Command
         $this->processExpiry($membersToExpire, $isDryRun, $expiredCount);
 
         // Get corporate family members who should be expired by age
-        $corporateMembersToExpire = \App\Models\CorporateMember::familyMembersToExpire()->get();
+        $corporateMembersToExpire = CorporateMember::familyMembersToExpire()->get();
         $this->info("Found {$corporateMembersToExpire->count()} corporate family member(s) to expire.");
         $this->processExpiry($corporateMembersToExpire, $isDryRun, $expiredCount);
 
@@ -67,7 +69,7 @@ class ExpireFamilyMembersByAge extends Command
     {
         foreach ($members as $member) {
             $age = $member->age;
-            $type = $member instanceof \App\Models\CorporateMember ? 'Corporate' : 'Regular';
+            $type = $member instanceof CorporateMember ? 'Corporate' : 'Regular';
             $memberInfo = "[$type] {$member->full_name} (ID: {$member->id}, Age: {$age})";
 
             if ($isDryRun) {

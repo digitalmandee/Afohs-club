@@ -289,12 +289,31 @@ class FinancialController extends Controller
             });
         }
 
-        // Apply date range filter
-        if ($request->filled('start_date')) {
-            $query->whereDate('issue_date', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('issue_date', '<=', $request->end_date);
+        // Apply date range filter (matches "Date" column in table: issue_date, fallback to created_at)
+        $start = $request->input('start_date');
+        $end = $request->input('end_date');
+        if ($start || $end) {
+            $query->where(function ($q) use ($start, $end) {
+                $q->where(function ($q2) use ($start, $end) {
+                    $q2->whereNotNull('issue_date');
+                    if ($start && $end) {
+                        $q2->whereBetween('issue_date', [$start . ' 00:00:00', $end . ' 23:59:59']);
+                    } elseif ($start) {
+                        $q2->whereDate('issue_date', '>=', $start);
+                    } elseif ($end) {
+                        $q2->whereDate('issue_date', '<=', $end);
+                    }
+                })->orWhere(function ($q2) use ($start, $end) {
+                    $q2->whereNull('issue_date');
+                    if ($start && $end) {
+                        $q2->whereBetween('created_at', [$start . ' 00:00:00', $end . ' 23:59:59']);
+                    } elseif ($start) {
+                        $q2->whereDate('created_at', '>=', $start);
+                    } elseif ($end) {
+                        $q2->whereDate('created_at', '<=', $end);
+                    }
+                });
+            });
         }
 
         // Apply general search filter
