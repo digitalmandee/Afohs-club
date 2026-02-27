@@ -101,18 +101,20 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
     };
 
     const getAgeStatusColor = (age, shouldExpire, hasExtension, relation) => {
-        // Wives are not subject to age-based expiry
-        if (relation === 'Wife') return '#063455'; // Blue for normal
+        const relationKey = String(relation || '').toLowerCase();
+        const isAgeCapped = ['son', 'daughter'].includes(relationKey);
+        if (!isAgeCapped) return '#063455';
 
         if (hasExtension) return '#27ae60'; // Green for extended
-        if (age >= 25) return '#e74c3c'; // Red for should expire
+        if (shouldExpire || age >= 25) return '#e74c3c'; // Red for should expire
         if (age >= 24) return '#ff6b35'; // Orange for warning
         return '#063455'; // Blue for normal
     };
 
     const getAgeStatusIcon = (age, shouldExpire, hasExtension, relation) => {
-        // Wives are not subject to age-based expiry
-        if (relation === 'Wife') return <CheckCircle color="white" fontSize="small" />;
+        const relationKey = String(relation || '').toLowerCase();
+        const isAgeCapped = ['son', 'daughter'].includes(relationKey);
+        if (!isAgeCapped) return <CheckCircle color="white" fontSize="small" />;
 
         if (hasExtension) return <Extension color="white" fontSize="small" />;
         if (shouldExpire) return <Warning color="white" fontSize="small" />;
@@ -121,8 +123,9 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
     };
 
     const getAgeStatusText = (age, shouldExpire, hasExtension, relation) => {
-        // Wives are not subject to age-based expiry
-        if (relation === 'Wife') return 'Active';
+        const relationKey = String(relation || '').toLowerCase();
+        const isAgeCapped = ['son', 'daughter'].includes(relationKey);
+        if (!isAgeCapped) return 'Active';
 
         if (hasExtension) return 'Extended';
         if (shouldExpire) return 'Should Expire';
@@ -525,7 +528,9 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                     </TableCell>
                                                     <TableCell>
                                                         <Box display="flex" gap={1}>
-                                                            {isSuperAdmin && (age >= 25 || shouldExpire) && user.relation !== 'Wife' && (
+                                                            {isSuperAdmin &&
+                                                                ['son', 'daughter'].includes(String(user.relation || '').toLowerCase()) &&
+                                                                (age >= 25 || shouldExpire || hasExtension) && (
                                                                 <Button
                                                                     size="small"
                                                                     variant="contained"

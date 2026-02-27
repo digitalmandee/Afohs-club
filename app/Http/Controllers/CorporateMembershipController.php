@@ -1051,14 +1051,18 @@ class CorporateMembershipController extends Controller
 
         // Over 25 Age Checkbox
         if ($request->boolean('age_over_25')) {
-            $query->whereDate('date_of_birth', '<=', Carbon::now()->subYears(25)->toDateString());
+            $query
+                ->whereIn('relation', ['Son', 'Daughter'])
+                ->whereDate('date_of_birth', '<=', Carbon::now()->subYears(25)->toDateString());
         }
 
         $familyGroups = $query->latest()->paginate(7)->withQueryString();
 
-        // Add calculated age
+        // Add calculated age and expiry info to each member
         $familyGroups->getCollection()->transform(function ($member) {
             $member->calculated_age = $member->age ?? \Carbon\Carbon::parse($member->date_of_birth)->age;
+            $member->should_expire = $member->shouldExpireByAge();
+            $member->has_extension = $member->hasValidExtension();
             return $member;
         });
 
@@ -1067,6 +1071,16 @@ class CorporateMembershipController extends Controller
             'total_family_members' => CorporateMember::whereNotNull('parent_id')->count(),
             'total_over_25' => CorporateMember::whereNotNull('parent_id')
                 ->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 25')
+                ->whereIn('relation', ['Son', 'Daughter'])
+                ->count(),
+            'expired_by_age' => CorporateMember::whereNotNull('parent_id')
+                ->where('status', 'expired')
+                ->whereIn('relation', ['Son', 'Daughter'])
+                ->count(),
+            'with_extensions' => CorporateMember::whereNotNull('parent_id')
+                ->whereNotNull('expiry_extension_date')
+                ->where('expiry_extension_date', '>', now())
+                ->whereIn('relation', ['Son', 'Daughter'])
                 ->count(),
         ];
 
@@ -1078,6 +1092,104 @@ class CorporateMembershipController extends Controller
             'memberCategories' => $memberCategories,
             'filters' => $request->all(),
             'stats' => $stats,
+        ]);
+    }
+
+    public function extendFamilyExpiry(Request $request, CorporateMember $corporateMember)
+    {
+        if (!Auth::user()->hasRole('super-admin')) {
+            return response()->json([
+                'error' => 'Only Super Admins can extend family member expiry dates.'
+            ], 403);
+        }
+
+        if (!$corporateMember->isFamilyMember()) {
+            return response()->json([
+                'error' => 'This is not a family member.'
+            ], 400);
+        }
+
+        if (!in_array(strtolower((string) ($corporateMember->relation ?? '')), ['son', 'daughter'], true)) {
+            return response()->json([
+                'error' => 'Expiry extension is only applicable to son and daughter.'
+            ], 400);
+        }
+
+        $request->validate([
+            'extension_date' => 'required|date_format:d-m-Y|after:today',
+            'reason' => 'required|string|min:10|max:500',
+        ]);
+
+        try {
+            $corporateMember->extendExpiry(
+                $this->formatDateForDatabase($request->extension_date),
+                $request->reason,
+                Auth::id()
+            );
+
+            Log::info('Corporate family member expiry extended by super admin', [
+                'member_id' => $corporateMember->id,
+                'member_name' => $corporateMember->full_name,
+                'extended_by' => Auth::user()->name,
+                'extension_date' => $request->extension_date,
+                'reason' => $request->reason,
+            ]);
+
+            return response()->json([
+                'message' => 'Expiry date extended successfully.',
+                'member' => $corporateMember->fresh(['expiryExtendedBy'])
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to extend corporate family member expiry', [
+                'member_id' => $corporateMember->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to extend expiry date. Please try again.'
+            ], 500);
+        }
+    }
+
+    public function bulkExpireFamily(Request $request)
+    {
+        if (!Auth::user()->hasRole('super-admin')) {
+            return response()->json([
+                'error' => 'Only Super Admins can perform bulk operations.'
+            ], 403);
+        }
+
+        $request->validate([
+            'member_ids' => 'required|array',
+            'member_ids.*' => 'exists:corporate_members,id',
+        ]);
+
+        $expiredCount = 0;
+        $errors = [];
+
+        foreach ($request->member_ids as $memberId) {
+            try {
+                $member = CorporateMember::find($memberId);
+
+                if ($member && $member->isFamilyMember() && $member->shouldExpireByAge()) {
+                    $member->expireByAge('Manual expiry by Super Admin: ' . Auth::user()->name);
+                    $expiredCount++;
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Failed to expire member ID {$memberId}: " . $e->getMessage();
+            }
+        }
+
+        Log::info('Bulk corporate family member expiry by super admin', [
+            'expired_count' => $expiredCount,
+            'performed_by' => Auth::user()->name,
+            'member_ids' => $request->member_ids,
+        ]);
+
+        return response()->json([
+            'message' => "Successfully expired {$expiredCount} family member(s).",
+            'expired_count' => $expiredCount,
+            'errors' => $errors,
         ]);
     }
 

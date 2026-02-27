@@ -375,6 +375,11 @@ const CorporateMemberForm = ({ membershipNo, applicationNo, membercategories, fa
             return;
         }
 
+        if (isEditMode) {
+            setStep(targetStep);
+            return;
+        }
+
         // Validate steps sequentially up to targetStep
         let canProceed = true;
 

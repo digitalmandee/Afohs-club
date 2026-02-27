@@ -31,29 +31,31 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
     // New State for Invoice Grid
     const [transactionTypes, setTransactionTypes] = useState([]);
-    const [invoiceItems, setInvoiceItems] = useState([
-        {
-            id: Date.now(),
-            fee_type: '',
-            fee_type_name: '',
-            description: '',
-            qty: 1,
-            amount: '',
-            tax_percentage: 0,
-            overdue_percentage: 0,
-            discount_type: 'fixed',
-            discount_value: 0,
-            discount_amount: 0,
-            additional_charges: 0,
-            valid_from: null,
-            valid_to: null,
-            remarks: '',
-            subscription_type_id: '',
-            subscription_category_id: '',
-            family_member_id: '',
-            total: 0,
-        },
-    ]);
+    const createBlankInvoiceItem = () => ({
+        id: Date.now(),
+        fee_type: '',
+        fee_type_name: '',
+        description: '',
+        qty: 1,
+        amount: '',
+        tax_percentage: 0,
+        overdue_percentage: 0,
+        discount_type: 'fixed',
+        discount_value: 0,
+        discount_amount: 0,
+        additional_charges: 0,
+        extra_percentage: 0,
+        valid_from: null,
+        valid_to: null,
+        days: '',
+        remarks: '',
+        subscription_type_id: '',
+        subscription_category_id: '',
+        family_member_id: '',
+        financial_charge_type_id: '',
+        total: 0,
+    });
+    const [invoiceItems, setInvoiceItems] = useState([createBlankInvoiceItem()]);
 
     // Pagination and search states
     const [searchInvoice, setSearchInvoice] = useState('');
@@ -596,6 +598,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         setSelectedMember(null);
         setSearchResults([]);
         setMemberTransactions([]);
+        setInvoiceItems([createBlankInvoiceItem()]);
 
         // Map UI values to Backend types
         // 0 -> member
@@ -1022,26 +1025,17 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                         receipt_file: null,
                         remarks: '',
                     });
-                    setInvoiceItems([]);
+                    setInvoiceItems([createBlankInvoiceItem()]);
                     // preSelectedMember is a prop, cannot set it.
                     setSearchResults([]);
-                    if (!preSelectedMember) {
-                        setSelectedMember(null);
-                    }
                 }
 
-                // Clear items
-                setInvoiceItems([]);
-
-                if (!preSelectedMember) {
-                    // Reset member selection
-                    setSelectedMember(null);
-                    setMemberTransactions([]);
-                    setMembershipFeePaid(false);
-                    // Reset quarter status manually if needed, or it will be reset on next member select
+                if (selectedMember && (bookingType === '0' || bookingType === '2')) {
+                    fetchMemberTransactions(selectedMember.id);
                 } else {
-                    // Refresh transactions for the pre-selected member
-                    fetchMemberTransactions(selectedMember.id); // Assuming this function exists and works
+                    setMemberTransactions([]);
+                    setFilteredTransactions([]);
+                    setMembershipFeePaid(false);
                 }
 
                 setFormErrors({});
@@ -1129,19 +1123,49 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         setActiveInvoice(transaction);
 
         // Populate items with balance info
-        const itemsToPay = transaction.items.map((item) => {
+        const parsedItems = (transaction.items || []).map((item) => {
             const total = parseFloat(String(item.total || 0).replace(/,/g, ''));
             const paid = parseFloat(String(item.paid_amount || 0).replace(/,/g, ''));
             return {
-                ...item, // Keep existing ID, etc.
-                transaction_type_id: item.fee_type, // Map for grid if needed
-                total: total, // Ensure numeric
-                amount: parseFloat(String(item.amount || 0).replace(/,/g, '')), // Ensure numeric
-                payment_amount: 0, // Default to 0 input
-                balance: total - paid,
+                ...item,
+                transaction_type_id: item.fee_type,
+                total: total,
+                amount: parseFloat(String(item.amount || 0).replace(/,/g, '')),
+                payment_amount: 0,
+                balance: Math.max(0, total - paid),
                 paid_amount: paid,
             };
         });
+
+        const invoiceTotal = parseFloat(String(transaction.total_price || 0).replace(/,/g, ''));
+        const itemsBaseTotal = parsedItems.reduce((sum, it) => sum + (parseFloat(it.total || 0) || 0), 0);
+        const delta = invoiceTotal - itemsBaseTotal;
+
+        let itemsToPay = parsedItems;
+        if (Number.isFinite(invoiceTotal) && parsedItems.length > 0 && Math.abs(delta) >= 1) {
+            let remaining = delta;
+            itemsToPay = parsedItems.map((it, idx) => {
+                const base = parseFloat(it.total || 0) || 0;
+                let share = 0;
+                if (parsedItems.length === 1) {
+                    share = remaining;
+                } else if (itemsBaseTotal > 0) {
+                    share = Math.round((delta * base) / itemsBaseTotal);
+                }
+                if (idx === parsedItems.length - 1) {
+                    share = remaining;
+                } else {
+                    remaining -= share;
+                }
+                const adjustedTotal = Math.round(base + share);
+                const adjustedBalance = Math.max(0, adjustedTotal - (parseFloat(it.paid_amount || 0) || 0));
+                return {
+                    ...it,
+                    total: adjustedTotal,
+                    balance: adjustedBalance,
+                };
+            });
+        }
         setInvoiceItems(itemsToPay);
 
         // Scroll to top
@@ -1150,7 +1174,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
     const resetForm = () => {
         reset();
-        setInvoiceItems([]);
+        setInvoiceItems([createBlankInvoiceItem()]);
         setFormErrors({});
         setSearchResults([]);
         if (!preSelectedMember) {
@@ -1166,7 +1190,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
         setPaymentMode(false);
         setActiveInvoice(null);
-        setInvoiceItems([]);
+        setInvoiceItems([createBlankInvoiceItem()]);
         resetForm();
     };
 
@@ -1509,7 +1533,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                     {/* Invoice Items Grid */}
                                                     <Grid item xs={12}>
-                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} subscriptionTypes={subscriptionTypes} onQuickSelectMaintenance={suggestMaintenancePeriod} membershipCharges={membershipCharges} maintenanceCharges={maintenanceCharges} subscriptionCharges={subscriptionCharges} otherCharges={otherCharges} financialChargeTypes={financialChargeTypes} bookingType={bookingType} paymentMode={paymentMode} />
+                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} onQuickSelectMaintenance={suggestMaintenancePeriod} membershipCharges={membershipCharges} maintenanceCharges={maintenanceCharges} subscriptionCharges={subscriptionCharges} otherCharges={otherCharges} financialChargeTypes={financialChargeTypes} bookingType={bookingType} paymentMode={paymentMode} invoice={activeInvoice} />
                                                     </Grid>
 
                                                     {/* Remarks Section */}

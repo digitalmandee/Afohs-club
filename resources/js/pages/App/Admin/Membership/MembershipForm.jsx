@@ -412,6 +412,11 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             return;
         }
 
+        if (isEditMode) {
+            setStep(targetStep);
+            return;
+        }
+
         // Validate steps sequentially up to targetStep
         // Example: Current 1, Target 3. Check 1, then 2.
         let canProceed = true;

@@ -289,12 +289,31 @@ class FinancialController extends Controller
             });
         }
 
-        // Apply date range filter
-        if ($request->filled('start_date')) {
-            $query->whereDate('issue_date', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('issue_date', '<=', $request->end_date);
+        // Apply date range filter (matches "Date" column in table: issue_date, fallback to created_at)
+        $start = $request->input('start_date');
+        $end = $request->input('end_date');
+        if ($start || $end) {
+            $query->where(function ($q) use ($start, $end) {
+                $q->where(function ($q2) use ($start, $end) {
+                    $q2->whereNotNull('issue_date');
+                    if ($start && $end) {
+                        $q2->whereBetween('issue_date', [$start . ' 00:00:00', $end . ' 23:59:59']);
+                    } elseif ($start) {
+                        $q2->whereDate('issue_date', '>=', $start);
+                    } elseif ($end) {
+                        $q2->whereDate('issue_date', '<=', $end);
+                    }
+                })->orWhere(function ($q2) use ($start, $end) {
+                    $q2->whereNull('issue_date');
+                    if ($start && $end) {
+                        $q2->whereBetween('created_at', [$start . ' 00:00:00', $end . ' 23:59:59']);
+                    } elseif ($start) {
+                        $q2->whereDate('created_at', '>=', $start);
+                    } elseif ($end) {
+                        $q2->whereDate('created_at', '<=', $end);
+                    }
+                });
+            });
         }
 
         // Apply general search filter
@@ -404,7 +423,7 @@ class FinancialController extends Controller
             'subscriptionType',
             'subscriptionCategory',
             'invoiceable',
-            'items',
+            'items.transactions',
         ];
 
         // 1. Try to find by invoice ID directly
@@ -428,6 +447,20 @@ class FinancialController extends Controller
             $invoice->member->loadCount('familyMembers');
         } elseif ($invoice->corporateMember) {
             $invoice->corporateMember->loadCount('familyMembers');
+        }
+
+        if ($invoice->items) {
+            $invoice->items->each(function ($item) {
+                $item->paid_amount = $item->transactions
+                    ->where('type', 'credit')
+                    ->sum('amount');
+            });
+
+            $paid = $invoice->items->sum(function ($item) {
+                return $item->transactions->where('type', 'credit')->sum('amount');
+            });
+            $invoice->paid_amount = $paid;
+            $invoice->customer_charges = max(0, (float) ($invoice->total_price ?? 0) - (float) $paid);
         }
 
         return response()->json(['invoice' => $invoice]);
@@ -623,6 +656,60 @@ class FinancialController extends Controller
         return $invoiceNo;
     }
 
+    private function syncInvoiceLedgerDebits(FinancialInvoice $invoice): void
+    {
+        $debits = Transaction::where('invoice_id', $invoice->id)
+            ->where('type', 'debit')
+            ->orderBy('id')
+            ->get();
+
+        $target = (float) ($invoice->total_price ?? 0);
+        $current = (float) $debits->sum('amount');
+        $delta = $target - $current;
+
+        if (abs($delta) < 0.01) {
+            return;
+        }
+
+        if ($debits->isEmpty()) {
+            Transaction::create([
+                'payable_type' => $invoice->invoiceable_type ?: \App\Models\Member::class,
+                'payable_id' => $invoice->invoiceable_id ?: $invoice->member_id,
+                'type' => 'debit',
+                'amount' => $target,
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
+                'invoice_id' => $invoice->id,
+                'description' => "Invoice #{$invoice->invoice_no} - Ledger Sync",
+                'date' => now(),
+                'created_by' => Auth::id(),
+            ]);
+            return;
+        }
+
+        if ($delta > 0) {
+            $last = $debits->last();
+            $last->amount = (float) $last->amount + $delta;
+            $last->save();
+            return;
+        }
+
+        $reduction = -$delta;
+        foreach ($debits->reverse() as $debit) {
+            if ($reduction <= 0.01) {
+                break;
+            }
+            $amt = (float) $debit->amount;
+            if ($amt <= 0) {
+                continue;
+            }
+            $cut = min($amt, $reduction);
+            $debit->amount = $amt - $cut;
+            $debit->save();
+            $reduction -= $cut;
+        }
+    }
+
     public function bulkApplyDiscount(Request $request)
     {
         $request->validate([
@@ -697,24 +784,23 @@ class FinancialController extends Controller
 
                 $invoice->save();
 
-                // Update Ledger Transaction (Debit)
-                // We need to find the main debit transaction for this invoice.
-                $transaction = Transaction::where('reference_type', FinancialInvoice::class)
-                    ->where('reference_id', $invoice->id)
-                    ->where('type', 'debit')
-                    ->first();
+                $this->syncInvoiceLedgerDebits($invoice);
 
-                if ($transaction) {
-                    $transaction->amount = $invoice->total_price;
-                    $transaction->save();
-                }
+                $paid = Transaction::where('invoice_id', $invoice->id)
+                    ->where('type', 'credit')
+                    ->sum('amount');
+                $invoice->paid_amount = $paid;
+                $invoice->customer_charges = max(0, (float) ($invoice->total_price ?? 0) - (float) $paid);
 
                 // If paid_amount > total_price (due to discount), status becomes Paid?
                 // Or is there a "Credit" balance?
                 // Logic:
-                $paid = $invoice->transactions()->where('type', 'credit')->sum('amount');
                 if ($paid >= $invoice->total_price) {
                     $invoice->status = 'paid';
+                    $invoice->customer_charges = 0;
+                    $invoice->save();
+                } elseif ($paid > 0) {
+                    $invoice->status = 'partial';
                     $invoice->save();
                 }
 
@@ -765,16 +851,20 @@ class FinancialController extends Controller
 
                 $invoice->save();
 
-                // Update Ledger
-                $transaction = Transaction::where('reference_type', FinancialInvoice::class)
-                    ->where('reference_id', $invoice->id)
-                    ->where('type', 'debit')
-                    ->first();
+                $this->syncInvoiceLedgerDebits($invoice);
 
-                if ($transaction) {
-                    $transaction->amount = $invoice->total_price;
-                    $transaction->save();
+                $paid = Transaction::where('invoice_id', $invoice->id)
+                    ->where('type', 'credit')
+                    ->sum('amount');
+                $invoice->paid_amount = $paid;
+                $invoice->customer_charges = max(0, (float) ($invoice->total_price ?? 0) - (float) $paid);
+                if ($paid >= $invoice->total_price) {
+                    $invoice->status = 'paid';
+                    $invoice->customer_charges = 0;
+                } elseif ($paid > 0) {
+                    $invoice->status = 'partial';
                 }
+                $invoice->save();
 
                 $updatedCount++;
             }

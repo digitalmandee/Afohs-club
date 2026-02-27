@@ -2347,7 +2347,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     onOpen={() => setFamilyDobOpen(true)}
                                                                 />
                                                             </LocalizationProvider>
-                                                            {currentFamilyMember.date_of_birth && calculateAge(currentFamilyMember.date_of_birth) >= 25 && (
+                                                            {currentFamilyMember.date_of_birth &&
+                                                                ['son', 'daughter'].includes(String(currentFamilyMember.relation || '').toLowerCase()) &&
+                                                                calculateAge(currentFamilyMember.date_of_birth) >= 25 && (
                                                                 <Typography variant="caption" sx={{ color: '#ff9800', mt: 1, display: 'block' }}>
                                                                     ⚠️ Member is 25+ years old. Membership will expire automatically unless extended by Super Admin.
                                                                 </Typography>

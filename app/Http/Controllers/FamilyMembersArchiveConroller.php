@@ -69,7 +69,9 @@ class FamilyMembersArchiveConroller extends Controller
 
         // Over 25 Age Checkbox
         if ($request->boolean('age_over_25')) {
-            $query->whereDate('date_of_birth', '<=', Carbon::now()->subYears(25)->toDateString());
+            $query
+                ->whereIn('relation', ['Son', 'Daughter'])
+                ->whereDate('date_of_birth', '<=', Carbon::now()->subYears(25)->toDateString());
         }
 
         // Min Age
@@ -97,13 +99,16 @@ class FamilyMembersArchiveConroller extends Controller
             'total_family_members' => Member::whereNotNull('parent_id')->count(),
             'total_over_25' => Member::whereNotNull('parent_id')
                 ->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 25')
+                ->whereIn('relation', ['Son', 'Daughter'])
                 ->count(),
             'expired_by_age' => Member::whereNotNull('parent_id')
                 ->where('status', 'expired')
+                ->whereIn('relation', ['Son', 'Daughter'])
                 ->count(),
             'with_extensions' => Member::whereNotNull('parent_id')
                 ->whereNotNull('expiry_extension_date')
                 ->where('expiry_extension_date', '>', now())
+                ->whereIn('relation', ['Son', 'Daughter'])
                 ->count(),
         ];
 
@@ -123,6 +128,10 @@ class FamilyMembersArchiveConroller extends Controller
         // Ensure this is a family member
         if (!$member->isFamilyMember()) {
             return redirect()->back()->with('error', 'This is not a family member.');
+        }
+
+        if (!in_array(strtolower((string) ($member->relation ?? '')), ['son', 'daughter'], true)) {
+            return redirect()->back()->with('error', 'Expiry extension is only applicable to son and daughter.');
         }
 
         $member->load(['parent', 'memberCategory', 'expiryExtendedBy']);
@@ -162,6 +171,12 @@ class FamilyMembersArchiveConroller extends Controller
         if (!$member->isFamilyMember()) {
             return response()->json([
                 'error' => 'This is not a family member.'
+            ], 400);
+        }
+
+        if (!in_array(strtolower((string) ($member->relation ?? '')), ['son', 'daughter'], true)) {
+            return response()->json([
+                'error' => 'Expiry extension is only applicable to son and daughter.'
             ], 400);
         }
 
