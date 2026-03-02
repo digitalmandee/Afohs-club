@@ -220,7 +220,9 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
             return sum + (Number(item.order_item?.total_price || 0) - Number(item.order_item?.discount_amount || 0));
         }, 0);
         const taxAmount = Math.round(taxableAmount * taxRate);
-        const total = Math.round(discountedSubtotal + taxAmount);
+        const serviceCharges = Number(selectedCard.service_charges || 0);
+        const bankCharges = Number(selectedCard.bank_charges || 0);
+        const total = Math.round(discountedSubtotal + taxAmount + serviceCharges + bankCharges);
 
         const payload = {
             updated_items: updatedItems,
@@ -229,6 +231,8 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
             discount: discountAmount,
             tax_rate: taxRate,
             total_price: total,
+            service_charges: serviceCharges,
+            bank_charges: bankCharges,
             status,
         };
 
@@ -398,6 +402,10 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
             amount: order.amount || 0, // subtotal
             discount: order.discount || 0,
             tax: order.tax_rate || order.tax || 0,
+            service_charges: order.service_charges || 0,
+            service_charges_percentage: order.service_charges_percentage || 0,
+            bank_charges: order.bank_charges || 0,
+            bank_charges_percentage: order.bank_charges_percentage || 0,
             total_price: order.total_price, // grand total
             order_type: order.order_type,
             member: order.member,

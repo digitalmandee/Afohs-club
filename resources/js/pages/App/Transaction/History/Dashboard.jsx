@@ -125,6 +125,7 @@ const Dashboard = ({ orders, filters, totals }) => {
     // Transform order data for Receipt component
     const getReceiptData = (order) => {
         if (!order) return null;
+        const bankChargesEnabled = Number(order.bank_charges) > 0;
         return {
             id: order.id,
             order_no: order.id,
@@ -134,6 +135,10 @@ const Dashboard = ({ orders, filters, totals }) => {
             discount: order.discount || 0,
             tax: order.tax || 0,
             total_price: order.total_price,
+            service_charges: order.service_charges || 0,
+            service_charges_percentage: order.service_charges_percentage || 0,
+            bank_charges: order.bank_charges || 0,
+            bank_charges_percentage: order.bank_charges_percentage || 0,
             order_type: order.order_type,
             member: order.member,
             customer: order.customer,
@@ -152,13 +157,10 @@ const Dashboard = ({ orders, filters, totals }) => {
                     total_price: item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0),
                 })) || [],
             data: {
-                bank_charges_enabled: order.id ? true : false, // Simplification, need actual data from pivot/invoice
-                // Since we don't have direct invoice data here on 'order' object easily without transformation in controller...
-                // Ideally, controller should have loaded 'invoice' relation.
-                // Assuming 'order' has 'invoice' loaded as per TransactionController::transactionHistory
-                bank_charges_amount: order.invoice?.data?.bank_charges_amount || 0,
-                bank_charges_type: order.invoice?.data?.bank_charges_type || 'percentage',
-                bank_charges_value: order.invoice?.data?.bank_charges_value || 0,
+                bank_charges_enabled: bankChargesEnabled,
+                bank_charges_amount: Number(order.bank_charges || 0),
+                bank_charges_type: order.bank_charges_percentage > 0 ? 'percentage' : 'fixed',
+                bank_charges_value: order.bank_charges_percentage > 0 ? Number(order.bank_charges_percentage) : Number(order.bank_charges),
             },
         };
     };
@@ -167,6 +169,8 @@ const Dashboard = ({ orders, filters, totals }) => {
         const printWindow = window.open('', '_blank');
         const customerName = order.member?.full_name || order.customer?.name || order.employee?.name || 'N/A';
         const memberNo = order.member?.membership_no || '';
+        const serviceCharges = parseFloat(order.service_charges || 0);
+        const bankCharges = parseFloat(order.bank_charges || 0);
 
         // Calculate items HTML
         const itemsHtml =
@@ -289,11 +293,21 @@ const Dashboard = ({ orders, filters, totals }) => {
               <div>Rs ${order.tax ? Math.round((order.amount || order.total_price) * order.tax) : 0}</div>
             </div>
 
-            ${order.invoice?.data?.bank_charges_amount > 0
+            ${serviceCharges > 0
                 ? `
                 <div class="row">
-                  <div>Bank Charges (${order.invoice.data.bank_charges_type === 'percentage' ? order.invoice.data.bank_charges_value + '%' : 'Fixed'})</div>
-                  <div>Rs ${order.invoice.data.bank_charges_amount}</div>
+                  <div>Service Charges</div>
+                  <div>Rs ${serviceCharges}</div>
+                </div>
+                `
+                : ''
+            }
+
+            ${bankCharges > 0
+                ? `
+                <div class="row">
+                  <div>Bank Charges</div>
+                  <div>Rs ${bankCharges}</div>
                 </div>
                 `
                 : ''
@@ -828,13 +842,23 @@ const Dashboard = ({ orders, filters, totals }) => {
                                     </Box>
 
                                     {/* Bank Charges Detail in Modal */}
-                                    {selectedOrder.invoice?.data?.bank_charges_amount > 0 && (
+                                    {Number(selectedOrder.service_charges) > 0 && (
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Service Charges
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                Rs. {selectedOrder.service_charges}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                    {Number(selectedOrder.bank_charges) > 0 && (
                                         <Box>
                                             <Typography variant="caption" color="text.secondary">
                                                 Bank Charges
                                             </Typography>
                                             <Typography variant="body1" color="error">
-                                                Rs. {selectedOrder.invoice.data.bank_charges_amount}
+                                                Rs. {selectedOrder.bank_charges}
                                             </Typography>
                                         </Box>
                                     )}

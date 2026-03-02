@@ -1389,6 +1389,10 @@ class OrderController extends Controller
                 'discount' => $request->discount,
                 'total_price' => $request->total_price,
                 'cost_price' => $totalCostPrice,
+                'service_charges' => $request->service_charges,
+                'service_charges_percentage' => $request->service_charges_percentage,
+                'bank_charges' => $request->bank_charges,
+                'bank_charges_percentage' => $request->bank_charges_percentage,
             ]);
 
             DB::commit();

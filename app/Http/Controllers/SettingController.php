@@ -58,9 +58,15 @@ class SettingController extends Controller
 
     public function showTax()
     {
-        $setting = Setting::where('type', 'tax')->first();
+        $tax = Setting::where('type', 'tax')->value('value') ?? 0;
+        $billing = Setting::getGroup('billing');
 
-        return response()->json($setting);
+        return response()->json([
+            'tax' => $tax,
+            'service_charges_percentage' => $billing['service_charges_percentage'] ?? 0,
+            'bank_charges_value' => $billing['bank_charges_value'] ?? 0,
+            'bank_charges_type' => $billing['bank_charges_type'] ?? 'percentage',
+        ]);
     }
 
     public function getFinancialSettings()

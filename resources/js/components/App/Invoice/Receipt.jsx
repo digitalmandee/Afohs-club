@@ -104,6 +104,10 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 order_items: invoiceData.order_items || [],
                 paid_amount: invoiceData.paid_amount || null,
                 advance_payment: invoiceData.advance_payment || invoiceData.advance_amount || invoiceData.down_payment || invoiceData.data?.advance_deducted || 0,
+                service_charges: invoiceData.service_charges || 0,
+                service_charges_percentage: invoiceData.service_charges_percentage || 0,
+                bank_charges: invoiceData.bank_charges || 0,
+                bank_charges_percentage: invoiceData.bank_charges_percentage || 0,
             };
             setPaymentData(restructuredData);
             setLoading(false);
@@ -137,7 +141,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
     }
 
     const round0 = (n) => Math.round(Number(n) || 0);
-    const totalAmount = round0(round0(paymentData.total_price) + round0(paymentData.data?.bank_charges_amount));
+    const totalAmount = round0(paymentData.total_price);
     const advancePaid = round0(paymentData.advance_payment || paymentData.data?.advance_deducted || 0);
     const netPayable = Math.max(0, totalAmount - advancePaid);
     const paidCash = round0(paymentData.paid_amount || 0);
@@ -148,7 +152,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
         const printWindow = window.open('', '_blank');
 
-        const printTotalAmount = round0(round0(data.total_price) + round0(data.data?.bank_charges_amount));
+        const printTotalAmount = round0(data.total_price);
         const printAdvancePaid = round0(data.advance_payment || data.data?.advance_deducted || 0);
         const printNetPayable = Math.max(0, printTotalAmount - printAdvancePaid);
         const printPaidCash = round0(data.paid_amount || 0);
@@ -279,11 +283,22 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
             </div>
 
             ${
-                data.data?.bank_charges_amount > 0
+                data.service_charges > 0
                     ? `
                 <div class="row">
-                  <div>Bank Charges (${data.data.bank_charges_type === 'percentage' ? (round0(data.data.bank_charges_value) + '%') : 'Fixed'})</div>
-                  <div>Rs ${round0(data.data.bank_charges_amount)}</div>
+                  <div>Service Charges${data.service_charges_percentage > 0 ? ` (${data.service_charges_percentage}%)` : ''}</div>
+                  <div>Rs ${round0(data.service_charges)}</div>
+                </div>
+                `
+                    : ''
+            }
+
+            ${
+                data.bank_charges > 0
+                    ? `
+                <div class="row">
+                  <div>Bank Charges${data.bank_charges_percentage > 0 ? ` (${data.bank_charges_percentage}%)` : ''}</div>
+                  <div>Rs ${round0(data.bank_charges)}</div>
                 </div>
                 `
                     : ''
@@ -485,12 +500,21 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 <Typography variant="caption">Rs {taxAmount()}</Typography>
             </Box>
 
-            {paymentData.data?.bank_charges_amount > 0 && (
+            {paymentData.service_charges > 0 && (
                 <Box sx={styles.receiptRow}>
                     <Typography variant="caption" color="text.secondary">
-                        Bank Charges ({paymentData.data.bank_charges_type === 'percentage' ? paymentData.data.bank_charges_value + '%' : 'Fixed'})
+                        Service Charges{paymentData.service_charges_percentage > 0 ? ` (${paymentData.service_charges_percentage}%)` : ''}
                     </Typography>
-                    <Typography variant="caption">Rs {paymentData.data.bank_charges_amount}</Typography>
+                    <Typography variant="caption">Rs {paymentData.service_charges}</Typography>
+                </Box>
+            )}
+
+            {paymentData.bank_charges > 0 && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        Bank Charges{paymentData.bank_charges_percentage > 0 ? ` (${paymentData.bank_charges_percentage}%)` : ''}
+                    </Typography>
+                    <Typography variant="caption">Rs {paymentData.bank_charges}</Typography>
                 </Box>
             )}
             <Box sx={styles.receiptDivider} />

@@ -2,7 +2,7 @@ import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { routeNameForContext } from '@/lib/utils';
 import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Save as SaveIcon } from '@mui/icons-material';
-import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem, DialogContent, DialogTitle, Autocomplete, InputAdornment } from '@mui/material';
+import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem, DialogContent, DialogTitle, Autocomplete, InputAdornment, Switch } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -31,6 +31,9 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
     const [loadingSetting, setLoadingSetting] = useState(true);
     const [isEditingTax, setIsEditingTax] = useState(false);
     const [tempTax, setTempTax] = useState('');
+    const [isEditingServiceCharge, setIsEditingServiceCharge] = useState(false);
+    const [serviceChargeRate, setServiceChargeRate] = useState('0');
+    const [isBankChargesEnabled, setIsBankChargesEnabled] = useState(false);
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [waiters, setWaiters] = useState([]);
@@ -79,6 +82,16 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
             .then((response) => {
                 setSetting(response.data);
                 setTempTax(response.data.tax?.toString() || '0');
+
+                // Use saved service charge if available, otherwise default
+                const savedServicePct = orderDetails.service_charges_percentage;
+                const defaultServicePct = response.data.service_charges_percentage?.toString() || '0';
+                setServiceChargeRate(savedServicePct !== undefined ? savedServicePct.toString() : defaultServicePct);
+
+                // Initialize Bank Charges toggle based on saved order or default to false
+                const hasBankCharges = Number(orderDetails.bank_charges) > 0;
+                setIsBankChargesEnabled(hasBankCharges);
+
                 setLoadingSetting(false);
             })
             .catch((error) => {
@@ -125,8 +138,23 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
     const taxAmount = Math.round(taxableAmount * taxRate);
 
+    // Service Charges
+    const serviceChargePct = parseFloat(serviceChargeRate) || 0;
+    const serviceCharges = Math.round(discountedSubtotal * (serviceChargePct / 100));
+
+    // Bank Charges
+    const bankChargeBase = discountedSubtotal + taxAmount + serviceCharges;
+    let bankCharges = 0;
+    if (isBankChargesEnabled && setting?.bank_charges_value > 0) {
+        if (setting.bank_charges_type === 'percentage') {
+            bankCharges = Math.round(bankChargeBase * (setting.bank_charges_value / 100));
+        } else {
+            bankCharges = Math.round(setting.bank_charges_value);
+        }
+    }
+
     // Final total
-    const total = Math.round(discountedSubtotal + taxAmount);
+    const total = Math.round(discountedSubtotal + taxAmount + serviceCharges + bankCharges);
     const advanceAmount = Number(orderDetails.advance_amount || 0);
     const payableTotal = Math.max(0, total - advanceAmount);
 
@@ -140,6 +168,10 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
             ...extra, // include waiter + time if passed
             price: total,
             tax: taxRate,
+            service_charges: serviceCharges,
+            service_charges_percentage: serviceChargePct,
+            bank_charges: bankCharges,
+            bank_charges_percentage: isBankChargesEnabled && setting?.bank_charges_type === 'percentage' ? setting.bank_charges_value : 0,
             discount_type: 'amount', // global discount is now just the sum amount
             discount_value: discountAmount,
             discount: discountAmount,
@@ -187,6 +219,21 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     }
+
+    const handleServiceChargeEditClick = () => {
+        setIsEditingServiceCharge(true);
+    };
+
+    const handleServiceChargeChange = (e) => {
+        const value = e.target.value;
+        if (/^\d*\.?\d*$/.test(value)) {
+            setServiceChargeRate(value);
+        }
+    };
+
+    const handleSaveServiceCharge = () => {
+        setIsEditingServiceCharge(false);
+    };
 
     const handleTaxEditClick = () => {
         setIsEditingTax(true);
@@ -817,6 +864,52 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                             <Typography variant="body2">Rs {taxAmount.toFixed(2)}</Typography>
                         </Box>
 
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Service Charges
+                            </Typography>
+                            {isEditingServiceCharge ? (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <TextField
+                                        size="small"
+                                        value={serviceChargeRate}
+                                        onChange={handleServiceChargeChange}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                handleSaveServiceCharge();
+                                            }
+                                        }}
+                                        autoFocus
+                                        sx={{ width: '80px' }}
+                                        inputProps={{ style: { textAlign: 'center' } }}
+                                    />
+                                    <IconButton size="small" onClick={handleSaveServiceCharge}>
+                                        <SaveIcon fontSize="small" />
+                                    </IconButton>
+                                </Box>
+                            ) : (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {serviceChargeRate}%
+                                    </Typography>
+                                    <IconButton size="small" onClick={handleServiceChargeEditClick}>
+                                        <EditIcon fontSize="small" />
+                                    </IconButton>
+                                </Box>
+                            )}
+                            <Typography variant="body2">Rs {serviceCharges.toFixed(2)}</Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Bank Charges
+                                </Typography>
+                                <Switch size="small" checked={isBankChargesEnabled} onChange={(e) => setIsBankChargesEnabled(e.target.checked)} />
+                            </Box>
+                            <Typography variant="body2">Rs {bankCharges.toFixed(2)}</Typography>
+                        </Box>
+
                         <Divider sx={{ my: 1 }} />
                         {orderDetails.advance_amount > 0 && (
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -1087,7 +1180,27 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
             </Dialog>
 
             {/* Payment Modal */}
-            <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: 'amount', discount_value: discountAmount, discount: discountAmount, price: subtotal, total_price: total - (orderDetails.advance_amount || 0) }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
+            <PaymentNow
+                invoiceData={{
+                    ...orderDetails,
+                    tax: taxRate,
+                    service_charges: serviceCharges,
+                    service_charges_percentage: serviceChargePct,
+                    bank_charges: bankCharges,
+                    bank_charges_percentage: isBankChargesEnabled && setting?.bank_charges_type === 'percentage' ? setting.bank_charges_value : 0,
+                    discount_type: 'amount',
+                    discount_value: discountAmount,
+                    discount: discountAmount,
+                    price: subtotal,
+                    total_price: total - (orderDetails.advance_amount || 0),
+                }}
+                openSuccessPayment={handleSuccessPayment}
+                openPaymentModal={openPaymentModal}
+                handleClosePayment={handleClosePayment}
+                mode="order"
+                isLoading={isLoading}
+                handleSendToKitchen={handleSendToKitchen}
+            />
 
             <CancelItemDialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} onConfirm={handleConfirmCancel} item={itemToCancel} />
         </>

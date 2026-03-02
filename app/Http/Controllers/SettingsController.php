@@ -32,6 +32,7 @@ class SettingsController extends Controller
             'tax' => 'nullable|numeric|min:0|max:100',
             'bank_charges_type' => 'nullable|string|in:percentage,fixed',
             'bank_charges_value' => 'nullable|numeric|min:0',
+            'service_charges_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
         // Separate tax setting

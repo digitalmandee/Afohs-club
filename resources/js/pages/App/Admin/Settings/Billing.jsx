@@ -8,6 +8,7 @@ export default function Billing({ settings, tax }) {
 
     const { data, setData, post, processing, errors } = useForm({
         tax: tax ?? 12,
+        service_charges_percentage: settings.service_charges_percentage ?? 0,
         bank_charges_type: settings.bank_charges_type ?? 'percentage',
         bank_charges_value: settings.bank_charges_value ?? 0,
         overdue_charge_pct: settings.overdue_charge_pct ?? 0,
@@ -81,6 +82,9 @@ export default function Billing({ settings, tax }) {
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} md={6}>
                                         <TextField label="Tax Rate (%)" name="tax" type="number" fullWidth value={data.tax} onChange={(e) => setData('tax', e.target.value)} onWheel={(e) => e.target.blur()} error={!!errors.tax} helperText={errors.tax} inputProps={{ step: '0.01', min: 0, max: 100 }} />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField label="Service Charges (%)" name="service_charges_percentage" type="number" fullWidth value={data.service_charges_percentage} onChange={(e) => setData('service_charges_percentage', e.target.value)} onWheel={(e) => e.target.blur()} error={!!errors.service_charges_percentage} helperText={errors.service_charges_percentage} inputProps={{ step: '0.01', min: 0, max: 100 }} />
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Grid container spacing={2}>
