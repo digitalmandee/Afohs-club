@@ -112,6 +112,24 @@ export default function ShowTransaction({ transaction }) {
                                                 <TableCell>{formatCurrency(transaction.amount)}</TableCell>
                                             </TableRow>
 
+                                            {transaction.tax_amount > 0 && (
+                                                <TableRow>
+                                                    <TableCell component="th" scope="row" sx={{ fontWeight: 'medium' }}>
+                                                        Tax
+                                                    </TableCell>
+                                                    <TableCell>{formatCurrency(transaction.tax_amount)}</TableCell>
+                                                </TableRow>
+                                            )}
+
+                                            {transaction.additional_charges > 0 && (
+                                                <TableRow>
+                                                    <TableCell component="th" scope="row" sx={{ fontWeight: 'medium' }}>
+                                                        Overdue / Additional Charges
+                                                    </TableCell>
+                                                    <TableCell>{formatCurrency(transaction.additional_charges)}</TableCell>
+                                                </TableRow>
+                                            )}
+
                                             {transaction.discount_value > 0 && (
                                                 <>
                                                     <TableRow>

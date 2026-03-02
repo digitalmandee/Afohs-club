@@ -1134,6 +1134,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 payment_amount: 0,
                 balance: Math.max(0, total - paid),
                 paid_amount: paid,
+                valid_from: item.valid_from || item.start_date,
+                valid_to: item.valid_to || item.end_date,
             };
         });
 

@@ -1053,36 +1053,13 @@ class OrderController extends Controller
 
             $totalDue = $request->price;
             $orderType = $request->order_type;
-            $hasPayment = $request->has('payment') && is_array($request->payment);
-            $isTakeawayPayNow = $orderType == 'takeaway' && $hasPayment && array_key_exists('payment_method', $request->payment ?? []);
-
-            // Validate Takeaway Payment (only when "Pay Now" flow is used)
-            if ($isTakeawayPayNow) {
-                $request->validate([
-                    'payment.payment_method' => 'required|string',
-                    'payment.paid_amount' => 'required|numeric',
-                    'payment.credit_card_type' => 'nullable|required_if:payment.payment_method,credit_card|string',
-                    'receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
-                    'payment.payment_account_id' => 'nullable|exists:payment_accounts,id',
-                    'payment.split_payment_accounts' => 'nullable|array',
-                    'payment.split_payment_accounts.cash' => 'nullable|exists:payment_accounts,id',
-                    'payment.split_payment_accounts.credit_card' => 'nullable|exists:payment_accounts,id',
-                    'payment.split_payment_accounts.bank' => 'nullable|exists:payment_accounts,id',
-                ]);
-
-                $entEnabled = $request->payment['ent_enabled'] ?? false;
-                $ctsEnabled = $request->payment['cts_enabled'] ?? false;
-                $entDeduction = $entEnabled ? ($request->payment['ent_amount'] ?? 0) : 0;
-                $ctsDeduction = $ctsEnabled ? ($request->payment['cts_amount'] ?? 0) : 0;
-                $bankChargesEnabled = $request->payment['bank_charges_enabled'] ?? false;
-                $bankChargesAmount = $bankChargesEnabled ? ($request->payment['bank_charges_amount'] ?? 0) : 0;
-                $paidAmount = $request->payment['paid_amount'] ?? 0;
-                $remainingDue = $totalDue + $bankChargesAmount - $entDeduction - $ctsDeduction;
-
-                // Allow small float variance (1.0)
-                if ($paidAmount < ($remainingDue - 1.0)) {
-                    return back()->withErrors(['paid_amount' => 'The paid amount (' . $paidAmount . ') is not enough to cover the remaining balance (' . $remainingDue . ') after deductions.']);
-                }
+            $hasPaymentMethod = $request->has('payment') && is_array($request->payment) && array_key_exists('payment_method', $request->payment ?? []);
+            if ($hasPaymentMethod) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Payment is only allowed after selecting 'Generate Invoice' from Order Management.",
+                    'error_code' => 'PAYMENT_NOT_ALLOWED_HERE',
+                ], 400);
             }
 
             $tableId = $request->input('table.id');
@@ -1126,9 +1103,7 @@ class OrderController extends Controller
                 'rider_id' => $request->rider_id ?? null,
                 // Reservations that are new are saved as drafts
                 // All other orders go to in_progress for kitchen processing
-                'status' => ($request->order_type === 'takeaway' && $isTakeawayPayNow)
-                    ? 'completed'
-                    : (($request->order_type === 'reservation' && $request->boolean('is_new_order')) ? 'saved' : 'in_progress'),
+                'status' => ($request->order_type === 'reservation' && $request->boolean('is_new_order')) ? 'saved' : 'in_progress',
             ];
 
             $bookingType = $request->input('member.booking_type');
@@ -1140,29 +1115,6 @@ class OrderController extends Controller
                 $orderData['customer_id'] = $memberId;
             } else {
                 $orderData['employee_id'] = $memberId;
-            }
-
-            if ($isTakeawayPayNow) {
-                $orderData['cashier_id'] = Auth::user()->id;
-                $orderData['payment_method'] = $request->payment['payment_method'];
-                $orderData['paid_amount'] = $request->payment['paid_amount'];
-
-                if ($request->payment['payment_method'] === 'credit_card') {
-                    $orderData['credit_card_type'] = $request->payment['credit_card_type'];
-                    // Handle receipt saving if applicable
-                    // Example:
-                    if ($request->hasFile('receipt')) {
-                        $path = FileHelper::saveImage($request->file('receipt'), 'receipts');
-                        $orderData['receipt'] = $path;
-                    }
-                }
-                if ($request->payment['payment_method'] === 'split_payment') {
-                    $orderData['cash_amount'] = $request->payment['cash'];
-                    $orderData['credit_card_amount'] = $request->payment['credit_card'];
-                    $orderData['bank_amount'] = $request->payment['bank_transfer'];
-                }
-                $orderData['paid_at'] = now();
-                $orderData['payment_status'] = 'paid';
             }
 
             // 🔎 DEBUG: Log Request Status Logic
@@ -1438,274 +1390,6 @@ class OrderController extends Controller
                 'total_price' => $request->total_price,
                 'cost_price' => $totalCostPrice,
             ]);
-
-            // ✅ Create Invoice for takeaway ONLY when Pay Now is used
-            // For dine-in, delivery, reservation, room_service (and takeaway-pay-later): invoice created when order marked 'completed'
-            if ($isTakeawayPayNow) {
-                $existingInvoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->first();
-                if ($existingInvoice) {
-                    $invoice = $existingInvoice;
-                } else {
-                $invoiceData = [
-                    'invoice_no' => $this->getInvoiceNo(),
-                    'invoice_type' => 'food_order',
-                    'amount' => $request->price,
-                    'total_price' => $request->total_price,
-                    // discount logic moved to items
-                    'payment_method' => null,
-                    'issue_date' => Carbon::now(),
-                    'status' => 'unpaid',
-                    'data' => [
-                        'order_id' => $order->id,
-                    ],
-                    'invoiceable_id' => $order->id,
-                    'invoiceable_type' => Order::class,
-                ];
-
-                if ($bookingType == 'member') {
-                    $invoiceData['member_id'] = $memberId;
-                    $payerType = \App\Models\Member::class;
-                    $payerId = $memberId;
-                } elseif ($bookingType == 'guest') {
-                    $invoiceData['customer_id'] = $memberId;
-                    $payerType = \App\Models\Customer::class;
-                    $payerId = $memberId;
-                } else {
-                    $invoiceData['employee_id'] = $memberId;
-                    $payerType = \App\Models\Employee::class;
-                    $payerId = $memberId;
-                }
-
-                $invoiceData['status'] = 'paid';
-                $invoiceData['payment_date'] = now();
-                $invoiceData['payment_method'] = $request->payment['payment_method'];
-                $invoiceData['paid_amount'] = $request->payment['paid_amount'];
-                $invoiceData['ent_reason'] = $request->payment['ent_reason'] ?? null;
-                $invoiceData['ent_comment'] = $request->payment['ent_comment'] ?? null;
-                $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
-
-                if ($request->payment['bank_charges_enabled'] ?? false) {
-                    $invoiceData['data']['bank_charges_enabled'] = true;
-                    $invoiceData['data']['bank_charges_type'] = $request->payment['bank_charges_type'] ?? 'percentage';
-                    $invoiceData['data']['bank_charges_value'] = round((float) ($request->payment['bank_charges_value'] ?? 0), 0);
-                    $invoiceData['data']['bank_charges_amount'] = round((float) ($request->payment['bank_charges_amount'] ?? 0), 0);
-                }
-
-                $invoice = FinancialInvoice::create($invoiceData);
-
-                // ✅ Create Invoice Items & DEBIT Transactions (Aggregated)
-                if (!empty($orderItems)) {
-                    $totalGross = 0;
-                    $totalDiscount = 0;
-                    $totalTax = 0;
-                    $itemNames = [];
-
-                    $taxRate = $request->tax ?? 0;  // Tax rate (e.g. 0.16)
-
-                    // Fetch products to check is_taxable
-                    $productIds = collect($orderItems)->pluck('product_id')->filter()->toArray();
-                    $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
-
-                    foreach ($orderItems as $item) {
-                        $qty = $item['quantity'] ?? 1;
-                        $price = $item['price'] ?? 0;
-                        $subTotal = $qty * $price;
-
-                        // Use item discount as sum source
-                        $itemDiscountAmount = $item['discount_amount'] ?? 0;
-
-                        // Tax Calculation
-                        $netAmount = $subTotal - $itemDiscountAmount;
-
-                        // Check if product is taxable
-                        $isTaxable = false;
-                        if (isset($item['product_id']) && isset($products[$item['product_id']])) {
-                            $isTaxable = $products[$item['product_id']]->is_taxable;
-                        }
-
-                        $itemTaxAmount = $isTaxable ? ($netAmount * $taxRate) : 0;
-
-                        $totalGross += $subTotal;
-                        $totalDiscount += $itemDiscountAmount;
-                        $totalTax += $itemTaxAmount;
-
-                        if (count($itemNames) < 3) {
-                            $itemNames[] = $item['name'] ?? 'Item';
-                        }
-                    }
-
-                    $totalNet = $totalGross - $totalDiscount + $totalTax;
-
-                    $description = 'Food Order Items (' . count($orderItems) . ') - ' . implode(', ', $itemNames) . (count($orderItems) > 3 ? '...' : '');
-
-                    $invoiceItem = FinancialInvoiceItem::create([
-                        'invoice_id' => $invoice->id,
-                        'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,  // Food Order / Room Service
-                        'description' => $description,
-                        'qty' => 1,  // Aggregated item count as 1 block
-                        'amount' => $totalGross,
-                        'sub_total' => $totalGross,
-                        'discount_type' => 'fixed',  // Aggregated discount is always an amount
-                        'discount_value' => $totalDiscount,
-                        'discount_amount' => $totalDiscount,
-                        'tax_amount' => $totalTax,
-                        'total' => $totalNet,
-                    ]);
-
-                    // Create Debit Transaction for THIS aggregated invoice item
-                    Transaction::create([
-                        'type' => 'debit',
-                        'amount' => $totalNet,
-                        'date' => now(),
-                        'description' => 'Invoice #' . $invoiceData['invoice_no'] . ' - Food Order',
-                        'payable_type' => $payerType,
-                        'payable_id' => $payerId,
-                        'reference_type' => FinancialInvoiceItem::class,
-                        'reference_id' => $invoiceItem->id,
-                        'invoice_id' => $invoice->id,
-                        'created_by' => Auth::id(),
-                    ]);
-
-                    // Bank Charges Transaction
-                    if (isset($invoiceData['data']['bank_charges_amount']) && $invoiceData['data']['bank_charges_amount'] > 0) {
-                        $bcAmount = $invoiceData['data']['bank_charges_amount'];
-
-                        $bcItem = FinancialInvoiceItem::create([
-                            'invoice_id' => $invoice->id,
-                            'fee_type' => 8,  // Using literal 8 for Financial Charges/Bank Charges
-                            'description' => 'Bank Charges (' . ($invoiceData['data']['bank_charges_type'] == 'percentage' ? ($invoiceData['data']['bank_charges_value'] ?? 0) . '%' : 'Fixed') . ')',
-                            'qty' => 1,
-                            'amount' => $bcAmount,
-                            'sub_total' => $bcAmount,
-                            'total' => $bcAmount,
-                        ]);
-
-                        Transaction::create([
-                            'type' => 'debit',
-                            'amount' => $bcAmount,
-                            'date' => now(),
-                            'description' => 'Bank Charges for Order #' . $invoiceData['invoice_no'],
-                            'payable_type' => $payerType,
-                            'payable_id' => $payerId,
-                            'reference_type' => FinancialInvoiceItem::class,
-                            'reference_id' => $bcItem->id,
-                            'invoice_id' => $invoice->id,
-                            'created_by' => Auth::id(),
-                        ]);
-                    }
-                }
-
-                // Recalculate Logic for ENT/CTS to ensure consistency with TransactionController
-                $entAmount = 0;
-                $entDetails = '';
-                $ctsAmount = 0;
-                $paymentData = $request->payment;
-
-                // Check if ENT is enabled (new toggle-based flow)
-                $entEnabled = $paymentData['ent_enabled'] ?? false;
-                $ctsEnabled = $paymentData['cts_enabled'] ?? false;
-
-                // ENT Calculation - Only if enabled
-                if ($entEnabled) {
-                    if (array_key_exists('ent_items', $paymentData) && !empty($paymentData['ent_items'])) {
-                        // Calculate from items
-                        $entIds = $paymentData['ent_items'];
-                        foreach ($orderItems as $item) {
-                            if (in_array($item['id'], $entIds)) {
-                                $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
-                                $entAmount += $iPrice;
-                                $entDetails .= ($item['name'] ?? 'Item') . ' (x' . ($item['quantity'] ?? 1) . '), ';
-                            }
-                        }
-                    } elseif (isset($paymentData['ent_amount'])) {
-                        // Use provided ENT amount
-                        $entAmount = $paymentData['ent_amount'];
-                    }
-                }
-
-                // CTS Calculation - Only if enabled
-                if ($ctsEnabled) {
-                    $ctsAmount = isset($paymentData['cts_amount']) ? $paymentData['cts_amount'] : 0;
-                }
-
-                // Verify Total (Paid + ENT + CTS >= Total)
-                // Note: paid_amount in request is the amount paid via selected payment method
-                $paidCash = $paymentData['paid_amount'] ?? 0;
-                // Allow small float variance
-                if (($paidCash + $entAmount + $ctsAmount) < ($request->total_price - 1.0)) {
-                    throw new \Exception('Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidCash + $entAmount + $ctsAmount) . ' < ' . $request->total_price . ')');
-                }
-
-                // Update Invoice with ENT/CTS Details
-                $updateData = [];
-
-                if ($entEnabled && $entAmount > 0) {
-                    $comment = $invoiceData['ent_comment'] ?? '';
-                    if ($entDetails) {
-                        $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
-                    }
-                    $updateData['ent_comment'] = $comment;
-                    $updateData['ent_amount'] = $entAmount;
-                    $updateData['ent_reason'] = $paymentData['ent_reason'] ?? null;
-                }
-
-                if ($ctsEnabled && $ctsAmount > 0) {
-                    $comment = $invoiceData['cts_comment'] ?? '';
-                    if ($ctsAmount < $request->total_price) {
-                        $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
-                    }
-                    $updateData['cts_comment'] = $comment;
-                    $updateData['cts_amount'] = $ctsAmount;
-                }
-
-                if (!empty($updateData)) {
-                    $invoice->update($updateData);
-                }
-
-                // If Paid (Takeaway) -> Receipt + Credit + Allocation
-                $receiptImg = $orderData['receipt'] ?? null;
-
-                // 1. Create Receipt
-                $receipt = FinancialReceipt::create([
-                    'receipt_no' => time(),
-                    'payer_type' => $payerType,
-                    'payer_id' => $payerId,
-                    'amount' => $request->payment['paid_amount'],
-                    'payment_method' => ($request->payment['payment_method'] === 'cts' && !empty($request->payment['cts_payment_method']))
-                        ? $request->payment['cts_payment_method']
-                        : $request->payment['payment_method'],
-                    'payment_account_id' => ($request->payment['payment_method'] ?? null) === 'split_payment' ? null : ($request->payment['payment_account_id'] ?? null),
-                    'payment_details' => !empty($request->payment['split_payment_accounts']) ? json_encode(['split_payment_accounts' => $request->payment['split_payment_accounts']]) : null,
-                    'receipt_date' => now(),
-                    'status' => 'active',
-                    'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
-                    'created_by' => Auth::id(),
-                    'receipt_image' => $receiptImg,
-                ]);
-
-                // 2. Link Receipt to Invoice
-                TransactionRelation::create([
-                    'invoice_id' => $invoice->id,
-                    'receipt_id' => $receipt->id,
-                    'amount' => $request->payment['paid_amount'],
-                ]);
-
-                // 3. Create SINGLE Credit Transaction (Amount Paid)
-                Transaction::create([
-                    'type' => 'credit',
-                    'amount' => $request->payment['paid_amount'],
-                    'date' => now(),
-                    'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
-                    'payable_type' => $payerType,
-                    'payable_id' => $payerId,
-                    'reference_type' => FinancialInvoiceItem::class,
-                    'reference_id' => $invoiceItem->id,  // Link to the summary item
-                    'invoice_id' => $invoice->id,
-                    'receipt_id' => $receipt->id,
-                    'created_by' => Auth::id(),
-                ]);
-                }
-            }
 
             DB::commit();
 
@@ -2586,6 +2270,18 @@ class OrderController extends Controller
             // Load invoice ENT/CTS data via subquery (since relationship is via JSON column)
             ->addSelect([
                 'orders.*',
+                'invoice_id' => FinancialInvoice::select('id')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_no' => FinancialInvoice::select('invoice_no')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_status' => FinancialInvoice::select('status')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
                 'invoice_ent_amount' => FinancialInvoice::select('ent_amount')
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->limit(1),

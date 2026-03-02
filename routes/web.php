@@ -946,7 +946,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
             'destroy' => 'permission:finance.charge-types.delete',
         ]);
 
-        // Maintenance Fee Posting Routes
+        // Maintenance Fee Posting Routes (Bulk Fee)
         Route::get('maintenance-posting', [MaintenanceFeePostingController::class, 'create'])->name('finance.maintenance.create')->middleware('super.admin:financial.create');
         Route::post('maintenance-posting/preview', [MaintenanceFeePostingController::class, 'preview'])->name('finance.maintenance.preview')->middleware('permission:financial.create');
         Route::post('maintenance-posting', [MaintenanceFeePostingController::class, 'store'])->name('finance.maintenance.store')->middleware('permission:financial.create');

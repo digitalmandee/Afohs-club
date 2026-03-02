@@ -202,6 +202,12 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         return types[type] || type;
     };
 
+    const canPrintInvoice = (order) => {
+        if (!order) return false;
+        if (order.status === 'in_progress') return false;
+        return Boolean(order.invoice_id);
+    };
+
     const handleViewOrder = (order) => {
         setSelectedOrder(order);
         setSelectedOrderDetails(null);
@@ -307,6 +313,10 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     };
 
     const handlePrintReceipt = (order) => {
+        if (!canPrintInvoice(order)) {
+            enqueueSnackbar("Invoice isn't generated for this order.", { variant: 'warning' });
+            return;
+        }
         const printWindow = window.open('', '_blank');
         const customerName = order.member?.full_name || order.customer?.name || order.employee?.name || 'N/A';
         const memberNo = order.member?.membership_no || '';
@@ -732,11 +742,13 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                                             <VisibilityIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-                                                    <Tooltip title="Print Receipt">
-                                                        <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
-                                                            <PrintIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
+                                                    {canPrintInvoice(order) && (
+                                                        <Tooltip title="Print Receipt">
+                                                            <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
+                                                                <PrintIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
                                                     {Boolean(canEditAfterBill) && (
                                                         <Tooltip title="Edit Order">
                                                             <IconButton size="small" onClick={() => handleOpenEdit(order)} sx={{ color: '#003153' }}>
@@ -1066,15 +1078,16 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                     <Button variant="outlined" onClick={handleCloseModal}>
                                         Close
                                     </Button>
-                                    <Button variant="contained" startIcon={<PrintIcon />} onClick={() => handlePrintReceipt(selectedOrder)} sx={{ backgroundColor: '#063455' }}>
-                                        Print Receipt
-                                    </Button>
+                                    {canPrintInvoice(selectedOrder) && (
+                                        <Button variant="contained" startIcon={<PrintIcon />} onClick={() => handlePrintReceipt(selectedOrder)} sx={{ backgroundColor: '#063455' }}>
+                                            Print Receipt
+                                        </Button>
+                                    )}
                                 </Box>
                             </Paper>
                         </Box>
                     )}
                 </DialogContent>
-            </Dialog>
             <EditOrderModal
                 open={editModalOpen}
                 allrestaurants={allrestaurants}

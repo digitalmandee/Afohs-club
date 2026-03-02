@@ -245,6 +245,7 @@ class MaintenanceFeePostingController extends Controller
                     'total_price' => $finalTotal,
                     'tax_amount' => $tax,
                     'discount_amount' => $discount,
+                    'additional_charges' => $overdue,
                     'status' => 'unpaid',
                     'issue_date' => $invoiceDate,
                     'due_date' => $invoiceDate->copy()->addDays(10),
@@ -275,9 +276,9 @@ class MaintenanceFeePostingController extends Controller
                     'qty' => 1,
                     'amount' => $subTotal,  // Using subtotal as the base rate for this calculated period
                     'sub_total' => $subTotal,
-                    'tax_percentage' => $request->tax_is_percent ? $request->tax_amount : 0,
+                    'tax_percentage' => $request->tax_is_percent ? ($request->tax_amount ?? 0) : 0,
                     'tax_amount' => $tax,
-                    'overdue_percentage' => $request->overdue_is_percent ? $request->overdue_amount : 0,
+                    'overdue_percentage' => $request->overdue_is_percent ? ($request->overdue_amount ?? 0) : 0,
                     'additional_charges' => $overdue,  // Mapping overdue to additional_charges
                     'discount_type' => $request->discount_is_percent ? 'percentage' : 'fixed',
                     'discount_value' => $request->discount_amount ?? 0,
