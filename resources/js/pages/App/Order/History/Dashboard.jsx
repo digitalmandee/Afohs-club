@@ -207,6 +207,13 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         if (order.status === 'in_progress') return false;
         return Boolean(order.invoice_id);
     };
+    const canEditOrderBeforePayment = (order) => {
+        if (!order) return false;
+        if (order.status === 'cancelled' || order.status === 'refund') return false;
+        const paymentStatus = String(order.payment_status || '').toLowerCase();
+        const invoiceStatus = String(order.invoice_status || '').toLowerCase();
+        return paymentStatus !== 'paid' && invoiceStatus !== 'paid';
+    };
 
     const handleViewOrder = (order) => {
         // Set basic info from list first
@@ -249,9 +256,20 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     };
 
     const handleOpenEdit = (order) => {
+        if (!order?.id) return;
         setSelectedOrder(order);
-        setEditOrderItems(order?.order_items || []);
-        setEditModalOpen(true);
+        axios
+            .get(route(routeNameForContext('order.details'), { id: order.id }))
+            .then((response) => {
+                const fullOrder = response?.data || order;
+                setSelectedOrder(fullOrder);
+                setEditOrderItems(fullOrder?.order_items || []);
+                setEditModalOpen(true);
+            })
+            .catch(() => {
+                setEditOrderItems(order?.order_items || []);
+                setEditModalOpen(true);
+            });
     };
 
     const handleCloseEdit = () => {
@@ -259,7 +277,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         setEditOrderItems([]);
     };
 
-    const handleSaveEdit = (status) => {
+    const handleSaveEdit = (status, clientMeta = null) => {
         if (!selectedOrder) return Promise.resolve(null);
 
         const payload = {
@@ -267,6 +285,10 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             new_items: (editOrderItems || []).filter((it) => it?.id === 'new'),
             status,
         };
+        if (clientMeta?.client_type && clientMeta?.client?.id) {
+            payload.client_type = clientMeta.client_type;
+            payload.client_id = clientMeta.client.id;
+        }
 
         return new Promise((resolve, reject) => {
             router.post(route(routeNameForContext('orders.update'), { id: selectedOrder.id }), payload, {
@@ -939,7 +961,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                                             </IconButton>
                                                         </Tooltip>
                                                     )}
-                                                    {Boolean(canEditAfterBill) && (
+                                                    {(Boolean(canEditAfterBill) || canEditOrderBeforePayment(order)) && (
                                                         <Tooltip title="Edit Order">
                                                             <IconButton size="small" onClick={() => handleOpenEdit(order)} sx={{ color: '#003153' }}>
                                                                 <EditIcon fontSize="small" />
@@ -1278,8 +1300,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                         </Box>
                     )}
                 </DialogContent>
-                <EditOrderModal open={editModalOpen} allrestaurants={allrestaurants} onClose={handleCloseEdit} order={selectedOrder} orderItems={editOrderItems} setOrderItems={setEditOrderItems} onSave={(status) => handleSaveEdit(status)} onSaveAndPrint={null} allowUpdateAndPrint={false} />
             </Dialog>
+            <EditOrderModal open={editModalOpen} allrestaurants={allrestaurants} onClose={handleCloseEdit} order={selectedOrder} orderItems={editOrderItems} setOrderItems={setEditOrderItems} onSave={(status, clientMeta) => handleSaveEdit(status, clientMeta)} onSaveAndPrint={null} allowUpdateAndPrint={false} />
             {/* </Box > */}
         </>
     );

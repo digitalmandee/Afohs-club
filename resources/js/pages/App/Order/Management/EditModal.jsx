@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import AddItems from './AddItem';
 import VariantSelectorDialog from '../VariantSelectorDialog';
 import CancelItemDialog from './CancelItemDialog';
+import UserAutocomplete from '@/components/UserAutocomplete';
+import { routeNameForContext } from '@/lib/utils';
 
 function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSave, onSaveAndPrint, allowUpdateAndPrint, allrestaurants }) {
     const [showAddItem, setShowAddItem] = useState(false);
@@ -23,6 +25,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const [itemToCancel, setItemToCancel] = useState(null);
 
     const [openCancelDetails, setOpenCancelDetails] = useState({});
+    const [selectedClientType, setSelectedClientType] = useState('member');
+    const [selectedClient, setSelectedClient] = useState(null);
 
     const toggleCancelDetails = (index) => {
         setOpenCancelDetails((prev) => ({
@@ -168,6 +172,38 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
 
     useEffect(() => {
         setOrderStatus(order?.status || 'pending');
+        if (order?.member) {
+            setSelectedClientType('member');
+            setSelectedClient({
+                ...order.member,
+                id: order.member.id,
+                name: order.member.full_name || order.member.name,
+                label: `${order.member.full_name || order.member.name} (${order.member.membership_no || '-'})`,
+            });
+            return;
+        }
+        if (order?.customer) {
+            setSelectedClientType('guest');
+            setSelectedClient({
+                ...order.customer,
+                id: order.customer.id,
+                name: order.customer.name,
+                label: `${order.customer.name} (${order.customer.customer_no || '-'})`,
+            });
+            return;
+        }
+        if (order?.employee) {
+            setSelectedClientType('employee');
+            setSelectedClient({
+                ...order.employee,
+                id: order.employee.id,
+                name: order.employee.name,
+                label: `${order.employee.name} (${order.employee.employee_id || '-'})`,
+            });
+            return;
+        }
+        setSelectedClientType('member');
+        setSelectedClient(null);
     }, [order]);
 
     const handleQuantityChange = (index, delta) => {
@@ -343,7 +379,10 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const onSubmit = async () => {
         setLoading(true);
         try {
-            await onSave(orderStatus); // or perform API call here
+            await onSave(orderStatus, {
+                client_type: selectedClientType,
+                client: selectedClient,
+            });
             setShowAddItem(false);
         } catch (error) {
             console.error('Failed to save order', error);
@@ -357,7 +396,10 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
         if (!onSaveAndPrint) return;
         setLoading(true);
         try {
-            await onSaveAndPrint(orderStatus);
+            await onSaveAndPrint(orderStatus, {
+                client_type: selectedClientType,
+                client: selectedClient,
+            });
             setShowAddItem(false);
         } catch (error) {
             console.error('Failed to save order', error);
@@ -565,7 +607,32 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 },
                             }}
                         >
-                            <Box p={2}></Box>
+                            <Box p={2}>
+                                <Typography variant="body2" sx={{ mb: 0.75 }}>
+                                    Client Type
+                                </Typography>
+                                <RadioGroup
+                                    row
+                                    value={selectedClientType}
+                                    onChange={(e) => {
+                                        setSelectedClientType(e.target.value);
+                                        setSelectedClient(null);
+                                    }}
+                                    sx={{ mb: 1.5 }}
+                                >
+                                    <FormControlLabel value="member" control={<Radio size="small" />} label="Member" />
+                                    <FormControlLabel value="guest" control={<Radio size="small" />} label="Guest" />
+                                    <FormControlLabel value="employee" control={<Radio size="small" />} label="Employee" />
+                                </RadioGroup>
+                                <UserAutocomplete
+                                    routeUri={route(routeNameForContext('api.users.global-search'))}
+                                    memberType={selectedClientType === 'member' ? '0' : selectedClientType === 'guest' ? '1' : '3'}
+                                    value={selectedClient && selectedClient.id ? selectedClient : null}
+                                    onChange={(newValue) => setSelectedClient(newValue || null)}
+                                    label="Client Name"
+                                    placeholder="Search by name, ID, or CNIC..."
+                                />
+                            </Box>
                             <List sx={{ py: 0 }}>
                                 {orderItems.length > 0 &&
                                     orderItems.map((item, index) => (

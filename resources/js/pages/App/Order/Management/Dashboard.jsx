@@ -222,7 +222,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
         }
     };
 
-    const onSave = (status) => {
+    const onSave = (status, clientMeta = null) => {
         const updatedItems = orderItems.filter((item) => typeof item.id === 'string' && item.id.startsWith('update-'));
         const newItems = orderItems.filter((item) => item.id === 'new');
 
@@ -254,6 +254,10 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
             bank_charges: bankCharges,
             status,
         };
+        if (clientMeta?.client_type && clientMeta?.client?.id) {
+            payload.client_type = clientMeta.client_type;
+            payload.client_id = clientMeta.client.id;
+        }
 
         return new Promise((resolve, reject) => {
             router.post(route(routeNameForContext('orders.update'), { id: selectedCard.id }), payload, {
@@ -273,8 +277,8 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
         });
     };
 
-    const onSaveAndPrint = async (status) => {
-        const res = await onSave(status);
+    const onSaveAndPrint = async (status, clientMeta = null) => {
+        const res = await onSave(status, clientMeta);
         const updatedOrder = res?.data?.data?.find((o) => String(o.id) === String(selectedCard?.id));
         if (updatedOrder) {
             setSelectedCard(updatedOrder);
@@ -975,7 +979,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
                                                         disabled={
                                                             card.status === 'cancelled' ||
                                                             card.status === 'refund' ||
-                                                            (!canEditAfterBill && (card.status === 'completed' || Boolean(card.invoice) || card.payment_status === 'awaiting' || card.payment_status === 'paid'))
+                                                            (!canEditAfterBill && isOrderPaymentClosed(card))
                                                         }
                                                         sx={{
                                                             px: 0,

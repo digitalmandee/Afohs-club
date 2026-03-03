@@ -1539,6 +1539,8 @@ class OrderController extends Controller
             'total_price' => 'nullable|numeric',
             'discount' => 'nullable|numeric',
             'tax_rate' => 'nullable|numeric',
+            'client_type' => 'nullable|in:member,guest,employee',
+            'client_id' => 'nullable|integer|min:1',
         ]);
 
         // Custom check for subtotal/total_price dependency
@@ -1559,6 +1561,22 @@ class OrderController extends Controller
                     'message' => 'You are not allowed to update this order.',
                     'error_code' => 'FORBIDDEN',
                 ], 403);
+            }
+
+            $financialInvoice = FinancialInvoice::where('invoice_type', 'food_order')
+                ->whereJsonContains('data', ['order_id' => $order->id])
+                ->first();
+            $hasClientUpdate = $request->filled('client_type') && $request->filled('client_id');
+            if ($hasClientUpdate) {
+                $isPaidOrder = strtolower((string) ($order->payment_status ?? '')) === 'paid';
+                $isPaidInvoice = strtolower((string) ($financialInvoice->status ?? '')) === 'paid';
+                if ($isPaidOrder || $isPaidInvoice) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'Client cannot be changed after payment is done.',
+                        'error_code' => 'CLIENT_EDIT_AFTER_PAYMENT_FORBIDDEN',
+                    ], 422);
+                }
             }
 
             $getItemId = function ($rawId) {
@@ -1723,6 +1741,25 @@ class OrderController extends Controller
                 'instructions' => $request->instructions ?? null,
                 'cancelType' => $request->cancelType ?? null,
             ];
+            if ($hasClientUpdate) {
+                $clientType = (string) $request->input('client_type');
+                $clientId = (int) $request->input('client_id');
+                if (
+                    ($clientType === 'member' && !Member::where('id', $clientId)->exists()) ||
+                    ($clientType === 'guest' && !Customer::where('id', $clientId)->exists()) ||
+                    ($clientType === 'employee' && !Employee::where('id', $clientId)->exists())
+                ) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'Selected client is invalid.',
+                        'error_code' => 'INVALID_CLIENT',
+                    ], 422);
+                }
+
+                $updateData['member_id'] = $clientType === 'member' ? $clientId : null;
+                $updateData['customer_id'] = $clientType === 'guest' ? $clientId : null;
+                $updateData['employee_id'] = $clientType === 'employee' ? $clientId : null;
+            }
 
             if (
                 $request->has('subtotal') &&
@@ -1820,11 +1857,6 @@ class OrderController extends Controller
                     'total_price' => $computedTotal,
                 ]);
             }
-
-            // Update financial invoice if exists and not paid (lookup by order_id, not member_id)
-            $financialInvoice = FinancialInvoice::where('invoice_type', 'food_order')
-                ->whereJsonContains('data', ['order_id' => $order->id])
-                ->first();
 
             // ✅ AUTO-CREATE INVOICE when order marked 'completed' (for dine-in, delivery, reservation, room_service)
             // Only if a payer exists (member, customer, or employee)
@@ -2011,6 +2043,30 @@ class OrderController extends Controller
                         ]);
                     }
                 }
+            }
+
+            if ($hasClientUpdate && $financialInvoice && strtolower((string) ($financialInvoice->status ?? '')) !== 'paid') {
+                $financialInvoice->update([
+                    'member_id' => $order->member_id ?: null,
+                    'customer_id' => $order->customer_id ?: null,
+                    'employee_id' => $order->employee_id ?: null,
+                ]);
+
+                if ($order->member_id) {
+                    $payerType = Member::class;
+                    $payerId = $order->member_id;
+                } elseif ($order->customer_id) {
+                    $payerType = Customer::class;
+                    $payerId = $order->customer_id;
+                } else {
+                    $payerType = Employee::class;
+                    $payerId = $order->employee_id;
+                }
+
+                Transaction::where('invoice_id', $financialInvoice->id)->update([
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                ]);
             }
 
             DB::commit();
