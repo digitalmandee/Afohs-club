@@ -240,11 +240,12 @@ class PayrollController extends Controller
                             $sub
                                 ->select(DB::raw(1))
                                 ->from('financial_invoices')
+                                ->where('invoice_type', 'food_order')
                                 ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
                                 ->where('cts_amount', '>', 0);
                         });
                 })
-                ->selectRaw("SUM(COALESCE((SELECT cts_amount FROM financial_invoices WHERE JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR) LIMIT 1), COALESCE(total_price, 0))) as total")
+                ->selectRaw("SUM(COALESCE((SELECT cts_amount FROM financial_invoices WHERE invoice_type = 'food_order' AND JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR) ORDER BY CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END, id DESC LIMIT 1), 0)) as total")
                 ->value('total') ?? 0);
 
             $period->total_order_deductions = $totalOrderDeductions;
@@ -282,7 +283,10 @@ class PayrollController extends Controller
                 ->addSelect([
                     'orders.*',
                     'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                        ->where('invoice_type', 'food_order')
                         ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                        ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                        ->orderByDesc('id')
                         ->limit(1),
                 ])
                 ->get()
@@ -295,13 +299,13 @@ class PayrollController extends Controller
         $payslips->getCollection()->transform(function ($payslip) use ($ordersByPayslip) {
             $empOrders = $ordersByPayslip->get($payslip->id, collect());
             $totalOrderDeductions = $empOrders->sum(function ($o) {
-                return (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0);
+                return max(0, (float) ($o->invoice_cts_amount ?? 0));
             });
             $payslip->order_deductions = $empOrders->map(function ($o) {
                 return [
                     'id' => $o->id,
                     'paid_at' => $o->paid_at ? \Carbon\Carbon::parse($o->paid_at)->format('d/m/Y h:i A') : null,
-                    'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                    'amount' => max(0, (float) ($o->invoice_cts_amount ?? 0)),
                     'note' => $o->payment_note ?? $o->remark ?? null,
                     'deducted_at' => $o->deducted_at ? \Carbon\Carbon::parse($o->deducted_at)->format('d/m/Y h:i A') : null
                 ];
@@ -333,7 +337,10 @@ class PayrollController extends Controller
             ->addSelect([
                 'orders.*',
                 'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->where('invoice_type', 'food_order')
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
                     ->limit(1),
             ])
             ->get();
@@ -342,7 +349,7 @@ class PayrollController extends Controller
             return [
                 'id' => $o->id,
                 'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
-                'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                'amount' => max(0, (float) ($o->invoice_cts_amount ?? 0)),
                 'note' => $o->payment_note ?? $o->remark ?? null,
                 'deducted_at' => $o->deducted_at ? (string) $o->deducted_at : null
             ];
@@ -480,7 +487,10 @@ class PayrollController extends Controller
             ->addSelect([
                 'orders.*',
                 'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->where('invoice_type', 'food_order')
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
                     ->limit(1),
             ])
             ->get();
@@ -489,7 +499,7 @@ class PayrollController extends Controller
             return [
                 'id' => $o->id,
                 'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
-                'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                'amount' => max(0, (float) ($o->invoice_cts_amount ?? 0)),
                 'note' => $o->payment_note ?? $o->remark ?? null
             ];
         })->values();

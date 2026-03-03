@@ -144,6 +144,24 @@ class TransactionController extends Controller
             );
         }
 
+        $invoiceForDue = FinancialInvoice::whereJsonContains('data', ['order_id' => $order->id])
+            ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+            ->orderByDesc('id')
+            ->first();
+        $invoiceTotal = $invoiceForDue ? (float) ($invoiceForDue->total_price ?? 0) : (float) ($order->total_price ?? 0);
+        $invoiceAdvance = $invoiceForDue ? (float) ($invoiceForDue->advance_payment ?? 0) : 0;
+        if ($invoiceAdvance <= 0) {
+            $invoiceAdvance = (float) ($order->down_payment ?? 0);
+        }
+        $invoicePaid = $invoiceForDue ? (float) ($invoiceForDue->paid_amount ?? 0) : 0;
+        $totalDue = max(0, $invoiceTotal - $invoiceAdvance - $invoicePaid);
+
+        if ($order->employee_id) {
+            $preview = $this->calculateEmployeeAutoPayment($order, (float) $totalDue);
+            $preview['total_due'] = round((float) $totalDue, 2);
+            $order->employee_payment_preview = $preview;
+        }
+
         $order->payment_meta = null;
 
         $invoiceId = $order->invoice?->id;
@@ -271,6 +289,9 @@ class TransactionController extends Controller
         $bankChargesAmount = 0;
         $entDetails = '';
         $employeeAutoPayment = null;
+        $employeeRemainingAfterAllowance = 0.0;
+        $employeeCtsAllowed = false;
+        $employeeMaxCtsAmount = 0.0;
 
         // Calculate ENT Value if specific items selected OR ENT enabled
         if ($request->boolean('ent_enabled') || $request->has('ent_items')) {
@@ -311,9 +332,17 @@ class TransactionController extends Controller
             $employeeAutoPayment = $this->calculateEmployeeAutoPayment($order, (float) $totalDue);
 
             $entAmount = round((float) ($employeeAutoPayment['food_allowance_applied'] ?? 0), 0);
-            $ctsAmount = round((float) ($employeeAutoPayment['cts_amount'] ?? 0), 0);
+            $employeeRemainingAfterAllowance = max(0, round((float) ($employeeAutoPayment['remaining_after_food_allowance'] ?? 0), 0));
+            $employeeCtsAllowed = (bool) ($employeeAutoPayment['cts_allowed'] ?? false);
+            $employeeMaxCtsAmount = $employeeCtsAllowed ? $employeeRemainingAfterAllowance : 0;
 
-            $requiredCash = max(0, round((float) ($employeeAutoPayment['cash_required'] ?? 0) + (float) $bankChargesAmount, 0));
+            $requestedCtsAmount = $request->boolean('cts_enabled') ? round((float) ($request->cts_amount ?? 0), 0) : 0;
+            if ($requestedCtsAmount < 0) {
+                $requestedCtsAmount = 0;
+            }
+            $ctsAmount = min($employeeMaxCtsAmount, $requestedCtsAmount);
+
+            $requiredCash = max(0, round(($employeeRemainingAfterAllowance - $ctsAmount) + (float) $bankChargesAmount, 0));
             $providedCash = max(0, round((float) $request->paid_amount, 0));
 
             if ($providedCash < ($requiredCash - 1.0)) {
@@ -369,7 +398,9 @@ class TransactionController extends Controller
         }
 
         if ($ctsAmount > 0 || $request->boolean('cts_enabled') || $employeeAutoPayment) {
-            $comment = $employeeAutoPayment ? 'Auto charged to salary (CTS)' : $request->cts_comment;
+            $comment = $employeeAutoPayment
+                ? ((string) ($request->cts_comment ?: 'Charged to salary (CTS)'))
+                : $request->cts_comment;
             if ($ctsAmount > 0 && $ctsAmount < $totalDue) {
                 $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
             }
@@ -454,8 +485,10 @@ class TransactionController extends Controller
                 $invoiceData['food_allowance_entitlement'] = round((float) ($employeeAutoPayment['food_allowance_entitlement'] ?? 0), 0);
                 $invoiceData['food_allowance_used'] = round((float) ($employeeAutoPayment['food_allowance_used'] ?? 0), 0);
                 $invoiceData['food_allowance_remaining_after'] = round((float) ($employeeAutoPayment['food_allowance_remaining_after'] ?? 0), 0);
+                $invoiceData['remaining_after_food_allowance'] = round((float) $employeeRemainingAfterAllowance, 0);
                 $invoiceData['employee_cts_allowed'] = (bool) ($employeeAutoPayment['cts_allowed'] ?? false);
-                $invoiceData['employee_cash_required'] = round((float) ($employeeAutoPayment['cash_required'] ?? 0), 0);
+                $invoiceData['employee_max_cts_amount'] = round((float) $employeeMaxCtsAmount, 0);
+                $invoiceData['employee_cash_required'] = round(max(0, $employeeRemainingAfterAllowance - $ctsAmount), 0);
                 $invoiceData['employee_auto_payment'] = true;
 
                 $invoice->update([
@@ -735,7 +768,9 @@ class TransactionController extends Controller
             'food_allowance_used' => round($usedFoodAllowance, 2),
             'food_allowance_applied' => round($foodAllowanceApplied, 2),
             'food_allowance_remaining_after' => round(max(0, $availableFoodAllowance - $foodAllowanceApplied), 2),
+            'remaining_after_food_allowance' => round($remainingAfterFoodAllowance, 2),
             'cts_allowed' => $ctsAllowed,
+            'max_cts_amount' => round($remainingAfterFoodAllowance, 2),
             'cts_amount' => round($ctsAmount, 2),
             'cash_required' => round($cashRequired, 2),
         ];
@@ -801,6 +836,51 @@ class TransactionController extends Controller
                 'tenant:id,name',  // ✅ Load Tenant Name
                 'orderItems:id,order_id,order_item,status',
                 'invoice',  // Load the invoice relation to get bank charges data
+            ])
+            ->addSelect([
+                'orders.*',
+                'invoice_ent_amount' => FinancialInvoice::select('ent_amount')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1),
+                'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1),
+                'invoice_advance_payment' => FinancialInvoice::select('advance_payment')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1),
+                'invoice_advance_deducted' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.advance_deducted')), '0') AS DECIMAL(10,2))")
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1),
+                'invoice_bank_charges_amount' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.bank_charges_amount')), '0') AS DECIMAL(10,2))")
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1),
+                'invoice_ent_reason' => FinancialInvoice::select('ent_reason')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1),
+                'invoice_cts_comment' => FinancialInvoice::select('cts_comment')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1),
             ]);
 
         // 🔍 Search by Order ID

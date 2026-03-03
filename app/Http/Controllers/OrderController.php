@@ -2266,7 +2266,7 @@ class OrderController extends Controller
         // Using with() for relationships but we can optimize relationships too if needed
         $query = Order::select([
             'id', 'order_type', 'start_date', 'status', 'payment_status', 'payment_method',
-            'total_price', 'amount', 'discount', 'tax',
+            'total_price', 'amount', 'discount', 'tax', 'paid_amount', 'down_payment',
             'table_id', 'member_id', 'customer_id', 'employee_id',
             'tenant_id', 'waiter_id', 'created_by', 'cashier_id'
         ])

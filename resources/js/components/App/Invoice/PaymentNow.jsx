@@ -44,6 +44,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const [ctsEnabled, setCtsEnabled] = useState(false);
     const [ctsComment, setCtsComment] = useState('');
     const [ctsAmount, setCtsAmount] = useState('0');
+    const [employeePaymentPreview, setEmployeePaymentPreview] = useState(null);
 
     // Fetch Settings
     useEffect(() => {
@@ -99,6 +100,21 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         return Array.isArray(items) ? items : [];
     };
     const isEmployeeOrder = Boolean(invoiceData?.employee_id || invoiceData?.employee?.id || invoiceData?.member?.booking_type === 'employee');
+    useEffect(() => {
+        if (!isEmployeeOrder || !invoiceData?.id) {
+            setEmployeePaymentPreview(null);
+            return;
+        }
+
+        axios
+            .get(route(routeNameForContext('transaction.invoice'), { invoiceId: invoiceData.id }))
+            .then((res) => {
+                const preview = res?.data?.employee_payment_preview;
+                setEmployeePaymentPreview(preview && typeof preview === 'object' ? preview : null);
+            })
+            .catch(() => setEmployeePaymentPreview(null));
+    }, [isEmployeeOrder, invoiceData?.id]);
+
     const getEntItemKey = (item, index = 0) => String(item?.id ?? item?.order_item?.id ?? `ent-${index}`);
     const getOrderItemsTotal = () =>
         getOrderItems()
@@ -146,6 +162,27 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         const alreadyPaid = getPaidCash() + getAdvancePaid();
         return Math.max(0, round2(getTotalPrice() - alreadyPaid));
     };
+    const employeeFoodAllowanceApplied = round2(employeePaymentPreview?.food_allowance_applied ?? invoiceData?.employee_payment_preview?.food_allowance_applied ?? 0);
+    const employeeRemainingAfterAllowance = round2(
+        employeePaymentPreview?.remaining_after_food_allowance ??
+            invoiceData?.employee_payment_preview?.remaining_after_food_allowance ??
+            Math.max(0, getDueTotal() - employeeFoodAllowanceApplied),
+    );
+    const employeeCtsAllowed = Boolean(employeePaymentPreview?.cts_allowed ?? invoiceData?.employee_payment_preview?.cts_allowed ?? false);
+    const employeeMaxCtsAmount = round2(
+        employeePaymentPreview?.max_cts_amount ?? invoiceData?.employee_payment_preview?.max_cts_amount ?? employeeRemainingAfterAllowance,
+    );
+    const getEffectiveEntDeduction = () => (isEmployeeOrder ? employeeFoodAllowanceApplied : entEnabled ? round2(entAmount || 0) : 0);
+    const getEffectiveCtsDeduction = () => {
+        if (isEmployeeOrder) {
+            if (!ctsEnabled || !employeeCtsAllowed) {
+                return 0;
+            }
+            return Math.min(round2(ctsAmount || 0), employeeMaxCtsAmount);
+        }
+        return ctsEnabled ? round2(ctsAmount || 0) : 0;
+    };
+    const getRemainingBalance = () => Math.max(0, round2(getDueTotal() - getEffectiveEntDeduction() - getEffectiveCtsDeduction()));
 
     // Calculate ENT Amount when items selected
     useEffect(() => {
@@ -164,23 +201,10 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
     // Calculate Remaining Balance or Total with Charges
     useEffect(() => {
-        const grandTotal = round0(getDueTotal());
-        const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
-
-        let targetAmount = 0;
-
-        if (entEnabled || ctsEnabled) {
-            const remainder = round0(grandTotal - entDeduction - ctsDeduction);
-            targetAmount = remainder < 0 ? 0 : remainder;
-        } else {
-            targetAmount = round0(grandTotal);
-        }
-
-        // Update input amount
+        const targetAmount = round0(getRemainingBalance());
         setInputAmount(String(Math.round(targetAmount)));
         setCustomerChanges('0');
-    }, [entAmount, ctsAmount, entEnabled, ctsEnabled, invoiceData]);
+    }, [entAmount, ctsAmount, entEnabled, ctsEnabled, invoiceData, employeePaymentPreview]);
 
     const handlePaymentMethodChange = (method) => {
         setActivePaymentMethod(method);
@@ -197,10 +221,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         setInputAmount(cleanAmount.toString());
 
         // Calculate customer changes based on remaining after ENT/CTS and including Bank Charges
-        const grandTotal = round0(getDueTotal());
-        const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
-        const dueAmount = Math.max(0, round0(grandTotal - entDeduction - ctsDeduction));
+        const dueAmount = Math.max(0, round0(getRemainingBalance()));
 
         const changes = round0(cleanAmount - dueAmount);
         setCustomerChanges(String(Math.round(changes < 0 ? 0 : changes)));
@@ -208,10 +229,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
     const handleNumberClick = (number) => {
         let newAmount;
-        const grandTotal = round0(getDueTotal());
-        const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
-        const dueAmount = Math.max(0, round0(grandTotal - entDeduction - ctsDeduction));
+        const dueAmount = Math.max(0, round0(getRemainingBalance()));
 
         if (parseFloat(inputAmount) === 0 && !inputAmount.includes('.')) {
             newAmount = number;
@@ -230,10 +248,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleDeleteClick = () => {
-        const grandTotal = round0(getDueTotal());
-        const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
-        const dueAmount = Math.max(0, round0(grandTotal - entDeduction - ctsDeduction));
+        const dueAmount = Math.max(0, round0(getRemainingBalance()));
 
         if (inputAmount.length > 1) {
             const newAmount = inputAmount.slice(0, -1);
@@ -264,10 +279,9 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleOrderAndPay = async () => {
-        const grandTotal = round2(getDueTotal());
-        const entDeduction = entEnabled ? round2(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? round2(ctsAmount || 0) : 0;
-        const remainingBalance = round2(grandTotal - entDeduction - ctsDeduction);
+        const entDeduction = getEffectiveEntDeduction();
+        const ctsDeduction = getEffectiveCtsDeduction();
+        const remainingBalance = getRemainingBalance();
 
         // Amount validation - input should cover remaining balance
         // Note: Using a small epsilon for float comparison safety, though simple < works usually
@@ -333,10 +347,9 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handlePayNow = () => {
-        const grandTotal = getDueTotal();
-        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-        const remainingBalance = grandTotal - entDeduction - ctsDeduction;
+        const entDeduction = getEffectiveEntDeduction();
+        const ctsDeduction = getEffectiveCtsDeduction();
+        const remainingBalance = getRemainingBalance();
 
         // Amount validation - input should cover remaining balance
         if (remainingBalance > 0 && parseFloat(inputAmount) < remainingBalance - 0.01) {
@@ -476,12 +489,12 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     useEffect(() => {
         if (activePaymentMethod === 'split_payment') {
             const totalPaid = Number(cashAmount) + Number(creditCardAmount) + Number(bankTransferAmount);
-            const due = getDueTotal();
+            const due = getRemainingBalance();
             const change = totalPaid - due;
             setCustomerChanges((change < 0 ? 0 : change).toFixed(2));
             setInputAmount(totalPaid.toString()); // Optional: track total paid in inputAmount too
         }
-    }, [cashAmount, creditCardAmount, bankTransferAmount, invoiceData, activePaymentMethod]);
+    }, [cashAmount, creditCardAmount, bankTransferAmount, invoiceData, activePaymentMethod, entAmount, ctsAmount, entEnabled, ctsEnabled, employeePaymentPreview]);
 
     useEffect(() => {
         if (!isEmployeeOrder) return;
@@ -608,8 +621,24 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                         {isEmployeeOrder && (
                             <Box sx={{ mb: 2, p: 1.5, border: '1px dashed #0a3d62', borderRadius: 1, backgroundColor: '#f5f9fc' }}>
                                 <Typography variant="body2" sx={{ color: '#0a3d62', fontWeight: 500 }}>
-                                    Employee order: Food Allowance and CTS adjustment are applied automatically during payment.
+                                    Employee order: Food Allowance is auto-applied first. You can choose CTS deduction from remaining amount.
                                 </Typography>
+                                <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Food Allowance Applied
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight="bold">
+                                        Rs {employeeFoodAllowanceApplied.toFixed(2)}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ mt: 0.5, display: 'flex', justifyContent: 'space-between' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Remaining After Allowance
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight="bold">
+                                        Rs {employeeRemainingAfterAllowance.toFixed(2)}
+                                    </Typography>
+                                </Box>
                             </Box>
                         )}
 
@@ -686,6 +715,42 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 </Box>
                             )}
                         </Box>}
+
+                        {isEmployeeOrder && employeeCtsAllowed && employeeRemainingAfterAllowance > 0 && (
+                            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+                                <Box
+                                    sx={{
+                                        flex: 1,
+                                        p: 1.5,
+                                        border: '1px solid #e0e0e0',
+                                        borderRadius: 1,
+                                        backgroundColor: ctsEnabled ? '#f5f9fc' : 'transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        minWidth: '150px',
+                                    }}
+                                >
+                                    <Switch
+                                        checked={ctsEnabled}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setCtsEnabled(checked);
+                                            if (checked) {
+                                                setCtsAmount(Math.round(employeeMaxCtsAmount).toString());
+                                            } else {
+                                                setCtsAmount('0');
+                                            }
+                                        }}
+                                        size="small"
+                                        sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#0a3d62' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#0a3d62' } }}
+                                    />
+                                    <Typography variant="body2" fontWeight="medium">
+                                        CTS Deduction
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        )}
 
                         {/* ENT Item Selection - Shows when enabled */}
                         {entEnabled && getOrderItems().length > 0 && (
@@ -768,22 +833,30 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                         CTS Amount:
                                     </Typography>
                                     <Typography variant="body2" color="success.main" fontWeight="bold">
-                                        Rs {ctsAmount}
+                                        Rs {getEffectiveCtsDeduction().toFixed(2)}
                                     </Typography>
                                 </Box>
-                                <WholeNumberInput value={ctsAmount} onChange={(val) => setCtsAmount(val)} sx={{ mb: 1 }} />
+                                <WholeNumberInput
+                                    value={ctsAmount}
+                                    onChange={(val) => {
+                                        const numeric = round2(val || 0);
+                                        const capped = isEmployeeOrder ? Math.min(numeric, employeeMaxCtsAmount) : numeric;
+                                        setCtsAmount(String(Math.round(capped)));
+                                    }}
+                                    sx={{ mb: 1 }}
+                                />
                                 <TextField fullWidth label="CTS Comment" value={ctsComment} onChange={(e) => setCtsComment(e.target.value)} size="small" multiline rows={2} sx={{ mt: 1 }} />
                             </Box>
                         )}
 
                         {/* Remaining Balance Display */}
-                        {(entEnabled || ctsEnabled) && (
+                        {(entEnabled || ctsEnabled || isEmployeeOrder) && (
                             <Box sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Typography variant="body1" fontWeight="medium">
                                     Remaining Balance to Pay:
                                 </Typography>
                                 <Typography variant="h6" fontWeight="bold" color="warning.main">
-                                    Rs {Math.max(0, getDueTotal() - (entEnabled ? parseFloat(entAmount || 0) : 0) - (ctsEnabled ? parseFloat(ctsAmount || 0) : 0)).toFixed(2)}
+                                    Rs {getRemainingBalance().toFixed(2)}
                                 </Typography>
                             </Box>
                         )}
@@ -837,10 +910,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     <Button
                                         variant="outlined"
                                         onClick={() => {
-                                            const grandTotal = getDueTotal();
-                                            const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
-                                            const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-                                            const remainingBalance = Math.max(0, grandTotal - entDeduction - ctsDeduction);
+                                            const remainingBalance = getRemainingBalance();
                                             handleQuickAmountClick(remainingBalance.toString());
                                         }}
                                         sx={styles.quickAmountButton}

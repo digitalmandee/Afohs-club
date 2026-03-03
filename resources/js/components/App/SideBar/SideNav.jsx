@@ -375,9 +375,6 @@ export default function SideNav({ open, setOpen }) {
                     <IconButton color="inherit" aria-label="toggle drawer" onClick={() => setOpen(!open)} edge="start" sx={{ marginRight: 5, backgroundColor: '#F0F5FF', borderRadius: '2px' }}>
                         {open ? <MenuOpenIcon sx={{ color: '#063455' }} /> : <MenuIcon sx={{ color: '#063455' }} />}
                     </IconButton>
-                    <Typography variant="h5" sx={{ color: '#063455', fontWeight: 'bold' }}>
-                        {isPos ? activePosLocation?.name : (activeRestaurant?.name ?? tenant?.name)}
-                    </Typography>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <IconButton onClick={() => setShowNotification(true)} sx={{ backgroundColor: '#F0F5FF', borderRadius: '2px', p: 1.3 }}>
