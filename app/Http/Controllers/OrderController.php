@@ -344,6 +344,12 @@ class OrderController extends Controller
             }
 
             $query->where('status', '!=', 'saved');
+            $query->where(function ($q) {
+                $q
+                    ->where('status', '!=', 'completed')
+                    ->orWhereNull('payment_status')
+                    ->orWhere('payment_status', '!=', 'paid');
+            });
 
             if ($request->filled('tenant_id') && $tenants->contains(fn($t) => (string) $t->id === (string) $request->tenant_id)) {
                 $query->where('tenant_id', $request->tenant_id);
@@ -1522,12 +1528,22 @@ class OrderController extends Controller
     {
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         $canEditAfterBill = $this->canEditAfterBill($user);
+        $respondUpdateError = function (string $message, string $errorCode = 'ORDER_UPDATE_ERROR', int $status = 422) use ($request) {
+            if ($request->expectsJson() && !$request->header('X-Inertia')) {
+                return response()->json([
+                    'message' => $message,
+                    'error_code' => $errorCode,
+                ], $status);
+            }
+
+            return redirect()->back()->withErrors([
+                'error' => $message,
+                'error_code' => $errorCode,
+            ]);
+        };
 
         if (!$this->checkActiveShift() && !$canEditAfterBill) {
-            return response()->json([
-                'message' => 'You must have an active shift to update orders.',
-                'error_code' => 'NO_ACTIVE_SHIFT'
-            ], 403);
+            return $respondUpdateError('You must have an active shift to update orders.', 'NO_ACTIVE_SHIFT', 403);
         }
 
         // Validate status and items first
@@ -1539,6 +1555,8 @@ class OrderController extends Controller
             'total_price' => 'nullable|numeric',
             'discount' => 'nullable|numeric',
             'tax_rate' => 'nullable|numeric',
+            'service_charges' => 'nullable|numeric',
+            'bank_charges' => 'nullable|numeric',
             'client_type' => 'nullable|in:member,guest,employee',
             'client_id' => 'nullable|integer|min:1',
         ]);
@@ -1557,25 +1575,27 @@ class OrderController extends Controller
             $order = Order::findOrFail($id);
             if (!$canEditAfterBill && (string) $order->created_by !== (string) Auth::id()) {
                 DB::rollBack();
-                return response()->json([
-                    'message' => 'You are not allowed to update this order.',
-                    'error_code' => 'FORBIDDEN',
-                ], 403);
+                return $respondUpdateError('You are not allowed to update this order.', 'FORBIDDEN', 403);
             }
 
             $financialInvoice = FinancialInvoice::where('invoice_type', 'food_order')
                 ->whereJsonContains('data', ['order_id' => $order->id])
                 ->first();
             $hasClientUpdate = $request->filled('client_type') && $request->filled('client_id');
+            $isClientChanged = false;
             if ($hasClientUpdate) {
+                $clientType = (string) $request->input('client_type');
+                $clientId = (int) $request->input('client_id');
+                $currentClientType = $order->member_id ? 'member' : ($order->customer_id ? 'guest' : ($order->employee_id ? 'employee' : null));
+                $currentClientId = (int) ($order->member_id ?: ($order->customer_id ?: ($order->employee_id ?: 0)));
+                $isClientChanged = ((string) $clientType !== (string) $currentClientType) || ($clientId !== $currentClientId);
+            }
+            if ($isClientChanged) {
                 $isPaidOrder = strtolower((string) ($order->payment_status ?? '')) === 'paid';
                 $isPaidInvoice = strtolower((string) ($financialInvoice->status ?? '')) === 'paid';
                 if ($isPaidOrder || $isPaidInvoice) {
                     DB::rollBack();
-                    return response()->json([
-                        'message' => 'Client cannot be changed after payment is done.',
-                        'error_code' => 'CLIENT_EDIT_AFTER_PAYMENT_FORBIDDEN',
-                    ], 422);
+                    return $respondUpdateError('Client cannot be changed after payment is done.', 'CLIENT_EDIT_AFTER_PAYMENT_FORBIDDEN', 422);
                 }
             }
 
@@ -1750,10 +1770,7 @@ class OrderController extends Controller
                     ($clientType === 'employee' && !Employee::where('id', $clientId)->exists())
                 ) {
                     DB::rollBack();
-                    return response()->json([
-                        'message' => 'Selected client is invalid.',
-                        'error_code' => 'INVALID_CLIENT',
-                    ], 422);
+                    return $respondUpdateError('Selected client is invalid.', 'INVALID_CLIENT', 422);
                 }
 
                 $updateData['member_id'] = $clientType === 'member' ? $clientId : null;
@@ -1779,6 +1796,12 @@ class OrderController extends Controller
                 if ($request->has('tax_rate')) {
                     $updateData['tax'] = $validated['tax_rate'];
                 }
+            }
+            if ($request->has('service_charges')) {
+                $updateData['service_charges'] = (float) ($validated['service_charges'] ?? 0);
+            }
+            if ($request->has('bank_charges')) {
+                $updateData['bank_charges'] = (float) ($validated['bank_charges'] ?? 0);
             }
 
             $order->update($updateData);
@@ -1847,13 +1870,21 @@ class OrderController extends Controller
 
             $computedAmount = (float) round($subtotal);
             $computedDiscount = (float) round($totalDiscount);
-            $computedTotal = (float) round($subtotal - $totalDiscount + $totalTax);
+            $effectiveServiceCharges = $request->has('service_charges')
+                ? (float) ($validated['service_charges'] ?? 0)
+                : (float) ($order->service_charges ?? 0);
+            $effectiveBankCharges = $request->has('bank_charges')
+                ? (float) ($validated['bank_charges'] ?? 0)
+                : (float) ($order->bank_charges ?? 0);
+            $computedTotal = (float) round($subtotal - $totalDiscount + $totalTax + $effectiveServiceCharges + $effectiveBankCharges);
 
-            $shouldSyncTotals = !empty($mergedUpdatedItems) || !empty($mergedNewItems) || ($request->has('subtotal') || $request->has('total_price'));
+            $shouldSyncTotals = !empty($mergedUpdatedItems) || !empty($mergedNewItems) || ($request->has('subtotal') || $request->has('total_price') || $request->has('service_charges') || $request->has('bank_charges'));
             if ($shouldSyncTotals) {
                 $order->update([
                     'amount' => $computedAmount,
                     'discount' => $computedDiscount,
+                    'service_charges' => $effectiveServiceCharges,
+                    'bank_charges' => $effectiveBankCharges,
                     'total_price' => $computedTotal,
                 ]);
             }

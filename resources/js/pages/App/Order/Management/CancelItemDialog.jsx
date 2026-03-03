@@ -2,19 +2,14 @@ import { Box, Button, Dialog, DialogContent, DialogTitle, FormControl, FormContr
 import { useState, useEffect } from 'react';
 
 const CancelItemDialog = ({ open, onClose, onConfirm, item }) => {
-    const [quantity, setQuantity] = useState(1);
+    const [quantity, setQuantity] = useState('1');
     const [remark, setRemark] = useState('CANCELLED BY CUSTOMER');
     const [instructions, setInstructions] = useState('');
     const [cancelType, setCancelType] = useState('void');
 
     useEffect(() => {
         if (open && item) {
-            // Default quantity to 1 or full quantity? Let's default to full quantity for convenience, or 1?
-            // "Specific quantity" implies user choice. Let's default to 1, or maybe the item's quantity.
-            // If I want to cancel *all*, I'd probably use the main checkbox.
-            // But if I want to cancel specific, I might want 1.
-            // Let's default to item.quantity (Cancel All) and let user reduce it for partial.
-            setQuantity(item.order_item.quantity);
+            setQuantity(String(item.order_item.quantity));
             setRemark('CANCELLED BY CUSTOMER');
             setInstructions('');
             setCancelType('void');
@@ -22,8 +17,11 @@ const CancelItemDialog = ({ open, onClose, onConfirm, item }) => {
     }, [open, item]);
 
     const handleConfirm = () => {
+        const numericQty = parseInt(quantity, 10);
+        const maxQty = Number(item?.order_item?.quantity || 1);
+        const safeQty = Number.isFinite(numericQty) ? Math.max(1, Math.min(numericQty, maxQty)) : 1;
         onConfirm({
-            quantity: parseInt(quantity, 10),
+            quantity: safeQty,
             remark,
             instructions,
             cancelType,
@@ -45,8 +43,22 @@ const CancelItemDialog = ({ open, onClose, onConfirm, item }) => {
                         type="number"
                         value={quantity}
                         onChange={(e) => {
-                            const val = parseInt(e.target.value, 10);
-                            if (val > 0 && val <= maxQty) setQuantity(val);
+                            const rawValue = e.target.value;
+                            if (rawValue === '') {
+                                setQuantity('');
+                                return;
+                            }
+                            if (/^\d+$/.test(rawValue)) {
+                                const val = parseInt(rawValue, 10);
+                                if (val > 0 && val <= maxQty) {
+                                    setQuantity(rawValue);
+                                }
+                            }
+                        }}
+                        onBlur={() => {
+                            const numericQty = parseInt(quantity, 10);
+                            const safeQty = Number.isFinite(numericQty) ? Math.max(1, Math.min(numericQty, maxQty)) : 1;
+                            setQuantity(String(safeQty));
                         }}
                         inputProps={{ min: 1, max: maxQty }}
                         helperText={`Max: ${maxQty}`}

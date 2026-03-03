@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 // Receipt component for reuse
-const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, showButtons = true, closeModal, invoiceRoute, layout = 'side', containerSx }) => {
+const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, showButtons = true, closeModal, invoiceRoute, layout = 'side', containerSx, includePaymentBreakdown = true }) => {
     const isModalLayout = layout === 'modal';
     const styles = {
         receiptContainer: {
@@ -146,12 +146,12 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
     const round0 = (n) => Math.round(Number(n) || 0);
     const totalAmount = round0(paymentData.total_price);
     const advancePaid = round0(paymentData.advance_payment || paymentData.data?.advance_deducted || 0);
-    const entAmount = round0(paymentData.ent_amount || paymentData.invoice_ent_amount || paymentData.data?.ent_amount || 0);
-    const ctsAmount = round0(paymentData.cts_amount || paymentData.invoice_cts_amount || paymentData.data?.cts_amount || 0);
+    const entAmount = includePaymentBreakdown ? round0(paymentData.ent_amount || paymentData.invoice_ent_amount || paymentData.data?.ent_amount || 0) : 0;
+    const ctsAmount = includePaymentBreakdown ? round0(paymentData.cts_amount || paymentData.invoice_cts_amount || paymentData.data?.cts_amount || 0) : 0;
     const netPayable = Math.max(0, totalAmount - advancePaid - entAmount - ctsAmount);
-    const paidCash = round0(paymentData.paid_amount || 0);
+    const paidCash = includePaymentBreakdown ? round0(paymentData.paid_amount || 0) : 0;
     const remainingDue = Math.max(0, netPayable - paidCash);
-    const explicitCustomerChange = round0(paymentData.customer_changes || paymentData.data?.customer_changes || 0);
+    const explicitCustomerChange = includePaymentBreakdown ? round0(paymentData.customer_changes || paymentData.data?.customer_changes || 0) : 0;
     const customerChangeAmount = explicitCustomerChange > 0 ? explicitCustomerChange : Math.max(0, paidCash - netPayable);
     const handlePrintReceipt = (data) => {
         if (!data) return;
@@ -160,12 +160,12 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
         const printTotalAmount = round0(data.total_price);
         const printAdvancePaid = round0(data.advance_payment || data.data?.advance_deducted || 0);
-        const printEntAmount = round0(data.ent_amount || data.invoice_ent_amount || data.data?.ent_amount || 0);
-        const printCtsAmount = round0(data.cts_amount || data.invoice_cts_amount || data.data?.cts_amount || 0);
+        const printEntAmount = includePaymentBreakdown ? round0(data.ent_amount || data.invoice_ent_amount || data.data?.ent_amount || 0) : 0;
+        const printCtsAmount = includePaymentBreakdown ? round0(data.cts_amount || data.invoice_cts_amount || data.data?.cts_amount || 0) : 0;
         const printNetPayable = Math.max(0, printTotalAmount - printAdvancePaid - printEntAmount - printCtsAmount);
-        const printPaidCash = round0(data.receipt_paid_amount ?? data.paid_amount ?? 0);
+        const printPaidCash = includePaymentBreakdown ? round0(data.receipt_paid_amount ?? data.paid_amount ?? 0) : 0;
         const printRemainingDue = Math.max(0, printNetPayable - printPaidCash);
-        const explicitPrintChange = round0(data.receipt_customer_changes ?? data.customer_changes ?? data.data?.customer_changes ?? 0);
+        const explicitPrintChange = includePaymentBreakdown ? round0(data.receipt_customer_changes ?? data.customer_changes ?? data.data?.customer_changes ?? 0) : 0;
         const printCustomerChange = explicitPrintChange > 0 ? explicitPrintChange : Math.max(0, printPaidCash - printNetPayable);
 
         const content = `
@@ -194,11 +194,6 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
             <div class="order-id">
               <div>Order Id</div>
               <div><strong>#${data.id || data.order_no || 'N/A'}</strong></div>
-            </div>
-
-            <div class="row">
-              <div>Cashier</div>
-              <div>${data.cashier ? data.cashier.name : user.name}</div>
             </div>
 
             <div class="divider"></div>
@@ -342,6 +337,10 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 `
                     : ''
             }
+            <div class="row">
+              <div>Cashier</div>
+              <div>${data.cashier ? data.cashier.name : user.name}</div>
+            </div>
 
             <div class="footer">
               <p>Thanks for having our passion. Drop by again. If your orders aren't still visible, you're always welcome here!</p>
@@ -392,13 +391,6 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 <Typography variant="body1" fontWeight="bold">
                     #{paymentData.id || paymentData.order_no || 'N/A'}
                 </Typography>
-            </Box>
-
-            <Box sx={styles.receiptRow}>
-                <Typography variant="caption" color="text.secondary">
-                    Cashier
-                </Typography>
-                <Typography variant="caption">{paymentData.cashier ? paymentData.cashier.name : user.name}</Typography>
             </Box>
 
             <Box sx={styles.receiptDivider} />
@@ -585,6 +577,12 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 <Typography variant="body2" fontWeight="bold" color="#0a3d62">
                     Rs {totalAmount}
                 </Typography>
+            </Box>
+            <Box sx={styles.receiptRow}>
+                <Typography variant="caption" color="text.secondary">
+                    Cashier
+                </Typography>
+                <Typography variant="caption">{paymentData.cashier ? paymentData.cashier.name : user.name}</Typography>
             </Box>
 
             <Box sx={styles.receiptFooter}>

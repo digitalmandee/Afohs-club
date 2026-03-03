@@ -207,6 +207,10 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     }, [order]);
 
     const handleQuantityChange = (index, delta) => {
+        if (Number(delta) < 0) {
+            enqueueSnackbar('Quantity decrease is not allowed. Use cancellation process.', { variant: 'warning' });
+            return;
+        }
         setOrderItems((prev) =>
             prev.map((item, i) => {
                 if (i !== index) return item;
@@ -683,7 +687,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                                 />
 
                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <IconButton size="small" onClick={() => handleQuantityChange(index, -1)} sx={{ color: '#003153' }}>
+                                                    <IconButton size="small" disabled onClick={() => handleQuantityChange(index, -1)} sx={{ color: '#003153' }}>
                                                         <Typography sx={{ fontSize: 16, fontWeight: 'bold' }}>-</Typography>
                                                     </IconButton>
                                                     <Typography sx={{ mx: 1 }}>{item.order_item.quantity}x</Typography>

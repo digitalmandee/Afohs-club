@@ -270,20 +270,25 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
                         .catch(() => resolve(null));
                 },
                 onError: (errors) => {
-                    enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
-                    reject(errors); // <-- reject the promise
+                    const firstMessage = Object.values(errors || {}).find((value) => typeof value === 'string' && value.trim());
+                    enqueueSnackbar(firstMessage || 'Unable to update order.', { variant: 'error' });
+                    reject(errors);
                 },
             });
         });
     };
 
     const onSaveAndPrint = async (status, clientMeta = null) => {
-        const res = await onSave(status, clientMeta);
-        const updatedOrder = res?.data?.data?.find((o) => String(o.id) === String(selectedCard?.id));
-        if (updatedOrder) {
-            setSelectedCard(updatedOrder);
+        try {
+            const res = await onSave(status, clientMeta);
+            const updatedOrder = res?.data?.data?.find((o) => String(o.id) === String(selectedCard?.id));
+            if (updatedOrder) {
+                setSelectedCard(updatedOrder);
+            }
+            setBillModalOpen(true);
+        } catch (_) {
+            setBillModalOpen(false);
         }
-        setBillModalOpen(true);
     };
 
     // Fetch Suggestions
@@ -440,6 +445,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
             paid_amount: order.invoice?.paid_amount || order.paid_amount || 0,
             // Items need to be mapped if structure differs
             order_items: order.order_items?.map((item) => ({
+                status: item.status,
                 order_item: item.order_item || item, // handle structure variations
                 name: (item.order_item || item).name,
                 quantity: (item.order_item || item).quantity,
@@ -1069,9 +1075,9 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
                         order={selectedCard}
                         orderItems={orderItems}
                         setOrderItems={setOrderItems}
-                        onSave={(status) => onSave(status)}
-                        onSaveAndPrint={(status) => onSaveAndPrint(status)}
-                        allowUpdateAndPrint={Boolean(canEditAfterBill && (selectedCard?.invoice || selectedCard?.payment_status))}
+                        onSave={(status, clientMeta) => onSave(status, clientMeta)}
+                        onSaveAndPrint={(status, clientMeta) => onSaveAndPrint(status, clientMeta)}
+                        allowUpdateAndPrint={Boolean(selectedCard?.invoice)}
                     />
 
                     {/* PaymentModal */}
@@ -1092,7 +1098,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
                     {billModalOpen && selectedCard && (
                         <Dialog open={billModalOpen} onClose={() => setBillModalOpen(false)} maxWidth="sm" fullWidth>
                             <Box sx={{ p: 2 }}>
-                                <Receipt invoiceRoute={'transaction.invoice'} invoiceData={getReceiptData(selectedCard)} openModal={true} />
+                                <Receipt invoiceRoute={'transaction.invoice'} invoiceData={getReceiptData(selectedCard)} openModal={true} includePaymentBreakdown={false} />
                                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                                     <Button onClick={() => setBillModalOpen(false)} variant="outlined">
                                         Close

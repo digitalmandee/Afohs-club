@@ -300,7 +300,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                     resolve(true);
                 },
                 onError: (errors) => {
-                    enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
+                    const firstMessage = Object.values(errors || {}).find((value) => typeof value === 'string' && value.trim());
+                    enqueueSnackbar(firstMessage || 'Unable to update order.', { variant: 'error' });
                     reject(errors);
                 },
             });
@@ -375,10 +376,11 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         const printWindow = window.open('', '_blank');
         const printTotalAmount = round0(data.total_price);
         const printAdvancePaid = round0(data.advance_payment || data.data?.advance_deducted || 0);
-        const printEntAmount = round0(data.ent_amount || data.invoice_ent_amount || data.data?.ent_amount || 0);
-        const printCtsAmount = round0(data.cts_amount || data.invoice_cts_amount || data.data?.cts_amount || 0);
-        const printNetPayable = Math.max(0, printTotalAmount - printAdvancePaid - printEntAmount - printCtsAmount);
         const printPaidCash = round0(data.receipt_paid_amount ?? data.paid_amount ?? 0);
+        const isSettled = String(data.payment_status || data.invoice_status || '').toLowerCase() === 'paid' || printPaidCash > 0;
+        const printEntAmount = isSettled ? round0(data.ent_amount || data.invoice_ent_amount || data.data?.ent_amount || 0) : 0;
+        const printCtsAmount = isSettled ? round0(data.cts_amount || data.invoice_cts_amount || data.data?.cts_amount || 0) : 0;
+        const printNetPayable = Math.max(0, printTotalAmount - printAdvancePaid - printEntAmount - printCtsAmount);
         const printRemainingDue = Math.max(0, printNetPayable - printPaidCash);
         const explicitPrintChange = round0(data.receipt_customer_changes ?? data.customer_changes ?? 0);
         const printCustomerChange = explicitPrintChange > 0 ? explicitPrintChange : Math.max(0, printPaidCash - printNetPayable);
@@ -409,11 +411,6 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             <div class="order-id">
               <div>Order Id</div>
               <div><strong>#${data.id || data.order_no || 'N/A'}</strong></div>
-            </div>
-
-            <div class="row">
-              <div>Cashier</div>
-              <div>${data.cashier ? data.cashier.name : user.name}</div>
             </div>
 
             <div class="divider"></div>
@@ -557,6 +554,10 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                 `
                     : ''
             }
+            <div class="row">
+              <div>Cashier</div>
+              <div>${data.cashier ? data.cashier.name : user.name}</div>
+            </div>
 
             <div class="footer">
               <p>Thanks for having our passion. Drop by again. If your orders aren't still visible, you're always welcome here!</p>
@@ -1038,7 +1039,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                             }}
                         >
                             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <Receipt invoiceData={getReceiptData(selectedOrder)} openModal={viewModalOpen} showButtons={false} layout="modal" />
+                                <Receipt invoiceData={getReceiptData(selectedOrder)} openModal={viewModalOpen} showButtons={false} layout="modal" includePaymentBreakdown={false} />
                             </Box>
                             <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, boxShadow: 'none' }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>

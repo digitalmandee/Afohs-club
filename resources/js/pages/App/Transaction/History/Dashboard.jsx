@@ -232,11 +232,6 @@ const Dashboard = ({ orders, filters, totals }) => {
               <div><strong>#${order.id}</strong></div>
             </div>
 
-            <div class="row">
-              <div>Cashier</div>
-              <div>${order.cashier?.name || user?.name || 'N/A'}</div>
-            </div>
-
             ${order.waiter
                 ? `
             <div class="row">
@@ -346,6 +341,10 @@ const Dashboard = ({ orders, filters, totals }) => {
             `
                 : ''
             }
+            <div class="row">
+              <div>Cashier</div>
+              <div>${order.cashier?.name || user?.name || 'N/A'}</div>
+            </div>
 
             <div class="footer">
               <p>Thanks for having our passion. Drop by again!</p>

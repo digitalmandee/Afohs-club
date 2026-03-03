@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import { routeNameForContext } from '@/lib/utils';
-import { AccountBalance as AccountBalanceIcon, ArrowForward as ArrowForwardIcon, Backspace as BackspaceIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
+import { AccountBalance as AccountBalanceIcon, ArrowForward as ArrowForwardIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
 import { Box, Button, Dialog, Grid, InputAdornment, MenuItem, Select, Switch, TextField, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
@@ -225,49 +225,6 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
         const changes = round0(cleanAmount - dueAmount);
         setCustomerChanges(String(Math.round(changes < 0 ? 0 : changes)));
-    };
-
-    const handleNumberClick = (number) => {
-        let newAmount;
-        const dueAmount = Math.max(0, round0(getRemainingBalance()));
-
-        if (parseFloat(inputAmount) === 0 && !inputAmount.includes('.')) {
-            newAmount = number;
-        } else if (parseFloat(inputAmount) === dueAmount) {
-            // If currently equal to total, start fresh
-            newAmount = number;
-        } else {
-            newAmount = inputAmount + number;
-        }
-
-        setInputAmount(newAmount);
-
-        // Calculate customer changes
-        const changes = round0(parseFloat(newAmount) - dueAmount);
-        setCustomerChanges(String(Math.round(changes < 0 ? 0 : changes)));
-    };
-
-    const handleDeleteClick = () => {
-        const dueAmount = Math.max(0, round0(getRemainingBalance()));
-
-        if (inputAmount.length > 1) {
-            const newAmount = inputAmount.slice(0, -1);
-            setInputAmount(newAmount);
-
-            const changes = parseFloat(newAmount) - dueAmount;
-            setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
-        } else {
-            setInputAmount('0');
-            const changes = round0(0 - dueAmount);
-            setCustomerChanges(String(Math.round(changes < 0 ? 0 : changes)));
-        }
-    };
-
-    const handleDecimalClick = () => {
-        if (!inputAmount.includes('.')) {
-            const newAmount = inputAmount + '.';
-            setInputAmount(newAmount);
-        }
     };
 
     const handleFileChange = (e) => {
@@ -898,113 +855,6 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     </Typography>
                                 </Box>
 
-                                {/* Quick Amount Buttons */}
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        gap: 1,
-                                        mb: 3,
-                                        flexWrap: 'wrap',
-                                    }}
-                                >
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => {
-                                            const remainingBalance = getRemainingBalance();
-                                            handleQuickAmountClick(remainingBalance.toString());
-                                        }}
-                                        sx={styles.quickAmountButton}
-                                    >
-                                        Exact money
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('100')} sx={styles.quickAmountButton}>
-                                        Rs 100
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('500')} sx={styles.quickAmountButton}>
-                                        Rs 500
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('1000')} sx={styles.quickAmountButton}>
-                                        Rs 1000
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('5000')} sx={styles.quickAmountButton}>
-                                        Rs 5000
-                                    </Button>
-                                </Box>
-
-                                {/* Numpad */}
-                                <Grid container spacing={1}>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('1')}>
-                                            1
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('2')}>
-                                            2
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('3')}>
-                                            3
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('4')}>
-                                            4
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('5')}>
-                                            5
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('6')}>
-                                            6
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('7')}>
-                                            7
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('8')}>
-                                            8
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('9')}>
-                                            9
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={handleDecimalClick}>
-                                            .
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button fullWidth sx={styles.numpadButton} onClick={() => handleNumberClick('0')}>
-                                            0
-                                        </Button>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Button
-                                            fullWidth
-                                            sx={{
-                                                ...styles.numpadButton,
-                                                backgroundColor: '#ffebee',
-                                                color: '#f44336',
-                                                '&:hover': {
-                                                    backgroundColor: '#ffcdd2',
-                                                },
-                                            }}
-                                            onClick={handleDeleteClick}
-                                        >
-                                            <BackspaceIcon />
-                                        </Button>
-                                    </Grid>
-                                </Grid>
                             </Grid>
                         </Grid>
                     )}
@@ -1195,29 +1045,6 @@ export default PaymentNow;
 
 // Custom CSS
 const styles = {
-    numpadButton: {
-        width: '100%',
-        height: '60px',
-        fontSize: '24px',
-        borderRadius: '4px',
-        border: '1px solid #e0e0e0',
-        backgroundColor: 'white',
-        color: '#333',
-        '&:hover': {
-            backgroundColor: '#f5f5f5',
-        },
-    },
-    quickAmountButton: {
-        borderRadius: '4px',
-        border: '1px solid #e0e0e0',
-        backgroundColor: 'white',
-        color: '#333',
-        padding: '8px 16px',
-        textTransform: 'none',
-        '&:hover': {
-            backgroundColor: '#f5f5f5',
-        },
-    },
     payNowButton: {
         backgroundColor: '#0a3d62',
         color: 'white',
