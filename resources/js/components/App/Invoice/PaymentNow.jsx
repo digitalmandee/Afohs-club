@@ -90,31 +90,70 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const parsePrice = (price) => {
         if (typeof price === 'number') return price;
         if (!price) return 0;
-        return parseFloat(price.toString().replace(/,/g, ''));
+        const parsed = parseFloat(price.toString().replace(/,/g, ''));
+        return Number.isFinite(parsed) ? parsed : 0;
     };
 
-    const getTotalPrice = () => parsePrice(invoiceData?.total_price ?? invoiceData?.invoice?.total_price ?? 0);
-    const getAdvancePaid = () =>
-        parsePrice(
-            invoiceData?.advance_payment ??
-                invoiceData?.invoice?.advance_payment ??
-                invoiceData?.down_payment ??
-                invoiceData?.invoice?.data?.advance_deducted ??
-                invoiceData?.data?.advance_deducted ??
-                0,
-        );
-    const getPaidCash = () => parsePrice(invoiceData?.paid_amount ?? invoiceData?.invoice?.paid_amount ?? 0);
+    const getOrderItems = () => {
+        const items = invoiceData?.order_items ?? invoiceData?.orderItems ?? invoiceData?.invoice?.order_items ?? invoiceData?.invoice?.orderItems ?? [];
+        return Array.isArray(items) ? items : [];
+    };
+    const getEntItemKey = (item, index = 0) => String(item?.id ?? item?.order_item?.id ?? `ent-${index}`);
+    const getOrderItemsTotal = () =>
+        getOrderItems()
+            .filter((item) => item?.status !== 'cancelled')
+            .reduce((sum, item) => {
+                const itemTotal = item?.order_item?.total_price || (item?.order_item?.quantity || item?.quantity) * (item?.order_item?.price || item?.price);
+                return sum + parsePrice(itemTotal || 0);
+            }, 0);
+    const getTotalPrice = () => {
+        const explicitTotal = parsePrice(invoiceData?.invoice?.total_price ?? invoiceData?.invoice?.total ?? invoiceData?.invoice?.grand_total ?? invoiceData?.invoice?.grandTotal ?? invoiceData?.total_price ?? invoiceData?.totalPrice ?? invoiceData?.amount ?? invoiceData?.invoice?.amount ?? 0);
+        if (explicitTotal > 0) return explicitTotal;
+        return getOrderItemsTotal();
+    };
+    const getPaymentStatus = () => String(invoiceData?.invoice?.status ?? invoiceData?.invoice?.payment_status ?? invoiceData?.payment_status ?? '').toLowerCase();
+    const getDueFromInvoiceField = () => {
+        const dueCandidates = [invoiceData?.invoice?.customer_charges, invoiceData?.invoice?.customerCharges, invoiceData?.customer_charges, invoiceData?.customerCharges, invoiceData?.invoice?.remaining_amount, invoiceData?.invoice?.remainingAmount, invoiceData?.remaining_amount, invoiceData?.remainingAmount, invoiceData?.invoice?.due_amount, invoiceData?.invoice?.dueAmount, invoiceData?.due_amount, invoiceData?.dueAmount];
 
-    const getAlreadyPaid = () => getPaidCash() + getAdvancePaid();
-    const getDueTotal = () => Math.max(0, getTotalPrice() - getAlreadyPaid());
+        for (const value of dueCandidates) {
+            if (value === null || value === undefined) continue;
+            const parsed = parsePrice(value);
+            if (parsed > 0) return parsed;
+        }
+
+        const hasExplicitZero = dueCandidates.some((value) => value !== null && value !== undefined && parsePrice(value) === 0);
+        return hasExplicitZero ? 0 : null;
+    };
+    const getAdvancePaid = () => {
+        if (invoiceData?.invoice) {
+            return parsePrice(invoiceData?.invoice?.advance_payment ?? invoiceData?.invoice?.advancePayment ?? invoiceData?.invoice?.data?.advance_deducted ?? 0);
+        }
+        return parsePrice(invoiceData?.advance_payment ?? invoiceData?.advancePayment ?? invoiceData?.down_payment ?? invoiceData?.downPayment ?? invoiceData?.data?.advance_deducted ?? 0);
+    };
+    const getPaidCash = () => parsePrice(invoiceData?.invoice?.paid_amount ?? invoiceData?.invoice?.paidAmount ?? invoiceData?.paid_amount ?? invoiceData?.paidAmount ?? 0);
+    const getDueTotal = () => {
+        const dueFromInvoice = getDueFromInvoiceField();
+        const status = getPaymentStatus();
+        const shouldTrustZeroDue = ['paid', 'settled'].includes(status);
+
+        if (dueFromInvoice > 0) {
+            return dueFromInvoice;
+        }
+        if (dueFromInvoice === 0 && shouldTrustZeroDue) {
+            return 0;
+        }
+        const alreadyPaid = getPaidCash() + getAdvancePaid();
+        return Math.max(0, round2(getTotalPrice() - alreadyPaid));
+    };
 
     // Calculate ENT Amount when items selected
     useEffect(() => {
-        if (entEnabled && invoiceData?.order_items) {
-            const selected = invoiceData.order_items.filter((item) => selectedEntItems.includes(item.id));
+        const entItems = getOrderItems();
+        if (entEnabled && entItems.length > 0) {
+            const selected = entItems.filter((item, index) => selectedEntItems.includes(getEntItemKey(item, index)));
             const totalEnt = selected.reduce((sum, item) => {
                 const itemTotal = item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price);
-                return sum + parseFloat(itemTotal || 0);
+                return sum + parsePrice(itemTotal || 0);
             }, 0);
             setEntAmount(totalEnt.toFixed(2));
         } else {
@@ -124,9 +163,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
     // Calculate Remaining Balance or Total with Charges
     useEffect(() => {
-        const total = round0(parsePrice(invoiceData?.total_price));
-        const alreadyPaid = round0(parsePrice(invoiceData?.paid_amount || 0)) + round0(parsePrice(invoiceData?.advance_payment || 0));
-        const grandTotal = Math.max(0, total - alreadyPaid);
+        const grandTotal = round0(getDueTotal());
         const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
 
@@ -155,35 +192,25 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
     const handleQuickAmountClick = (amount) => {
         // Sanitize the input amount (remove commas if present)
-        const cleanAmount = parsePrice(amount).toString();
-        setInputAmount(cleanAmount);
+        const cleanAmount = Math.max(0, parsePrice(amount));
+        setInputAmount(cleanAmount.toString());
 
         // Calculate customer changes based on remaining after ENT/CTS and including Bank Charges
-        const total = round0(parsePrice(invoiceData?.total_price));
-        const alreadyPaid = round0(parsePrice(invoiceData?.paid_amount || 0)) + round0(parsePrice(invoiceData?.advance_payment || 0));
-        const grandTotal = Math.max(0, total - alreadyPaid);
+        const grandTotal = round0(getDueTotal());
         const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
-        const dueAmount = Math.max(
-            0,
-            round0(grandTotal - entDeduction - ctsDeduction)
-        );
+        const dueAmount = Math.max(0, round0(grandTotal - entDeduction - ctsDeduction));
 
-        const changes = round0(parseFloat(cleanAmount) - dueAmount);
+        const changes = round0(cleanAmount - dueAmount);
         setCustomerChanges(String(Math.round(changes < 0 ? 0 : changes)));
     };
 
     const handleNumberClick = (number) => {
         let newAmount;
-        const total = round0(parsePrice(invoiceData?.total_price));
-        const alreadyPaid = round0(parsePrice(invoiceData?.paid_amount || 0)) + round0(parsePrice(invoiceData?.advance_payment || 0));
-        const grandTotal = Math.max(0, total - alreadyPaid);
+        const grandTotal = round0(getDueTotal());
         const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
-        const dueAmount = Math.max(
-            0,
-            round0(grandTotal - entDeduction - ctsDeduction)
-        );
+        const dueAmount = Math.max(0, round0(grandTotal - entDeduction - ctsDeduction));
 
         if (parseFloat(inputAmount) === 0 && !inputAmount.includes('.')) {
             newAmount = number;
@@ -202,15 +229,10 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleDeleteClick = () => {
-        const total = round0(parsePrice(invoiceData?.total_price));
-        const alreadyPaid = round0(parsePrice(invoiceData?.paid_amount || 0)) + round0(parsePrice(invoiceData?.advance_payment || 0));
-        const grandTotal = Math.max(0, total - alreadyPaid);
+        const grandTotal = round0(getDueTotal());
         const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
-        const dueAmount = Math.max(
-            0,
-            round0(grandTotal - entDeduction - ctsDeduction)
-        );
+        const dueAmount = Math.max(0, round0(grandTotal - entDeduction - ctsDeduction));
 
         if (inputAmount.length > 1) {
             const newAmount = inputAmount.slice(0, -1);
@@ -241,9 +263,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleOrderAndPay = async () => {
-        const total = round2(parsePrice(invoiceData.total_price));
-        const alreadyPaid = round2(parsePrice(invoiceData?.paid_amount || 0)) + round2(parsePrice(invoiceData?.advance_payment || 0));
-        const grandTotal = Math.max(0, total - alreadyPaid);
+        const grandTotal = round2(getDueTotal());
         const entDeduction = entEnabled ? round2(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? round2(ctsAmount || 0) : 0;
         const remainingBalance = round2(grandTotal - entDeduction - ctsDeduction);
@@ -312,9 +332,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handlePayNow = () => {
-        const total = parsePrice(invoiceData.total_price);
-        const alreadyPaid = parsePrice(invoiceData?.paid_amount || 0) + parsePrice(invoiceData?.advance_payment || 0);
-        const grandTotal = Math.max(0, total - alreadyPaid);
+        const grandTotal = getDueTotal();
         const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
         const remainingBalance = grandTotal - entDeduction - ctsDeduction;
@@ -325,11 +343,16 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             return;
         }
 
+        // Handle overpayment logic: paid_amount should be exactly what's due (or grandTotal if paying full),
+        // and difference is change. We shouldn't send more than remaining balance as paid_amount.
+        const inputVal = parseFloat(inputAmount);
+        const actualPaidAmount = inputVal > remainingBalance ? remainingBalance : inputVal;
+
         // Prepare form data for credit card (with file)
         if (activePaymentMethod === 'credit_card') {
             const formData = new FormData();
             formData.append('order_id', invoiceData.id);
-            formData.append('paid_amount', inputAmount);
+            formData.append('paid_amount', actualPaidAmount.toFixed(2)); // Send exact due amount
             formData.append('payment_method', 'credit_card');
             formData.append('credit_card_type', creditCardType);
             if (receiptFile) {
@@ -356,7 +379,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             router.post(route(routeNameForContext('order.payment')), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Payment successful', { variant: 'success' });
-                    setSelectedOrder((prev) => ({ ...prev, paid_amount: inputAmount, payment_status: 'paid' }));
+                    setSelectedOrder((prev) => ({ ...prev, paid_amount: actualPaidAmount.toFixed(2), payment_status: 'paid' }));
                     openSuccessPayment();
                 },
                 onError: (errors) => {
@@ -375,11 +398,17 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             });
         } else {
             // For other payment methods (cash, bank) use regular payload
-            const paidAmount = activePaymentMethod === 'split_payment' ? (parseFloat(cashAmount || 0) + parseFloat(creditCardAmount || 0) + parseFloat(bankTransferAmount || 0)).toFixed(2) : inputAmount;
+            // For split payment, logic might differ, but assuming cash payment mostly for change logic
+            let paidAmount = activePaymentMethod === 'split_payment' ? parseFloat(cashAmount || 0) + parseFloat(creditCardAmount || 0) + parseFloat(bankTransferAmount || 0) : inputVal;
+
+            // Apply same capping logic for non-split payments (Cash)
+            if (activePaymentMethod !== 'split_payment' && paidAmount > remainingBalance) {
+                paidAmount = remainingBalance;
+            }
 
             const payload = {
                 order_id: invoiceData?.id,
-                paid_amount: paidAmount,
+                paid_amount: paidAmount.toFixed(2),
                 customer_changes: customerChanges,
                 payment_method: activePaymentMethod,
                 ...(activePaymentMethod === 'split_payment' && {
@@ -413,7 +442,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
             router.post(route(routeNameForContext('order.payment')), payload, {
                 onSuccess: () => {
-                    setSelectedOrder((prev) => ({ ...prev, paid_amount: inputAmount, payment_status: 'paid' }));
+                    setSelectedOrder((prev) => ({ ...prev, paid_amount: paidAmount.toFixed(2), payment_status: 'paid' }));
                     enqueueSnackbar('Payment successful', { variant: 'success' });
                     openSuccessPayment();
                 },
@@ -498,7 +527,6 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     <Typography variant="h5" fontWeight="bold" mb={4}>
                         Payment
                     </Typography>
-
                     {/* Payment Method Tabs */}
                     <Box
                         sx={{
@@ -626,7 +654,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                             if (checked) {
                                                 setEntEnabled(false);
                                                 setSelectedEntItems([]);
-                                                setCtsAmount(parsePrice(invoiceData.total_price).toString());
+                                                setCtsAmount(getTotalPrice().toString());
                                             } else {
                                                 setCtsAmount('0');
                                             }
@@ -642,7 +670,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                         </Box>
 
                         {/* ENT Item Selection - Shows when enabled */}
-                        {entEnabled && invoiceData?.order_items && (
+                        {entEnabled && getOrderItems().length > 0 && (
                             <Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: '#f5f9fc' }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                                     <Typography variant="body2" color="text.secondary">
@@ -655,10 +683,10 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                     <input
                                         type="checkbox"
-                                        checked={selectedEntItems.length === invoiceData.order_items.length}
+                                        checked={getOrderItems().length > 0 && selectedEntItems.length === getOrderItems().length}
                                         onChange={(e) => {
                                             if (e.target.checked) {
-                                                setSelectedEntItems(invoiceData.order_items.map((item) => item.id));
+                                                setSelectedEntItems(getOrderItems().map((item, index) => getEntItemKey(item, index)));
                                             } else {
                                                 setSelectedEntItems([]);
                                             }
@@ -669,23 +697,23 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                         Select All
                                     </Typography>
                                 </Box>
-                                {invoiceData.order_items.map((item) => (
-                                    <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 0.5 }}>
+                                {getOrderItems().map((item, index) => (
+                                    <Box key={getEntItemKey(item, index)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 0.5 }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <input
                                                 type="checkbox"
-                                                checked={selectedEntItems.includes(item.id)}
+                                                checked={selectedEntItems.includes(getEntItemKey(item, index))}
                                                 onChange={(e) => {
                                                     if (e.target.checked) {
-                                                        setSelectedEntItems([...selectedEntItems, item.id]);
+                                                        setSelectedEntItems([...selectedEntItems, getEntItemKey(item, index)]);
                                                     } else {
-                                                        setSelectedEntItems(selectedEntItems.filter((id) => id !== item.id));
+                                                        setSelectedEntItems(selectedEntItems.filter((id) => id !== getEntItemKey(item, index)));
                                                     }
                                                 }}
                                                 style={{ marginRight: 8 }}
                                             />
                                             <Typography variant="body2">
-                                                {item.order_item?.product?.name || item.name} (x{item.order_item?.quantity || item.quantity})
+                                                {item.order_item?.name || item.order_item?.product?.name || item.name || 'Item'} (x{item.order_item?.quantity || item.quantity || 1})
                                             </Typography>
                                         </Box>
                                         <Typography variant="body2" fontWeight="medium">
@@ -794,7 +822,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                             const grandTotal = getDueTotal();
                                             const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
                                             const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-                                            const remainingBalance = grandTotal - entDeduction - ctsDeduction;
+                                            const remainingBalance = Math.max(0, grandTotal - entDeduction - ctsDeduction);
                                             handleQuickAmountClick(remainingBalance.toString());
                                         }}
                                         sx={styles.quickAmountButton}
@@ -994,12 +1022,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     Cash
                                 </Typography>
                                 <WholeNumberInput value={cashAmount} onChange={setCashAmount} />
-                                <Select
-                                    fullWidth
-                                    value={splitPaymentAccountIds.cash}
-                                    onChange={(e) => setSplitPaymentAccountIds((prev) => ({ ...prev, cash: e.target.value }))}
-                                    sx={{ mb: 3, mt: 1 }}
-                                >
+                                <Select fullWidth value={splitPaymentAccountIds.cash} onChange={(e) => setSplitPaymentAccountIds((prev) => ({ ...prev, cash: e.target.value }))} sx={{ mb: 3, mt: 1 }}>
                                     <MenuItem value="">Select Cash Account</MenuItem>
                                     {splitPaymentAccounts.cash.map((account) => (
                                         <MenuItem key={account.id} value={account.id}>
@@ -1012,12 +1035,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     Credit Card
                                 </Typography>
                                 <WholeNumberInput value={creditCardAmount} onChange={setCreditCardAmount} />
-                                <Select
-                                    fullWidth
-                                    value={splitPaymentAccountIds.credit_card}
-                                    onChange={(e) => setSplitPaymentAccountIds((prev) => ({ ...prev, credit_card: e.target.value }))}
-                                    sx={{ mb: 3, mt: 1 }}
-                                >
+                                <Select fullWidth value={splitPaymentAccountIds.credit_card} onChange={(e) => setSplitPaymentAccountIds((prev) => ({ ...prev, credit_card: e.target.value }))} sx={{ mb: 3, mt: 1 }}>
                                     <MenuItem value="">Select Card Account</MenuItem>
                                     {splitPaymentAccounts.credit_card.map((account) => (
                                         <MenuItem key={account.id} value={account.id}>
@@ -1030,12 +1048,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     Bank Transfer
                                 </Typography>
                                 <WholeNumberInput value={bankTransferAmount} onChange={setBankTransferAmount} />
-                                <Select
-                                    fullWidth
-                                    value={splitPaymentAccountIds.bank}
-                                    onChange={(e) => setSplitPaymentAccountIds((prev) => ({ ...prev, bank: e.target.value }))}
-                                    sx={{ mb: 3, mt: 1 }}
-                                >
+                                <Select fullWidth value={splitPaymentAccountIds.bank} onChange={(e) => setSplitPaymentAccountIds((prev) => ({ ...prev, bank: e.target.value }))} sx={{ mb: 3, mt: 1 }}>
                                     <MenuItem value="">Select Bank Account</MenuItem>
                                     {splitPaymentAccounts.bank.map((account) => (
                                         <MenuItem key={account.id} value={account.id}>

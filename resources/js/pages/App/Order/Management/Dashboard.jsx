@@ -74,6 +74,25 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
         }
         return 'N/A';
     };
+    const parseAmount = (value) => {
+        if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+        if (value === null || value === undefined || value === '') return 0;
+        const parsed = parseFloat(String(value).replace(/,/g, ''));
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+    const getOrderPendingAmount = (order) => {
+        const invoice = order?.invoice || {};
+        const explicitDue = parseAmount(invoice.customer_charges ?? invoice.remaining_amount ?? invoice.due_amount ?? order?.customer_charges ?? order?.remaining_amount ?? order?.due_amount ?? null);
+        if (explicitDue > 0) return explicitDue;
+        const total = parseAmount(invoice.total_price ?? invoice.total ?? invoice.grand_total ?? order?.total_price ?? order?.amount ?? 0);
+        const paid = parseAmount(invoice.paid_amount ?? order?.paid_amount ?? 0);
+        const advance = parseAmount(invoice.advance_payment ?? order?.down_payment ?? order?.advance_payment ?? 0);
+        return Math.max(0, total - paid - advance);
+    };
+    const isOrderPaymentClosed = (order) => {
+        const status = String(order?.invoice?.status ?? order?.payment_status ?? '').toLowerCase();
+        return ['paid', 'settled'].includes(status) && getOrderPendingAmount(order) <= 0;
+    };
 
     const openFilter = () => setIsFilterOpen(true);
     const closeFilter = () => setIsFilterOpen(false);
@@ -453,14 +472,24 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
             enqueueSnackbar('No invoice found for this order.', { variant: 'error' });
             return;
         }
+        if (isOrderPaymentClosed(order)) {
+            enqueueSnackbar('This order is already fully paid.', { variant: 'info' });
+            return;
+        }
+        const invoice = order.invoice || {};
         // Prepare data for PaymentNow
         // PaymentNow expects `invoiceData` which matches FinancialInvoice structure
         // PaymentNow expects the Order object (or object with Order ID)
         const invoiceData = {
             ...order,
-            invoice_no: order.invoice?.invoice_no, // Attach invoice no specifically
-            advance_payment: order.invoice?.advance_payment || 0,
-            paid_amount: order.invoice?.paid_amount || 0,
+            invoice,
+            invoice_no: invoice.invoice_no, // Attach invoice no specifically
+            advance_payment: invoice.advance_payment ?? order.down_payment ?? 0,
+            paid_amount: invoice.paid_amount ?? order.paid_amount ?? 0,
+            customer_charges: invoice.customer_charges ?? order.customer_charges ?? null,
+            remaining_amount: invoice.remaining_amount ?? order.remaining_amount ?? null,
+            due_amount: invoice.due_amount ?? order.due_amount ?? null,
+            payment_status: invoice.status ?? order.payment_status,
         };
         setSelectedInvoice(invoiceData);
         setPaymentModalOpen(true);
@@ -971,8 +1000,15 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
                                                                     Generate Invoice
                                                                 </Button>
                                                             ) : (
-                                                                <Button variant="contained" fullWidth color="success" sx={{ textTransform: 'none', px: 0, py: 1, bgcolor: '#003153', '&:hover': { bgcolor: '#00254d' } }} onClick={() => handlePayNow(card)}>
-                                                                    Pay Now
+                                                                <Button
+                                                                    variant="contained"
+                                                                    fullWidth
+                                                                    color="success"
+                                                                    sx={{ textTransform: 'none', px: 0, py: 1, bgcolor: '#003153', '&:hover': { bgcolor: '#00254d' } }}
+                                                                    onClick={() => handlePayNow(card)}
+                                                                    disabled={isOrderPaymentClosed(card)}
+                                                                >
+                                                                    {isOrderPaymentClosed(card) ? 'Paid' : 'Pay Now'}
                                                                 </Button>
                                                             )}
                                                         </>

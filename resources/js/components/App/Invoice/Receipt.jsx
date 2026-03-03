@@ -102,12 +102,15 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 cashier: invoiceData.cashier || null,
                 waiter: invoiceData.waiter || null,
                 order_items: invoiceData.order_items || [],
-                paid_amount: invoiceData.paid_amount || null,
+                paid_amount: invoiceData.receipt_paid_amount ?? invoiceData.paid_amount ?? null,
+                customer_changes: invoiceData.receipt_customer_changes ?? invoiceData.customer_changes ?? 0,
                 advance_payment: invoiceData.advance_payment || invoiceData.advance_amount || invoiceData.down_payment || invoiceData.data?.advance_deducted || 0,
                 service_charges: invoiceData.service_charges || 0,
                 service_charges_percentage: invoiceData.service_charges_percentage || 0,
                 bank_charges: invoiceData.bank_charges || 0,
                 bank_charges_percentage: invoiceData.bank_charges_percentage || 0,
+                ent_amount: invoiceData.ent_amount || invoiceData.invoice_ent_amount || invoiceData.data?.ent_amount || 0,
+                cts_amount: invoiceData.cts_amount || invoiceData.invoice_cts_amount || invoiceData.data?.cts_amount || 0,
             };
             setPaymentData(restructuredData);
             setLoading(false);
@@ -143,10 +146,13 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
     const round0 = (n) => Math.round(Number(n) || 0);
     const totalAmount = round0(paymentData.total_price);
     const advancePaid = round0(paymentData.advance_payment || paymentData.data?.advance_deducted || 0);
-    const netPayable = Math.max(0, totalAmount - advancePaid);
+    const entAmount = round0(paymentData.ent_amount || paymentData.invoice_ent_amount || paymentData.data?.ent_amount || 0);
+    const ctsAmount = round0(paymentData.cts_amount || paymentData.invoice_cts_amount || paymentData.data?.cts_amount || 0);
+    const netPayable = Math.max(0, totalAmount - advancePaid - entAmount - ctsAmount);
     const paidCash = round0(paymentData.paid_amount || 0);
     const remainingDue = Math.max(0, netPayable - paidCash);
-    const customerChangeAmount = Math.max(0, paidCash - netPayable);
+    const explicitCustomerChange = round0(paymentData.customer_changes || paymentData.data?.customer_changes || 0);
+    const customerChangeAmount = explicitCustomerChange > 0 ? explicitCustomerChange : Math.max(0, paidCash - netPayable);
     const handlePrintReceipt = (data) => {
         if (!data) return;
 
@@ -154,10 +160,13 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
         const printTotalAmount = round0(data.total_price);
         const printAdvancePaid = round0(data.advance_payment || data.data?.advance_deducted || 0);
-        const printNetPayable = Math.max(0, printTotalAmount - printAdvancePaid);
-        const printPaidCash = round0(data.paid_amount || 0);
+        const printEntAmount = round0(data.ent_amount || data.invoice_ent_amount || data.data?.ent_amount || 0);
+        const printCtsAmount = round0(data.cts_amount || data.invoice_cts_amount || data.data?.cts_amount || 0);
+        const printNetPayable = Math.max(0, printTotalAmount - printAdvancePaid - printEntAmount - printCtsAmount);
+        const printPaidCash = round0(data.receipt_paid_amount ?? data.paid_amount ?? 0);
         const printRemainingDue = Math.max(0, printNetPayable - printPaidCash);
-        const printCustomerChange = Math.max(0, printPaidCash - printNetPayable);
+        const explicitPrintChange = round0(data.receipt_customer_changes ?? data.customer_changes ?? data.data?.customer_changes ?? 0);
+        const printCustomerChange = explicitPrintChange > 0 ? explicitPrintChange : Math.max(0, printPaidCash - printNetPayable);
 
         const content = `
         <html>
@@ -250,7 +259,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
             <div class="divider"></div>
 
-            ${data.order_items
+            ${(data.order_items || [])
                 .filter((item) => item.status !== 'cancelled')
                 .map(
                     (item) => `
@@ -278,8 +287,8 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
             </div>
 
             <div class="row">
-              <div>Tax (${(data.tax * 100).toFixed(0)}%)</div>
-              <div>Rs ${round0(data.amount * (data.tax || 0))}</div>
+              <div>Tax (${(Number(data.tax || 0) * 100).toFixed(0)}%)</div>
+              <div>Rs ${round0(data.amount * (Number(data.tax || 0)) )}</div>
             </div>
 
             ${
@@ -312,6 +321,8 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
             </div>
 
             ${printAdvancePaid > 0 ? `<div class="row"><div>Advance Paid</div><div>- Rs ${printAdvancePaid}</div></div>` : ''}
+            ${printEntAmount > 0 ? `<div class="row"><div>ENT</div><div>- Rs ${printEntAmount}</div></div>` : ''}
+            ${printCtsAmount > 0 ? `<div class="row"><div>CTS</div><div>- Rs ${printCtsAmount}</div></div>` : ''}
             <div class="row total">
               <div>Remaining Due</div>
               <div>Rs ${printRemainingDue}</div>
@@ -524,6 +535,22 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                         Advance Paid
                     </Typography>
                     <Typography variant="caption">Rs {advancePaid}</Typography>
+                </Box>
+            )}
+            {entAmount > 0 && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        ENT
+                    </Typography>
+                    <Typography variant="caption">Rs {entAmount}</Typography>
+                </Box>
+            )}
+            {ctsAmount > 0 && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        CTS
+                    </Typography>
+                    <Typography variant="caption">Rs {ctsAmount}</Typography>
                 </Box>
             )}
 

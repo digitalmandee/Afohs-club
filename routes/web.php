@@ -90,6 +90,7 @@ Route::prefix('pos')->middleware('web')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\App\DashboardController::class, 'index'])->name('pos.dashboard');
 
         Route::get('order/all', [\App\Http\Controllers\App\DashboardController::class, 'allOrders'])->name('pos.order.all');
+        Route::get('order/{id}/details', [\App\Http\Controllers\OrderController::class, 'orderDetails'])->name('pos.order.details');
         Route::get('order/new', [\App\Http\Controllers\OrderController::class, 'index'])->name('pos.order.new');
         Route::get('order/menu', [\App\Http\Controllers\OrderController::class, 'orderMenu'])->name('pos.order.menu');
         Route::get('order/queue', [\App\Http\Controllers\OrderController::class, 'orderQueue'])->name('pos.order.queue');

@@ -247,7 +247,10 @@ class TransactionController extends Controller
         ]);
 
         $order = Order::findOrFail($request->order_id);
-        $invoiceForDue = FinancialInvoice::whereJsonContains('data', ['order_id' => $order->id])->first();
+        $invoiceForDue = FinancialInvoice::whereJsonContains('data', ['order_id' => $order->id])
+            ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+            ->orderByDesc('id')
+            ->first();
         $invoiceTotal = $invoiceForDue ? (float) ($invoiceForDue->total_price ?? 0) : (float) ($order->total_price ?? 0);
         $invoiceAdvance = $invoiceForDue ? (float) ($invoiceForDue->advance_payment ?? 0) : 0;
         if ($invoiceAdvance <= 0) {
@@ -356,6 +359,8 @@ class TransactionController extends Controller
 
         // 2. Update Financial Invoice (lookup by order_id, not just member_id)
         $invoice = FinancialInvoice::whereJsonContains('data', ['order_id' => $order->id])
+            ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+            ->orderByDesc('id')
             ->first();
 
         if ($invoice) {
