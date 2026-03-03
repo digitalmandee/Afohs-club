@@ -298,9 +298,11 @@ class OrderController extends Controller
                 ->select('id', 'name', 'room_type_id')
                 ->with(['currentBooking' => function ($q) {
                     $q
-                        ->select('id', 'room_id', 'booking_no', 'status', 'member_id', 'customer_id', 'guest_first_name', 'guest_last_name', 'check_in_date', 'check_out_date')
+                        ->select('id', 'room_id', 'booking_no', 'status', 'member_id', 'customer_id', 'employee_id', 'guest_first_name', 'guest_last_name', 'check_in_date', 'check_out_date')
+                        ->where('status', 'checked_in')
+                        ->whereDate('check_in_date', '<=', Carbon::today())
                         ->whereDate('check_out_date', '>=', Carbon::today())
-                        ->with(['member', 'customer']);
+                        ->with(['member', 'customer', 'employee']);
                 }]);
         }])->get();
 
