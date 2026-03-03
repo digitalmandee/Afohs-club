@@ -442,7 +442,7 @@ class OrderController extends Controller
                 // Optimization: In a real high-load scenario, fetch all invoices for these IDs in one go.
                 // For now, keeping logic but moving to async call to unblock page load.
                 $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)
-                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
                     ->orderByDesc('id')
                     ->first();
                 $order->invoice = $invoice;
@@ -2291,26 +2291,26 @@ class OrderController extends Controller
             'invoice_id' => FinancialInvoice::select('id')
                 ->where('invoice_type', 'food_order')
                 ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
                 ->orderByDesc('id')
                 ->limit(1),
             'invoice_no' => FinancialInvoice::select('invoice_no')
                 ->where('invoice_type', 'food_order')
                 ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
                 ->orderByDesc('id')
                 ->limit(1),
             // We can keep these if filters rely on them, otherwise move to detail fetch
             'invoice_ent_amount' => FinancialInvoice::select('ent_amount')
                 ->where('invoice_type', 'food_order')
                 ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
                 ->orderByDesc('id')
                 ->limit(1),
             'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
                 ->where('invoice_type', 'food_order')
                 ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
                 ->orderByDesc('id')
                 ->limit(1),
         ])
@@ -2509,7 +2509,7 @@ class OrderController extends Controller
 
         $invoice = FinancialInvoice::where('invoice_type', 'food_order')
             ->whereJsonContains('data->order_id', $order->id)
-            ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+            ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
             ->orderByDesc('id')
             ->first();
 

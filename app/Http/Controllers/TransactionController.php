@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
+use App\Models\AllowanceType;
+use App\Models\Employee;
+use App\Models\EmployeeAllowance;
 use App\Models\FinancialInvoice;
 use App\Models\Invoices;
 use App\Models\Order;
 use App\Models\PaymentAccount;
 use App\Models\TransactionRelation;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -248,7 +253,7 @@ class TransactionController extends Controller
 
         $order = Order::findOrFail($request->order_id);
         $invoiceForDue = FinancialInvoice::whereJsonContains('data', ['order_id' => $order->id])
-            ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+            ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
             ->orderByDesc('id')
             ->first();
         $invoiceTotal = $invoiceForDue ? (float) ($invoiceForDue->total_price ?? 0) : (float) ($order->total_price ?? 0);
@@ -260,10 +265,12 @@ class TransactionController extends Controller
         $totalDue = max(0, $invoiceTotal - $invoiceAdvance - $invoicePaid);
 
         $paidAmount = $request->paid_amount;
+        $effectivePaymentMethod = (string) $request->payment_method;
         $entAmount = 0;
         $ctsAmount = 0;
         $bankChargesAmount = 0;
         $entDetails = '';
+        $employeeAutoPayment = null;
 
         // Calculate ENT Value if specific items selected OR ENT enabled
         if ($request->boolean('ent_enabled') || $request->has('ent_items')) {
@@ -300,6 +307,34 @@ class TransactionController extends Controller
             $bankChargesAmount = round((float) ($request->bank_charges_amount ?? 0), 0);
         }
 
+        if ($order->employee_id) {
+            $employeeAutoPayment = $this->calculateEmployeeAutoPayment($order, (float) $totalDue);
+
+            $entAmount = round((float) ($employeeAutoPayment['food_allowance_applied'] ?? 0), 0);
+            $ctsAmount = round((float) ($employeeAutoPayment['cts_amount'] ?? 0), 0);
+
+            $requiredCash = max(0, round((float) ($employeeAutoPayment['cash_required'] ?? 0) + (float) $bankChargesAmount, 0));
+            $providedCash = max(0, round((float) $request->paid_amount, 0));
+
+            if ($providedCash < ($requiredCash - 1.0)) {
+                return back()->withErrors([
+                    'paid_amount' => 'Employee order requires minimum cash payment of ' . $requiredCash . ' after Food Allowance/CTS adjustment.',
+                ]);
+            }
+
+            $paidAmount = $requiredCash;
+
+            if ($paidAmount <= 0 && $ctsAmount > 0) {
+                $effectivePaymentMethod = 'cts';
+            } elseif ($paidAmount <= 0 && $entAmount > 0) {
+                $effectivePaymentMethod = 'ent';
+            }
+
+            if ($entAmount > 0) {
+                $entDetails = 'Food Allowance Auto Applied';
+            }
+        }
+
         // Verification
         // Ensure values are floats
         $payVal = round((float) $paidAmount, 0);
@@ -319,22 +354,22 @@ class TransactionController extends Controller
 
         // 1. Update Order Status
         $order->cashier_id = Auth::id();
-        $order->payment_method = $request->payment_method;  // Primary method
+        $order->payment_method = $effectivePaymentMethod;  // Primary method
         $order->paid_amount = $paidAmount;  // Only actual money paid
         $order->paid_at = now();
 
         // Update Comments with Details
-        if ($entAmount > 0 || $request->boolean('ent_enabled')) {
-            $order->ent_reason = $request->ent_reason;
-            $comment = $request->ent_comment;
+        if ($entAmount > 0 || $request->boolean('ent_enabled') || $employeeAutoPayment) {
+            $order->ent_reason = $employeeAutoPayment ? 'Food Allowance' : $request->ent_reason;
+            $comment = $employeeAutoPayment ? 'Auto applied from salary food allowance' : $request->ent_comment;
             if ($entDetails) {
                 $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
             }
             $order->ent_comment = $comment;
         }
 
-        if ($ctsAmount > 0 || $request->boolean('cts_enabled')) {
-            $comment = $request->cts_comment;
+        if ($ctsAmount > 0 || $request->boolean('cts_enabled') || $employeeAutoPayment) {
+            $comment = $employeeAutoPayment ? 'Auto charged to salary (CTS)' : $request->cts_comment;
             if ($ctsAmount > 0 && $ctsAmount < $totalDue) {
                 $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
             }
@@ -359,7 +394,7 @@ class TransactionController extends Controller
 
         // 2. Update Financial Invoice (lookup by order_id, not just member_id)
         $invoice = FinancialInvoice::whereJsonContains('data', ['order_id' => $order->id])
-            ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'partial' THEN 1 WHEN 'paid' THEN 2 ELSE 3 END")
+            ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
             ->orderByDesc('id')
             ->first();
 
@@ -401,7 +436,7 @@ class TransactionController extends Controller
             $invoice->update([
                 'status' => 'paid',
                 'payment_date' => now(),
-                'payment_method' => $request->payment_method,
+                'payment_method' => $effectivePaymentMethod,
                 'advance_payment' => $advanceToPersist,
                 'paid_amount' => round((float) $order->paid_amount, 0),
                 'ent_reason' => $order->ent_reason,
@@ -413,6 +448,20 @@ class TransactionController extends Controller
                 'invoiceable_type' => Order::class,
                 'data' => $invoiceData,  // Save updated JSON
             ]);
+
+            if ($employeeAutoPayment) {
+                $invoiceData['food_allowance_applied'] = round((float) ($employeeAutoPayment['food_allowance_applied'] ?? 0), 0);
+                $invoiceData['food_allowance_entitlement'] = round((float) ($employeeAutoPayment['food_allowance_entitlement'] ?? 0), 0);
+                $invoiceData['food_allowance_used'] = round((float) ($employeeAutoPayment['food_allowance_used'] ?? 0), 0);
+                $invoiceData['food_allowance_remaining_after'] = round((float) ($employeeAutoPayment['food_allowance_remaining_after'] ?? 0), 0);
+                $invoiceData['employee_cts_allowed'] = (bool) ($employeeAutoPayment['cts_allowed'] ?? false);
+                $invoiceData['employee_cash_required'] = round((float) ($employeeAutoPayment['cash_required'] ?? 0), 0);
+                $invoiceData['employee_auto_payment'] = true;
+
+                $invoice->update([
+                    'data' => $invoiceData,
+                ]);
+            }
 
             $invoiceItem = \App\Models\FinancialInvoiceItem::where('invoice_id', $invoice->id)
                 ->where('fee_type', '7')  // Food Order
@@ -554,19 +603,20 @@ class TransactionController extends Controller
                         'receipt_no' => 'REC-' . time() . '-PAY-' . $order->id,
                         'amount' => $paidAmount,
                         'receipt_date' => now(),
-                        'payment_method' => $request->payment_method,
-                        'payment_account_id' => $request->payment_method === 'split_payment' ? null : $request->payment_account_id,
+                        'payment_method' => $effectivePaymentMethod,
+                        'payment_account_id' => $effectivePaymentMethod === 'split_payment' ? null : $request->payment_account_id,
                         'payment_details' => json_encode([
                             'credit_card_type' => $request->credit_card_type,
-                            'split_payment' => $request->payment_method === 'split_payment' ? [
+                            'split_payment' => $effectivePaymentMethod === 'split_payment' ? [
                                 'cash' => $request->cash,
                                 'credit_card' => $request->credit_card,
                                 'bank' => $request->bank_transfer
                             ] : null,
-                            'split_payment_accounts' => $request->payment_method === 'split_payment' ? $request->input('split_payment_accounts') : null,
+                            'split_payment_accounts' => $effectivePaymentMethod === 'split_payment' ? $request->input('split_payment_accounts') : null,
                             'receipt_path' => $receiptPath,
                             'ent_details' => $entDetails ? "ENT Value: $entAmount" : null,
                             'cts_details' => $ctsAmount > 0 ? "CTS Value: $ctsAmount" : null,
+                            'employee_auto_payment' => $employeeAutoPayment,
                         ]),
                         'created_by' => Auth::id(),
                     ]);
@@ -595,6 +645,142 @@ class TransactionController extends Controller
         }
 
         return back()->with('success', 'Payment successful');
+    }
+
+    private function calculateEmployeeAutoPayment(Order $order, float $totalDue): array
+    {
+        $employee = Employee::with([
+            'salaryStructure:id,employee_id,basic_salary,is_active',
+            'allowances' => function ($q) {
+                $q->with('allowanceType:id,name,type,is_active');
+            },
+            'user.userDetail:id,user_id,ntn',
+        ])->find($order->employee_id);
+
+        if (!$employee) {
+            return [
+                'food_allowance_entitlement' => 0,
+                'food_allowance_used' => 0,
+                'food_allowance_applied' => 0,
+                'food_allowance_remaining_after' => 0,
+                'cts_allowed' => false,
+                'cts_amount' => 0,
+                'cash_required' => max(0, $totalDue),
+            ];
+        }
+
+        $now = Carbon::now();
+        $foodAllowance = EmployeeAllowance::with('allowanceType:id,name,type,is_active')
+            ->where('employee_id', $employee->id)
+            ->where('allowance_type_id', AppConstants::FOOD_ALLOWANCE_TYPE_ID)
+            ->where('is_active', true)
+            ->whereDate('effective_from', '<=', $now->toDateString())
+            ->where(function ($q) use ($now) {
+                $q->whereNull('effective_to')->orWhereDate('effective_to', '>=', $now->toDateString());
+            })
+            ->orderByDesc('effective_from')
+            ->first();
+
+        $basicSalary = (float) ($employee->salaryStructure->basic_salary ?? $employee->salary ?? 0);
+        $foodAllowanceEntitlement = 0.0;
+
+        if ($foodAllowance && $foodAllowance->allowanceType && $foodAllowance->allowanceType->is_active) {
+            if ($foodAllowance->allowanceType->type === 'percentage') {
+                $percentage = (float) ($foodAllowance->percentage ?? $foodAllowance->amount ?? 0);
+                $foodAllowanceEntitlement = ($basicSalary * $percentage) / 100;
+            } else {
+                $foodAllowanceEntitlement = (float) ($foodAllowance->amount ?? 0);
+            }
+        } else {
+            $globalFoodType = AllowanceType::where('id', AppConstants::FOOD_ALLOWANCE_TYPE_ID)
+                ->where('is_active', true)
+                ->where('is_global', true)
+                ->first();
+
+            if ($globalFoodType) {
+                if ($globalFoodType->type === 'percentage') {
+                    $foodAllowanceEntitlement = ($basicSalary * (float) ($globalFoodType->percentage ?? 0)) / 100;
+                } else {
+                    $foodAllowanceEntitlement = (float) ($globalFoodType->default_amount ?? 0);
+                }
+            }
+        }
+
+        $usedFoodAllowance = FinancialInvoice::where('invoice_type', 'food_order')
+            ->where('employee_id', $employee->id)
+            ->whereBetween('payment_date', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])
+            ->get(['data'])
+            ->sum(function ($invoice) {
+                $data = $invoice->data;
+                if (is_string($data)) {
+                    $decoded = json_decode($data, true);
+                    $data = is_array($decoded) ? $decoded : [];
+                }
+                if (!is_array($data)) {
+                    $data = [];
+                }
+                return (float) ($data['food_allowance_applied'] ?? 0);
+            });
+
+        $availableFoodAllowance = max(0, $foodAllowanceEntitlement - $usedFoodAllowance);
+        $foodAllowanceApplied = min($totalDue, $availableFoodAllowance);
+
+        $remainingAfterFoodAllowance = max(0, $totalDue - $foodAllowanceApplied);
+        $ctsAllowed = $this->canEmployeeUseCts($employee);
+        $ctsAmount = $ctsAllowed ? $remainingAfterFoodAllowance : 0;
+        $cashRequired = max(0, $remainingAfterFoodAllowance - $ctsAmount);
+
+        return [
+            'food_allowance_entitlement' => round($foodAllowanceEntitlement, 2),
+            'food_allowance_used' => round($usedFoodAllowance, 2),
+            'food_allowance_applied' => round($foodAllowanceApplied, 2),
+            'food_allowance_remaining_after' => round(max(0, $availableFoodAllowance - $foodAllowanceApplied), 2),
+            'cts_allowed' => $ctsAllowed,
+            'cts_amount' => round($ctsAmount, 2),
+            'cash_required' => round($cashRequired, 2),
+        ];
+    }
+
+    private function canEmployeeUseCts(Employee $employee): bool
+    {
+        $flags = [
+            $employee->getAttribute('allow_cts'),
+            $employee->getAttribute('cts_allowed'),
+            $employee->getAttribute('is_cts_allowed'),
+            $employee->getAttribute('entertainment'),
+            $employee->getAttribute('ntn'),
+            data_get($employee, 'user.userDetail.ntn'),
+        ];
+
+        foreach ($flags as $flag) {
+            if ($flag === null || $flag === '') {
+                continue;
+            }
+
+            if (is_bool($flag)) {
+                return $flag;
+            }
+
+            if (is_numeric($flag)) {
+                $numeric = (int) $flag;
+                if ($numeric === 2) {
+                    return true;
+                }
+                if ($numeric === 1 || $numeric === 0) {
+                    return false;
+                }
+            }
+
+            $value = strtolower(trim((string) $flag));
+            if (in_array($value, ['cts', 'yes', 'true', 'allowed', 'allow', 'on'], true)) {
+                return true;
+            }
+            if (in_array($value, ['ntn', 'no', 'false', 'not_allowed', 'disabled', 'off'], true)) {
+                return false;
+            }
+        }
+
+        return $employee->salaryStructure()->exists();
     }
 
     /**

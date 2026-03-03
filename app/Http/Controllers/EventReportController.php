@@ -192,7 +192,7 @@ class EventReportController extends Controller
         $query = EventBooking::has('invoice')
             ->with(['eventVenue', 'member', 'customer', 'corporateMember', 'invoice.transactions'])
             ->whereHas('invoice', function ($q) {
-                // Focus on revenue: either paid or partial
+                // Focus on revenue: either fully paid or already received amount
                 $q->where('status', 'paid')->orWhere('paid_amount', '>', 0);
             })
             ->orderBy('event_date', 'desc');

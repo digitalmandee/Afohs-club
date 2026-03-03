@@ -98,6 +98,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         const items = invoiceData?.order_items ?? invoiceData?.orderItems ?? invoiceData?.invoice?.order_items ?? invoiceData?.invoice?.orderItems ?? [];
         return Array.isArray(items) ? items : [];
     };
+    const isEmployeeOrder = Boolean(invoiceData?.employee_id || invoiceData?.employee?.id || invoiceData?.member?.booking_type === 'employee');
     const getEntItemKey = (item, index = 0) => String(item?.id ?? item?.order_item?.id ?? `ent-${index}`);
     const getOrderItemsTotal = () =>
         getOrderItems()
@@ -482,6 +483,15 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         }
     }, [cashAmount, creditCardAmount, bankTransferAmount, invoiceData, activePaymentMethod]);
 
+    useEffect(() => {
+        if (!isEmployeeOrder) return;
+        setEntEnabled(false);
+        setCtsEnabled(false);
+        setSelectedEntItems([]);
+        setEntAmount('0');
+        setCtsAmount('0');
+    }, [invoiceData?.id, isEmployeeOrder]);
+
     return (
         <Dialog
             open={openPaymentModal}
@@ -595,8 +605,16 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                             Deductions & Adjustments
                         </Typography>
 
+                        {isEmployeeOrder && (
+                            <Box sx={{ mb: 2, p: 1.5, border: '1px dashed #0a3d62', borderRadius: 1, backgroundColor: '#f5f9fc' }}>
+                                <Typography variant="body2" sx={{ color: '#0a3d62', fontWeight: 500 }}>
+                                    Employee order: Food Allowance and CTS adjustment are applied automatically during payment.
+                                </Typography>
+                            </Box>
+                        )}
+
                         {/* ENT, CTS, Bank Charges Toggles */}
-                        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+                        {!isEmployeeOrder && <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
                             {/* ENT Toggle */}
                             <Box
                                 sx={{
@@ -667,7 +685,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     </Typography>
                                 </Box>
                             )}
-                        </Box>
+                        </Box>}
 
                         {/* ENT Item Selection - Shows when enabled */}
                         {entEnabled && getOrderItems().length > 0 && (

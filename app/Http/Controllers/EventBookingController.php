@@ -371,7 +371,7 @@ class EventBookingController extends Controller
 
                 // 4. Update Invoice (Only Advance reduces the invoice balance)
                 $invoice->paid_amount = $advanceAmount;
-                $invoice->status = ($invoice->paid_amount >= $invoice->total_price) ? 'paid' : ($invoice->paid_amount > 0 ? 'unpaid' : 'unpaid');  // Simplified status logic, partial usually treated as unpaid details or custom
+                $invoice->status = ($invoice->paid_amount >= $invoice->total_price) ? 'paid' : ($invoice->paid_amount > 0 ? 'unpaid' : 'unpaid');
                 if ($invoice->paid_amount >= $invoice->total_price) {
                     $invoice->status = 'paid';
                 }

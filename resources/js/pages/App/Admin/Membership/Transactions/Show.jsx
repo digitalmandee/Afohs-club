@@ -29,8 +29,6 @@ export default function ShowTransaction({ transaction }) {
                 return 'success';
             case 'unpaid':
                 return 'error';
-            case 'partial':
-                return 'warning';
             default:
                 return 'default';
         }

@@ -1108,7 +1108,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const statusStyles = {
         paid: { bg: '#d4edda', color: '#155724' },
         unpaid: { bg: '#f8d7da', color: '#721c24' },
-        partial: { bg: '#fff3cd', color: '#856404' },
         default: { bg: '#e2e3e5', color: '#383d41' },
     };
 

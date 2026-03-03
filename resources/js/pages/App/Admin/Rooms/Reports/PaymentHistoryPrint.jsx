@@ -10,7 +10,6 @@ const PaymentHistoryPrint = ({ bookings = [], filters = {}, generatedAt = '' }) 
         const colors = {
             paid: 'success',
             unpaid: 'error',
-            partial: 'warning',
         };
         return colors[status] || 'default';
     };
@@ -51,7 +50,7 @@ const PaymentHistoryPrint = ({ bookings = [], filters = {}, generatedAt = '' }) 
                             const total = invoice ? parseFloat(invoice.total_amount) : 0;
                             const paid = invoice ? parseFloat(invoice.paid_amount) : 0;
                             const balance = total - paid;
-                            const status = balance <= 0 ? (total > 0 ? 'paid' : 'unpaid') : paid > 0 ? 'partial' : 'unpaid';
+                            const status = balance <= 0 ? (total > 0 ? 'paid' : 'unpaid') : 'unpaid';
 
                             return (
                                 <TableRow key={booking.id}>

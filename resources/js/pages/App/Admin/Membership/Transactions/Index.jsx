@@ -84,8 +84,6 @@ export default function TransactionIndex({ transactions, filters }) {
                 return 'success';
             case 'unpaid':
                 return 'error';
-            case 'partial':
-                return 'warning';
             default:
                 return 'default';
         }
@@ -169,7 +167,6 @@ export default function TransactionIndex({ transactions, filters }) {
                                         <MenuItem value="all">All Status</MenuItem>
                                         <MenuItem value="paid">Paid</MenuItem>
                                         <MenuItem value="unpaid">Unpaid</MenuItem>
-                                        <MenuItem value="partial">Partial</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>

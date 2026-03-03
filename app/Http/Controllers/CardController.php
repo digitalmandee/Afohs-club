@@ -68,7 +68,7 @@ class CardController extends Controller
                         ->where('status', 'paid')
                         ->where('valid_to', '<', now());
                 } elseif ($request->card_status === 'suspended') {
-                    $query->where('status', 'partial');
+                    $query->where('status', 'unpaid');
                 } elseif ($request->card_status === 'cancelled') {
                     $query->where('status', 'unpaid');
                 }
