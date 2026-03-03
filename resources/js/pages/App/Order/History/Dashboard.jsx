@@ -597,6 +597,24 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         },
     };
 
+    const orderHistoryPageTotals = (orders?.data || []).reduce(
+        (acc, order) => {
+            const round0 = (n) => Math.round(Number(n) || 0);
+            const total = round0(order.total_price || 0);
+            const advance = round0(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
+            const paid = round0(order.paid_amount || 0) + advance;
+            const entAmount = round0(order.invoice_ent_amount || 0);
+            const ctsAmount = round0(order.invoice_cts_amount || 0);
+            const bankCharges = round0(order.invoice_bank_charges_amount || 0);
+            const balance = round0(total + bankCharges - paid - entAmount - ctsAmount);
+            acc.amount += total;
+            acc.paid += paid;
+            acc.balance += balance;
+            return acc;
+        },
+        { amount: 0, paid: 0, balance: 0 },
+    );
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
@@ -835,7 +853,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                         </TableHead>
                         <TableBody>
                             {orders?.data?.length > 0 ? (
-                                orders.data.map((order) => {
+                                <>
+                                    {orders.data.map((order) => {
                                     const round0 = (n) => Math.round(Number(n) || 0);
                                     const gross = round0(order.amount || 0);
                                     const discount = round0(order.discount || 0);
@@ -931,7 +950,17 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                             </TableCell>
                                         </TableRow>
                                     );
-                                })
+                                    })}
+                                    <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                                        <TableCell colSpan={10} sx={{ fontWeight: 700, color: '#063455' }}>
+                                            Grand Total (Current Page)
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>{orderHistoryPageTotals.amount.toLocaleString()}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>{orderHistoryPageTotals.paid.toLocaleString()}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: orderHistoryPageTotals.balance > 0 ? 'error.main' : 'success.main' }}>{orderHistoryPageTotals.balance.toLocaleString()}</TableCell>
+                                        <TableCell colSpan={8} />
+                                    </TableRow>
+                                </>
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={15} align="center">

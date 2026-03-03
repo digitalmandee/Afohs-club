@@ -921,7 +921,7 @@ class TransactionController extends Controller
         // Clone query for totals before pagination
         $totalsQuery = clone $query;
 
-        $orders = $query->orderBy('paid_at', 'desc')->paginate(15)->withQueryString();
+        $orders = $query->orderBy('paid_at', 'desc')->paginate(10)->withQueryString();
 
         // Calculate totals for summary (from cloned query)
         $totals = [
