@@ -2,13 +2,22 @@ import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, Di
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { routeNameForContext } from '@/lib/utils';
+import { enqueueSnackbar } from 'notistack';
 
-const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfirm }) => {
+const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfirm, minQuantity = 1 }) => {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(false);
     const [selectedValues, setSelectedValues] = useState({});
     const [quantity, setQuantity] = useState(initialItem?.quantity || 1);
     const [remarks, setRemarks] = useState(initialItem?.remarks || ''); // ✅ New state for remarks
+
+    useEffect(() => {
+        const resolvedMinQty = Number(minQuantity) > 0 ? Number(minQuantity) : 1;
+        const baseQty = Number(initialItem?.quantity);
+        const nextQty = Number.isFinite(baseQty) && baseQty > 0 ? baseQty : resolvedMinQty;
+        setQuantity(Math.max(nextQty, resolvedMinQty));
+        setRemarks(initialItem?.remarks || '');
+    }, [initialItem, open, minQuantity]);
 
     useEffect(() => {
         if (!productId) return;
@@ -47,6 +56,12 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
     };
 
     const handleConfirm = () => {
+        const resolvedMinQty = Number(minQuantity) > 0 ? Number(minQuantity) : 1;
+        const safeQty = Number(quantity) > 0 ? Number(quantity) : resolvedMinQty;
+        if (safeQty < resolvedMinQty) {
+            enqueueSnackbar('Quantity decrease is not allowed. Use cancellation process.', { variant: 'warning' });
+            return;
+        }
         const selectedVariantItems = product.variants
             .filter((variant) => selectedValues[variant.name])
             .map((variant) => {
@@ -60,7 +75,7 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
             });
 
         const totalVariantPrice = selectedVariantItems.reduce((acc, v) => acc + v.price, 0);
-        const total_price = (parseFloat(product.base_price) + totalVariantPrice) * quantity;
+        const total_price = (parseFloat(product.base_price) + totalVariantPrice) * safeQty;
 
         const orderItem = {
             id: product.id,
@@ -69,7 +84,7 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
             price: parseFloat(product.base_price),
             tenant_id: product.tenant_id,
             total_price,
-            quantity,
+            quantity: safeQty,
             category: product.category?.name || '',
             variants: selectedVariantItems,
             remarks, // ✅ Include remarks
@@ -125,7 +140,36 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
                         ))}
 
                         <Box mt={2}>
-                            <TextField label="Quantity" type="number" value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))} inputProps={{ min: 1 }} fullWidth />
+                            <TextField
+                                label="Quantity"
+                                type="number"
+                                value={quantity}
+                                onChange={(e) => {
+                                    const rawValue = e.target.value;
+                                    if (rawValue === '') {
+                                        setQuantity('');
+                                        return;
+                                    }
+                                    const nextQty = parseInt(rawValue, 10);
+                                    if (!Number.isFinite(nextQty)) return;
+                                    const resolvedMinQty = Number(minQuantity) > 0 ? Number(minQuantity) : 1;
+                                    if (nextQty < resolvedMinQty) {
+                                        enqueueSnackbar('Quantity decrease is not allowed. Use cancellation process.', { variant: 'warning' });
+                                        setQuantity(resolvedMinQty);
+                                        return;
+                                    }
+                                    setQuantity(nextQty);
+                                }}
+                                onBlur={() => {
+                                    const resolvedMinQty = Number(minQuantity) > 0 ? Number(minQuantity) : 1;
+                                    const nextQty = Number(quantity);
+                                    if (!Number.isFinite(nextQty) || nextQty < resolvedMinQty) {
+                                        setQuantity(resolvedMinQty);
+                                    }
+                                }}
+                                inputProps={{ min: Number(minQuantity) > 0 ? Number(minQuantity) : 1 }}
+                                fullWidth
+                            />
                         </Box>
 
                         <Box mt={2}>

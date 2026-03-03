@@ -14,6 +14,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const [variantProductId, setVariantProductId] = useState(null);
     const [initialEditItem, setInitialEditItem] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
+    const [variantMinQuantity, setVariantMinQuantity] = useState(1);
     const [orderStatus, setOrderStatus] = useState(order?.status || 'pending');
     const [loading, setLoading] = useState(false);
     const [editingDiscountIndex, setEditingDiscountIndex] = useState(null);
@@ -344,6 +345,9 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
         setVariantPopupOpen(true);
         setInitialEditItem(item.order_item);
         setEditingItemIndex(index);
+        const isExistingRow = item?.id !== 'new';
+        const baseQty = Number(item?.order_item?.quantity) || 1;
+        setVariantMinQuantity(isExistingRow ? baseQty : 1);
     };
 
     const handleVariantConfirm = (updatedItem) => {
@@ -378,6 +382,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
         setVariantPopupOpen(false);
         setInitialEditItem(null);
         setEditingItemIndex(null);
+        setVariantMinQuantity(1);
     };
 
     const onSubmit = async () => {
@@ -508,7 +513,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                     }}
                 >
                     {/* Variant Popup */}
-                    {variantPopupOpen && <VariantSelectorDialog open={variantPopupOpen} onClose={resetVariantState} productId={variantProductId} initialItem={initialEditItem} onConfirm={handleVariantConfirm} />}
+                    {variantPopupOpen && <VariantSelectorDialog open={variantPopupOpen} onClose={resetVariantState} productId={variantProductId} initialItem={initialEditItem} onConfirm={handleVariantConfirm} minQuantity={variantMinQuantity} />}
                     {cancelDialogOpen && <CancelItemDialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} onConfirm={handleConfirmCancel} item={itemToCancel} />}
 
                     {/* Order Info Panel */}
