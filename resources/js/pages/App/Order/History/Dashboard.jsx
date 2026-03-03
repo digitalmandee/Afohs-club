@@ -202,6 +202,12 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         return types[type] || type;
     };
 
+    const canPrintInvoice = (order) => {
+        if (!order) return false;
+        if (order.status === 'in_progress') return false;
+        return Boolean(order.invoice_id);
+    };
+
     const handleViewOrder = (order) => {
         setSelectedOrder(order);
         setSelectedOrderDetails(null);
@@ -266,7 +272,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     // Transform order data for Receipt component
     const getReceiptData = (order) => {
         if (!order) return null;
-        const bankChargesEnabled = order.invoice_bank_charges_enabled === true || order.invoice_bank_charges_enabled === 1 || order.invoice_bank_charges_enabled === '1' || order.invoice_bank_charges_enabled === 'true';
+        const bankChargesEnabled = Number(order.bank_charges) > 0;
         const advancePayment = Number(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
         return {
             id: order.id,
@@ -277,11 +283,15 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             discount: order.discount || 0,
             tax: order.tax || 0,
             total_price: order.total_price,
+            service_charges: order.service_charges || 0,
+            service_charges_percentage: order.service_charges_percentage || 0,
+            bank_charges: order.bank_charges || 0,
+            bank_charges_percentage: order.bank_charges_percentage || 0,
             data: {
                 bank_charges_enabled: bankChargesEnabled,
-                bank_charges_type: order.invoice_bank_charges_type || 'percentage',
-                bank_charges_value: Number(order.invoice_bank_charges_value || 0),
-                bank_charges_amount: Number(order.invoice_bank_charges_amount || 0),
+                bank_charges_type: order.bank_charges_percentage > 0 ? 'percentage' : 'fixed',
+                bank_charges_value: order.bank_charges_percentage > 0 ? Number(order.bank_charges_percentage) : Number(order.bank_charges),
+                bank_charges_amount: Number(order.bank_charges || 0),
             },
             order_type: order.order_type,
             member: order.member,
@@ -307,13 +317,18 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     };
 
     const handlePrintReceipt = (order) => {
+        if (!canPrintInvoice(order)) {
+            enqueueSnackbar("Invoice isn't generated for this order.", { variant: 'warning' });
+            return;
+        }
         const printWindow = window.open('', '_blank');
         const customerName = order.member?.full_name || order.customer?.name || order.employee?.name || 'N/A';
         const memberNo = order.member?.membership_no || '';
         const guestNo = order.customer?.customer_no || '';
         const employeeNo = order.employee?.employee_id || '';
         const guestTypeName = order.customer?.guestType?.name || '';
-        const bankCharges = parseFloat(order.invoice_bank_charges_amount || 0);
+        const serviceCharges = parseFloat(order.service_charges || 0);
+        const bankCharges = parseFloat(order.bank_charges || 0);
 
         const itemsHtml =
             order.order_items
@@ -371,14 +386,15 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             <div class="row"><div>Subtotal</div><div>Rs ${order.amount || order.total_price || 0}</div></div>
             <div class="row"><div>Discount</div><div>Rs ${order.discount || 0}</div></div>
             <div class="row"><div>Tax</div><div>Rs ${order.tax ? Math.round((order.amount || order.total_price) * order.tax) : 0}</div></div>
+            ${serviceCharges > 0 ? `<div class="row"><div>Service Charges</div><div>Rs ${serviceCharges}</div></div>` : ''}
             ${bankCharges > 0 ? `<div class="row"><div>Bank Charges</div><div>Rs ${bankCharges}</div></div>` : ''}
             <div class="divider"></div>
-            <div class="row total"><div>Total Amount</div><div>Rs ${(Number(order.total_price || 0) + Number(bankCharges || 0)).toFixed(2)}</div></div>
+            <div class="row total"><div>Total Amount</div><div>Rs ${(Number(order.total_price || 0)).toFixed(2)}</div></div>
             ${
                 order.paid_amount
                     ? `
             <div class="row"><div>Paid Amount</div><div>Rs ${order.paid_amount}</div></div>
-            <div class="row"><div>Change</div><div>Rs ${Number(order.paid_amount || 0) - (Number(order.total_price || 0) + Number(bankCharges || 0))}</div></div>
+            <div class="row"><div>Change</div><div>Rs ${Number(order.paid_amount || 0) - (Number(order.total_price || 0))}</div></div>
             `
                     : ''
             }
@@ -732,11 +748,13 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                                             <VisibilityIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
-                                                    <Tooltip title="Print Receipt">
-                                                        <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
-                                                            <PrintIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
+                                                    {canPrintInvoice(order) && (
+                                                        <Tooltip title="Print Receipt">
+                                                            <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
+                                                                <PrintIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
                                                     {Boolean(canEditAfterBill) && (
                                                         <Tooltip title="Edit Order">
                                                             <IconButton size="small" onClick={() => handleOpenEdit(order)} sx={{ color: '#003153' }}>
@@ -904,62 +922,27 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                     )}
                                 </Box>
 
-                                {/* ENT/CTS Details Section */}
-                                {(selectedOrder.invoice_ent_amount > 0 || selectedOrder.invoice_cts_amount > 0) && (
-                                    <>
-                                        <Typography variant="h6" sx={{ mb: 2 }}>
-                                            Adjustments & Deductions
-                                        </Typography>
-                                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-                                            {selectedOrder.invoice_ent_amount > 0 && (
-                                                <>
-                                                    <Box>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            ENT Amount
-                                                        </Typography>
-                                                        <Typography variant="body1" sx={{ color: '#1565c0', fontWeight: 600 }}>
-                                                            Rs {selectedOrder.invoice_ent_amount}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            ENT Reason
-                                                        </Typography>
-                                                        <Typography variant="body1">{selectedOrder.invoice_ent_reason || '-'}</Typography>
-                                                    </Box>
-                                                    {selectedOrder.invoice_ent_comment && (
-                                                        <Box sx={{ gridColumn: 'span 2' }}>
-                                                            <Typography variant="caption" color="text.secondary">
-                                                                ENT Comment
-                                                            </Typography>
-                                                            <Typography variant="body2">{selectedOrder.invoice_ent_comment}</Typography>
-                                                        </Box>
-                                                    )}
-                                                </>
-                                            )}
-                                            {selectedOrder.invoice_cts_amount > 0 && (
-                                                <>
-                                                    <Box>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            CTS Amount
-                                                        </Typography>
-                                                        <Typography variant="body1" sx={{ color: '#ef6c00', fontWeight: 600 }}>
-                                                            Rs {selectedOrder.invoice_cts_amount}
-                                                        </Typography>
-                                                    </Box>
-                                                    {selectedOrder.invoice_cts_comment && (
-                                                        <Box>
-                                                            <Typography variant="caption" color="text.secondary">
-                                                                CTS Comment
-                                                            </Typography>
-                                                            <Typography variant="body2">{selectedOrder.invoice_cts_comment}</Typography>
-                                                        </Box>
-                                                    )}
-                                                </>
-                                            )}
+                                {/* Service & Bank Charges Detail in Modal */}
+                                    {Number(selectedOrder.service_charges) > 0 && (
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Service Charges
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                Rs. {selectedOrder.service_charges}
+                                            </Typography>
                                         </Box>
-                                    </>
-                                )}
+                                    )}
+                                    {Number(selectedOrder.bank_charges) > 0 && (
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Bank Charges
+                                            </Typography>
+                                            <Typography variant="body1" color="error">
+                                                Rs. {selectedOrder.bank_charges}
+                                            </Typography>
+                                        </Box>
+                                    )}
 
                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                     Order Items
@@ -1066,26 +1049,18 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                     <Button variant="outlined" onClick={handleCloseModal}>
                                         Close
                                     </Button>
-                                    <Button variant="contained" startIcon={<PrintIcon />} onClick={() => handlePrintReceipt(selectedOrder)} sx={{ backgroundColor: '#063455' }}>
-                                        Print Receipt
-                                    </Button>
+                                    {canPrintInvoice(selectedOrder) && (
+                                        <Button variant="contained" startIcon={<PrintIcon />} onClick={() => handlePrintReceipt(selectedOrder)} sx={{ backgroundColor: '#063455' }}>
+                                            Print Receipt
+                                        </Button>
+                                    )}
                                 </Box>
                             </Paper>
                         </Box>
                     )}
                 </DialogContent>
+                <EditOrderModal open={editModalOpen} allrestaurants={allrestaurants} onClose={handleCloseEdit} order={selectedOrder} orderItems={editOrderItems} setOrderItems={setEditOrderItems} onSave={(status) => handleSaveEdit(status)} onSaveAndPrint={null} allowUpdateAndPrint={false} />
             </Dialog>
-            <EditOrderModal
-                open={editModalOpen}
-                allrestaurants={allrestaurants}
-                onClose={handleCloseEdit}
-                order={selectedOrder}
-                orderItems={editOrderItems}
-                setOrderItems={setEditOrderItems}
-                onSave={(status) => handleSaveEdit(status)}
-                onSaveAndPrint={null}
-                allowUpdateAndPrint={false}
-            />
             {/* </Box > */}
         </>
     );
