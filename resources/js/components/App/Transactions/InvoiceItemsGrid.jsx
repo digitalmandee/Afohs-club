@@ -34,13 +34,13 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                 description: '',
                 qty: 1,
                 amount: '',
-                tax_percentage: 0,
+                tax_percentage: '',
                 overdue_percentage: 0,
                 discount_type: 'fixed',
-                discount_value: 0,
+                discount_value: '',
                 discount_amount: 0,
-                additional_charges: 0,
-                extra_percentage: 0,
+                additional_charges: '',
+                extra_percentage: '',
                 valid_from: null,
                 valid_to: null,
                 days: '',
@@ -222,6 +222,19 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                 item.amount = cat.fee;
                 item.description = `${item.fee_type_name} - ${cat.name}`;
             }
+        } else if (field === 'financial_charge_type_id') {
+            item[field] = value;
+            const chargeType = financialChargeTypes.find((t) => t.id == value);
+            if (!value) {
+                item.amount = '';
+                item.is_fixed = false;
+                item.description = item.fee_type_name || '';
+            } else if (chargeType) {
+                const autoAmount = chargeType.default_amount ?? chargeType.amount ?? '';
+                item.amount = autoAmount !== null && autoAmount !== undefined ? autoAmount : '';
+                item.is_fixed = !!chargeType.is_fixed;
+                item.description = item.fee_type_name ? `${item.fee_type_name} - ${chargeType.name}` : chargeType.name;
+            }
         } else {
             item[field] = value;
         }
@@ -232,6 +245,11 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
         const baseSubTotal = qty * rate;
         const extraPct = Math.round(parseFloat(item.extra_percentage) || 0);
         let addCharges = Math.round(parseFloat(item.additional_charges) || 0);
+        const extraCleared = field === 'extra_percentage' && (value === '' || value === null || Number(value) === 0);
+        if (extraCleared) {
+            item.additional_charges = '';
+            addCharges = 0;
+        }
         if (extraPct > 0) {
             addCharges = Math.round((baseSubTotal * extraPct) / 100);
             item.additional_charges = addCharges;
@@ -678,7 +696,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                             fullWidth
                                             size="small"
                                             label="Add. %"
-                                            value={item.extra_percentage || 0}
+                                            value={item.extra_percentage ?? ''}
                                             onChange={(e) => handleChange(index, 'extra_percentage', e.target.value)}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
@@ -695,7 +713,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                             fullWidth
                                             size="small"
                                             label="Tax%"
-                                            value={item.tax_percentage}
+                                            value={item.tax_percentage ?? ''}
                                             onChange={(e) => handleChange(index, 'tax_percentage', e.target.value)}
                                             sx={{
                                                 // bgcolor: 'white',
@@ -733,7 +751,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                             type="number"
                                             size="small"
                                             label="Disc Val"
-                                            value={item.discount_value}
+                                            value={item.discount_value ?? ''}
                                             onChange={(e) => handleChange(index, 'discount_value', e.target.value)}
                                             sx={{
                                                 // bgcolor: 'white',
