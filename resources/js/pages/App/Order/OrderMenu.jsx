@@ -6,7 +6,7 @@ import { ArrowBack, Search } from '@mui/icons-material';
 import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import OrderDetail from './Detail';
 import OrderSaved from './Saved';
 import VariantSelectorDialog from './VariantSelectorDialog';
@@ -35,6 +35,9 @@ const OrderMenu = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [searchMode, setSearchMode] = useState('product'); // 'product' or 'booking'
+    const [quickQty, setQuickQty] = useState(1);
+    const qtyInputRef = useRef(null);
+    const searchInputRef = useRef(null);
 
     const handleCategoryClick = (categoryId) => {
         setSelectedCategory(categoryId);
@@ -90,14 +93,16 @@ const OrderMenu = () => {
     };
 
     // Handle product click from search results
-    const handleSearchProductClick = (product) => {
+    const handleSearchProductClick = (product, qtyOverride = 1) => {
         // Add product to order
-        handleProductClick(product);
+        handleProductClick(product, qtyOverride);
 
         // Clear search
         setSearchTerm('');
         setShowSearchResults(false);
         setSearchResults([]);
+        setQuickQty(1);
+        qtyInputRef.current?.focus?.();
     };
 
     const handleBookingClick = (booking) => {
@@ -154,7 +159,7 @@ const OrderMenu = () => {
     };
 
     // This would be called when user clicks a product
-    const handleProductClick = (product) => {
+    const handleProductClick = (product, qtyOverride = 1) => {
         // Only check stock if management is enabled
         if (product.manage_stock && product.minimal_stock > product.current_stock - 1) return;
 
@@ -163,9 +168,13 @@ const OrderMenu = () => {
             handleOrderDetailChange('restaurant_id', product.tenant_id);
         }
 
+        const resolvedQty = Number.isFinite(Number(qtyOverride)) && Number(qtyOverride) > 0 ? Number(qtyOverride) : 1;
+
         if (product.variants && product.variants.length > 0) {
             setVariantProductId(product.id);
             setVariantProduct(product);
+            setEditingItemIndex(null);
+            setInitialEditItem({ quantity: resolvedQty });
             setVariantPopupOpen(true);
         } else {
             const existingIndex = orderDetails.order_items.findIndex((item) => item.id === product.id && item.variants.length === 0);
@@ -175,7 +184,7 @@ const OrderMenu = () => {
                 const updatedItems = [...orderDetails.order_items];
                 const existingItem = updatedItems[existingIndex];
 
-                const newQuantity = existingItem.quantity + 1;
+                const newQuantity = existingItem.quantity + resolvedQty;
                 updatedItems[existingIndex] = {
                     ...existingItem,
                     quantity: newQuantity,
@@ -190,8 +199,8 @@ const OrderMenu = () => {
                     id: product.id,
                     name: product.name,
                     price: parseFloat(product.base_price),
-                    total_price: parseFloat(product.base_price),
-                    quantity: 1,
+                    total_price: parseFloat(product.base_price) * resolvedQty,
+                    quantity: resolvedQty,
                     tenant_id: product.tenant_id,
                     category: product.category?.name || '',
                     variants: [],
@@ -554,7 +563,50 @@ const OrderMenu = () => {
                                     }}
                                 >
                                     <Box sx={{ display: 'flex' }}>
+                                        {searchMode !== 'booking' && (
+                                            <TextField
+                                                inputRef={qtyInputRef}
+                                                placeholder="Qty"
+                                                variant="outlined"
+                                                size="small"
+                                                type="number"
+                                                value={quickQty}
+                                                onChange={(e) => {
+                                                    const raw = e.target.value;
+                                                    if (raw === '') {
+                                                        setQuickQty('');
+                                                        return;
+                                                    }
+                                                    const n = parseInt(raw, 10);
+                                                    if (!Number.isFinite(n)) return;
+                                                    setQuickQty(n < 1 ? 1 : n);
+                                                }}
+                                                onBlur={() => {
+                                                    const n = Number(quickQty);
+                                                    if (!Number.isFinite(n) || n < 1) setQuickQty(1);
+                                                }}
+                                                inputProps={{ min: 1 }}
+                                                sx={{
+                                                    width: 80,
+                                                    borderRadius: 0,
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderRadius: 0,
+                                                        backgroundColor: '#FFFFFF',
+                                                        '& fieldset': {
+                                                            border: '1px solid #121212',
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            border: '1px solid #121212',
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            border: '1px solid #121212',
+                                                        },
+                                                    },
+                                                }}
+                                            />
+                                        )}
                                         <TextField
+                                            inputRef={searchInputRef}
                                             placeholder={searchMode === 'booking' ? 'Search Booking # or Name' : 'Search by ID, menu code or name'}
                                             variant="outlined"
                                             size="small"
@@ -571,11 +623,12 @@ const OrderMenu = () => {
                                                 if (searchMode === 'booking') {
                                                     handleBookingClick(first);
                                                 } else {
-                                                    handleSearchProductClick(first);
+                                                    const qty = Number.isFinite(Number(quickQty)) && Number(quickQty) > 0 ? Number(quickQty) : 1;
+                                                    handleSearchProductClick(first, qty);
                                                 }
                                             }}
                                             sx={{
-                                                width: 300,
+                                                width: searchMode === 'booking' ? 300 : 220,
                                                 borderRadius: 0,
                                                 '& .MuiOutlinedInput-root': {
                                                     borderRadius: 0,
@@ -677,7 +730,10 @@ const OrderMenu = () => {
                                                         <Grid item key={product.id} sx={{ width: '15%' }}>
                                                             <Paper
                                                                 elevation={0}
-                                                                onClick={() => handleSearchProductClick(product)}
+                                                                onClick={() => {
+                                                                    const qty = Number.isFinite(Number(quickQty)) && Number(quickQty) > 0 ? Number(quickQty) : 1;
+                                                                    handleSearchProductClick(product, qty);
+                                                                }}
                                                                 sx={{
                                                                     p: 2,
                                                                     display: 'flex',
