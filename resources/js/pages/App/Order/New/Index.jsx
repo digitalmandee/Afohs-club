@@ -164,10 +164,16 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId, activeP
         }
     };
 
-    const loadRooms = async () => {
+    const loadRooms = async (params = {}) => {
+        if (params?.clear) {
+            setRoomTypes([]);
+            return;
+        }
         setLoading(true);
         try {
-            const response = await axios.get(route(routeNameForContext('rooms.order')));
+            const response = await axios.get(route(routeNameForContext('rooms.order')), {
+                params: { ...params, restaurant_id: selectedRestaurant || undefined },
+            });
             setRoomTypes(response.data);
         } catch (error) {
             console.error(error);
@@ -178,7 +184,9 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId, activeP
 
     useEffect(() => {
         if (orderDetails.order_type === 'room') {
-            loadRooms();
+            loadRooms({ clear: true });
+        } else {
+            setRoomTypes([]);
         }
     }, [orderDetails.order_type]);
 
@@ -648,7 +656,7 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId, activeP
                                     onRestaurantChange={handleRestaurantChange}
                                 />
                             )}
-                            {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} selectedRestaurant={selectedRestaurant} />}
+                            {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} selectedRestaurant={selectedRestaurant} reloadRooms={loadRooms} />}
 
                             {orderDetails.order_type === 'load_booking' && (
                                 <Box sx={{ mt: 3, px: 2 }}>

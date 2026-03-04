@@ -560,6 +560,20 @@ const OrderMenu = () => {
                                             size="small"
                                             value={searchTerm}
                                             onChange={(e) => handleSearch(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key !== 'Enter') return;
+                                                e.preventDefault();
+                                                if (isSearching) return;
+                                                if (!showSearchResults) return;
+                                                if (!searchResults || searchResults.length === 0) return;
+
+                                                const first = searchResults[0];
+                                                if (searchMode === 'booking') {
+                                                    handleBookingClick(first);
+                                                } else {
+                                                    handleSearchProductClick(first);
+                                                }
+                                            }}
                                             sx={{
                                                 width: 300,
                                                 borderRadius: 0,

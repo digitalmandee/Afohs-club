@@ -291,20 +291,60 @@ class OrderController extends Controller
         return response()->json($floorTables);
     }
 
-    public function getRoomsForOrder()
+    public function getRoomsForOrder(Request $request)
     {
-        $roomTypes = RoomType::with(['rooms' => function ($query) {
+        $memberId = $request->query('member_id');
+        $memberType = $request->query('member_type');
+
+        $hasMemberFilter = $memberId !== null && $memberId !== '' && $memberType !== null && $memberType !== '';
+
+        $bookingConstraints = function ($q) use ($hasMemberFilter, $memberId, $memberType) {
+            $q
+                ->where('status', 'checked_in')
+                ->whereDate('check_in_date', '<=', Carbon::today())
+                ->where(function ($dateQ) {
+                    $dateQ->whereNull('check_out_date')
+                        ->orWhereDate('check_out_date', '>=', Carbon::today());
+                });
+
+            if (!$hasMemberFilter) return;
+
+            if ($memberType == 0 || $memberType == 1) {
+                $q->where('member_id', (int) $memberId);
+                return;
+            }
+            if ($memberType == 2) {
+                $q->where('corporate_member_id', (int) $memberId);
+                return;
+            }
+            // if ($memberType == 3) {
+            //     $q->where('employee_id', (int) $memberId);
+            //     return;
+            // }
+            if (str_starts_with((string) $memberType, 'guest-') || $memberType == '1') {
+                $q->where('customer_id', (int) $memberId);
+            }
+        };
+
+        $roomTypes = RoomType::with(['rooms' => function ($query) use ($hasMemberFilter, $bookingConstraints) {
             $query
                 ->select('id', 'name', 'room_type_id')
-                ->with(['currentBooking' => function ($q) {
+                ->when($hasMemberFilter, function ($roomQ) use ($bookingConstraints) {
+                    $roomQ->whereHas('currentBooking', $bookingConstraints);
+                })
+                ->with(['currentBooking' => function ($q) use ($bookingConstraints) {
                     $q
-                        ->select('id', 'room_id', 'booking_no', 'status', 'member_id', 'customer_id', 'employee_id', 'guest_first_name', 'guest_last_name', 'check_in_date', 'check_out_date')
-                        ->where('status', 'checked_in')
-                        ->whereDate('check_in_date', '<=', Carbon::today())
-                        ->whereDate('check_out_date', '>=', Carbon::today())
-                        ->with(['member', 'customer', 'employee']);
+                        ->select('id', 'room_id', 'booking_no', 'status', 'member_id', 'corporate_member_id', 'customer_id', 'guest_first_name', 'guest_last_name', 'check_in_date', 'check_out_date')
+                        ->tap($bookingConstraints)
+                        ->with(['member', 'corporateMember', 'customer']);
                 }]);
         }])->get();
+
+        if ($hasMemberFilter) {
+            $roomTypes = $roomTypes->filter(function ($rt) {
+                return $rt->rooms && $rt->rooms->isNotEmpty();
+            })->values();
+        }
 
         return response()->json($roomTypes);
     }
@@ -926,7 +966,7 @@ class OrderController extends Controller
                         'email' => $member->personal_email,
                         'address' => $member->current_address
                     ];
-                } elseif ($request->member_type == 2) {
+                } elseif ($request->member_type == 2 || str_starts_with((string) $request->member_type, 'guest-')) {
                     $customer = Customer::select('id', 'name', 'customer_no', 'email', 'address')
                         ->where('id', $request->member_id)
                         ->first();
