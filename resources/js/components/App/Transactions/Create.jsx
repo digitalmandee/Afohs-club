@@ -1014,31 +1014,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     return;
                 }
 
-                // Reset form
-                if (paymentMode) {
-                    handleCancelPaymentMode();
-                } else {
-                    setData({
-                        ...data,
-                        payment_method: 'cash',
-                        credit_card_type: '',
-                        receipt_file: null,
-                        remarks: '',
-                    });
-                    setInvoiceItems([createBlankInvoiceItem()]);
-                    // preSelectedMember is a prop, cannot set it.
-                    setSearchResults([]);
-                }
-
-                if (selectedMember && (bookingType === '0' || bookingType === '2')) {
-                    fetchMemberTransactions(selectedMember.id);
-                } else {
-                    setMemberTransactions([]);
-                    setFilteredTransactions([]);
-                    setMembershipFeePaid(false);
-                }
-
-                setFormErrors({});
+                resetToNewTransaction();
 
                 // Show success message
                 enqueueSnackbar(`Transaction created successfully (${targetStatus})!`, { variant: 'success' });
@@ -1182,6 +1158,47 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             setSelectedMember(null);
             setMemberTransactions([]);
         }
+    };
+
+    const resetToNewTransaction = () => {
+        const normalizedBookingType = bookingType === '2' ? 'corporate' : String(bookingType).startsWith('guest') ? 'guest' : 'member';
+
+        reset();
+        setData({
+            booking_type: normalizedBookingType,
+            member_id: '',
+            corporate_member_id: '',
+            customer_id: '',
+            items: [],
+            payment_frequency: 'monthly',
+            payment_method: null,
+            amount: 0,
+            remarks: '',
+            credit_card_type: null,
+            receipt_file: null,
+        });
+
+        setSelectedMember(null);
+        setMemberTransactions([]);
+        setFilteredTransactions([]);
+        setMembershipFeePaid(false);
+        setLedgerBalance(null);
+        setSearchResults([]);
+        setSearchInvoice('');
+        setCurrentPage(1);
+        setQuarterStatus({
+            paidQuarters: [],
+            nextAvailableQuarter: 1,
+            currentYear: new Date().getFullYear(),
+            partialQuarters: {},
+        });
+        setFormErrors({});
+
+        setPaymentMode(false);
+        setActiveInvoice(null);
+        setTransactionToPay(null);
+        setPaymentConfirmationOpen(false);
+        setInvoiceItems([createBlankInvoiceItem()]);
     };
 
     const handleCancelPaymentMode = () => {
