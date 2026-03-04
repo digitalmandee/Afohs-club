@@ -245,6 +245,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
     // admin dashboard routes
     Route::get('dashboard', [AdminController::class, 'index'])->name('dashboard')->middleware('super.admin:dashboard.view');
     Route::get('activity-log', [App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activity-log');
+    Route::get('api/employee-logs', [\App\Http\Controllers\EmployeeController::class, 'employeeLog'])->name('admin.api.employee-logs');
     Route::post('notifications/{id}/read', [AdminController::class, 'markNotificationRead'])->name('notifications.read');
     Route::get('dashboard/print', [AdminController::class, 'printDashboard'])->name('dashboard.print')->middleware('super.admin:dashboard.view');
 

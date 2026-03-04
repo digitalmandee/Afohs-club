@@ -615,6 +615,7 @@ const OrderMenu = () => {
                                             onKeyDown={(e) => {
                                                 if (e.key !== 'Enter') return;
                                                 e.preventDefault();
+                                                e.stopPropagation();
                                                 if (isSearching) return;
                                                 if (!showSearchResults) return;
                                                 if (!searchResults || searchResults.length === 0) return;

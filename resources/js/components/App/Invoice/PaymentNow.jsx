@@ -432,16 +432,18 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     useEffect(() => {
+        if (!openPaymentModal) return;
+
         const handleKeyDown = (e) => {
-            if (e.key.toLowerCase() === 'enter') {
-                e.preventDefault(); // Optional: prevent browser behavior
-                handlePayNow();
-            }
+            if (e.isComposing) return;
+            if (String(e.key || '').toLowerCase() !== 'enter') return;
+            e.preventDefault();
+            handlePayNow();
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [router]);
+    }, [openPaymentModal, handlePayNow]);
 
     useEffect(() => {
         if (activePaymentMethod === 'split_payment') {
