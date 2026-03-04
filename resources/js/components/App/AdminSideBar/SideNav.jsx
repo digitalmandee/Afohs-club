@@ -519,6 +519,12 @@ export default function SideNav({ open, setOpen }) {
             ],
         },
         {
+            text: 'POS',
+            icon: <HomeIcon />,
+            path: '/pos',
+            permission: 'pos.view',
+        },
+        {
             text: 'Reports',
             icon: <AssessmentIcon />,
             permission: 'reports.view',
