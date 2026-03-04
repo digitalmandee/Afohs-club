@@ -6,9 +6,10 @@ import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, Ar
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 import { routeNameForContext } from '@/lib/utils';
+import POSLayout from "@/components/POSLayout";
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const ProductsTrashed = ({ trashedProducts, filters }) => {
     const [open, setOpen] = useState(true);
@@ -71,8 +72,8 @@ const ProductsTrashed = ({ trashedProducts, filters }) => {
 
     return (
         <>
-            <Head title="Trashed Products" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <Head title="Trashed Products" /> */}
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1000 }} open={processing}>
                 <CircularProgress color="inherit" />
@@ -80,35 +81,43 @@ const ProductsTrashed = ({ trashedProducts, filters }) => {
 
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    padding: '1rem',
-                    marginTop: '5rem',
+                    bgcolor:'#f5f5f5',
+                    minHeight:'100vh',
+                    p: 2
                 }}
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Box display="flex" alignItems="center" gap={1}>
+                    <Box display="flex" alignItems="center">
                         <IconButton onClick={() => router.visit(route(routeNameForContext('inventory.index')))}>
-                            <ArrowBackIcon />
+                            <ArrowBackIcon sx={{color:'#063455'}} />
                         </IconButton>
-                        <Typography variant="h5" fontWeight="bold">
+                        <Typography sx={{fontWeight:'700', fontSize:'30px', color:'#063455'}}>
                             Trashed Products
                         </Typography>
                     </Box>
                     <Box display="flex" gap={2}>
-                        <TextField size="small" placeholder="Search..." value={search} onChange={handleSearch} sx={{ bgcolor: 'white', borderRadius: 1 }} />
+                        <TextField
+                            size="small"
+                            placeholder="Search..."
+                            value={search}
+                            onChange={handleSearch}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                },
+                            }} />
                     </Box>
                 </Box>
 
-                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
+                <TableContainer sx={{ borderRadius: '12px', }}>
                     <Table>
-                        <TableHead sx={{ bgcolor: '#d32f2f' }}>
+                        <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Menu Code</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Category</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Deleted At</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
+                                <TableCell sx={{ color: '#fff', fontWeight: '600' }}>Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: '600' }}>Menu Code</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: '600' }}>Category</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: '600' }}>Deleted At</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: '600' }}>
                                     Actions
                                 </TableCell>
                             </TableRow>
@@ -186,6 +195,6 @@ const ProductsTrashed = ({ trashedProducts, filters }) => {
     );
 };
 
-ProductsTrashed.layout = (page) => page;
+ProductsTrashed.layout = (page) => <POSLayout>{page}</POSLayout>;
 
 export default ProductsTrashed;

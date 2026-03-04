@@ -7,9 +7,7 @@ import { Save, ArrowBack, AttachFile, Close } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { routeNameForContext } from '@/lib/utils';
-
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+import POSLayout from "@/components/POSLayout";
 
 export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, guestTypes }) {
     const { props } = usePage();
@@ -114,23 +112,26 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
 
     return (
         <>
-            <Head title={isEdit ? 'Edit Cake Booking' : 'New Cake Booking'} />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <Head title={isEdit ? 'Edit Cake Booking' : 'New Cake Booking'} /> */}
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5.5rem',
-                    p: 3,
+                    p: 2,
+                    minHeight: '100vh',
+                    bgcolor: '#f5f5f5'
                 }}
             >
                 <Box>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <Button startIcon={<ArrowBack />} component={'a'} href={route(routeNameForContext('cake-bookings.index'))} sx={{ mr: 2 }}>
+                        {/* <Button startIcon={<ArrowBack />} component={'a'} href={route(routeNameForContext('cake-bookings.index'))} sx={{ mr: 2 }}>
                             Back
-                        </Button>
-                        <Typography variant="h5" fontWeight="bold" sx={{ color: '#003B5C' }}>
+                        </Button> */}
+                        <ArrowBack
+                            sx={{ color: '#063455', cursor: 'pointer' }}
+                            onClick={() => router.visit(route(routeNameForContext('cake-bookings.index')))}
+                        />
+                        <Typography sx={{ color: '#063455', fontWeight:'700', fontSize:'30px' }}>
                             {isEdit ? 'Edit Cake Booking' : 'New Cake Booking'}
                         </Typography>
                     </Box>
@@ -464,4 +465,4 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
     );
 }
 
-Create.layout = (page) => page;
+Create.layout = (page) => <POSLayout>{page}</POSLayout>;

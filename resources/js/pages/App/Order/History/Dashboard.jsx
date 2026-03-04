@@ -655,7 +655,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                     minHeight: '100vh',
                 }}
             >
-                <Typography sx={{ mb: 3, fontWeight: 600, color: '#063455', fontSize: '30px' }}>Order History</Typography>
+                <Typography sx={{ mb: 3, fontWeight: 700, color: '#063455', fontSize: '30px' }}>Order History</Typography>
 
                 {/* Filters */}
                 <Box sx={{ mb: 3 }}>
@@ -829,7 +829,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                 </Box>
 
                 {/* Table */}
-                <TableContainer component={Paper} sx={{ position: 'relative', borderRadius: '12px' }}>
+                <TableContainer sx={{ borderRadius: '12px' }}>
                     {isLoading && (
                         <Box
                             sx={{
@@ -848,7 +848,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                             <CircularProgress size={40} />
                         </Box>
                     )}
-                    <Table size="small">
+                    <Table>
                         <TableHead sx={{ backgroundColor: '#063455' }}>
                             <TableRow>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order</TableCell>
