@@ -207,11 +207,46 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         if (order.status === 'in_progress') return false;
         return Boolean(order.invoice_id);
     };
+    const canEditOrderBeforePayment = (order) => {
+        if (!order) return false;
+        if (order.status === 'cancelled' || order.status === 'refund') return false;
+        const paymentStatus = String(order.payment_status || '').toLowerCase();
+        const invoiceStatus = String(order.invoice_status || '').toLowerCase();
+        return paymentStatus !== 'paid' && invoiceStatus !== 'paid';
+    };
 
     const handleViewOrder = (order) => {
+        // Set basic info from list first
         setSelectedOrder(order);
         setSelectedOrderDetails(null);
         setViewModalOpen(true);
+        setLoadingOrderDetails(true);
+
+        // Fetch full details
+        axios
+            .get(route(routeNameForContext('order.details'), { id: order.id }))
+            .then((response) => {
+                if (response.data) {
+                    // Update selectedOrder with full details including items
+                    setSelectedOrder(response.data);
+
+                    // Also fetch invoice details if needed
+                    if (response.data.invoice_id) {
+                        return axios.get(route(routeNameForContext('transaction.invoice'), { invoiceId: response.data.id }));
+                    }
+                }
+                return null;
+            })
+            .then((invoiceRes) => {
+                if (invoiceRes && invoiceRes.data) {
+                    setSelectedOrderDetails(invoiceRes.data);
+                }
+            })
+            .catch((error) => {
+                console.error("Failed to fetch order details:", error);
+                enqueueSnackbar("Failed to load full order details", { variant: "error" });
+            })
+            .finally(() => setLoadingOrderDetails(false));
     };
 
     const handleCloseModal = () => {
@@ -221,9 +256,20 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     };
 
     const handleOpenEdit = (order) => {
+        if (!order?.id) return;
         setSelectedOrder(order);
-        setEditOrderItems(order?.order_items || []);
-        setEditModalOpen(true);
+        axios
+            .get(route(routeNameForContext('order.details'), { id: order.id }))
+            .then((response) => {
+                const fullOrder = response?.data || order;
+                setSelectedOrder(fullOrder);
+                setEditOrderItems(fullOrder?.order_items || []);
+                setEditModalOpen(true);
+            })
+            .catch(() => {
+                setEditOrderItems(order?.order_items || []);
+                setEditModalOpen(true);
+            });
     };
 
     const handleCloseEdit = () => {
@@ -231,7 +277,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         setEditOrderItems([]);
     };
 
-    const handleSaveEdit = (status) => {
+    const handleSaveEdit = (status, clientMeta = null) => {
         if (!selectedOrder) return Promise.resolve(null);
 
         const payload = {
@@ -239,6 +285,10 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             new_items: (editOrderItems || []).filter((it) => it?.id === 'new'),
             status,
         };
+        if (clientMeta?.client_type && clientMeta?.client?.id) {
+            payload.client_type = clientMeta.client_type;
+            payload.client_id = clientMeta.client.id;
+        }
 
         return new Promise((resolve, reject) => {
             router.post(route(routeNameForContext('orders.update'), { id: selectedOrder.id }), payload, {
@@ -250,7 +300,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                     resolve(true);
                 },
                 onError: (errors) => {
-                    enqueueSnackbar('Something went wrong: ' + JSON.stringify(errors), { variant: 'error' });
+                    const firstMessage = Object.values(errors || {}).find((value) => typeof value === 'string' && value.trim());
+                    enqueueSnackbar(firstMessage || 'Unable to update order.', { variant: 'error' });
                     reject(errors);
                 },
             });
@@ -258,15 +309,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     };
 
     useEffect(() => {
-        if (!viewModalOpen || !selectedOrder?.id) return;
-
-        setLoadingOrderDetails(true);
-        axios
-            .get(route(routeNameForContext('transaction.invoice'), { invoiceId: selectedOrder.id }))
-            .then((response) => {
-                setSelectedOrderDetails(response.data);
-            })
-            .finally(() => setLoadingOrderDetails(false));
+        // No longer fetching invoice details automatically on mount/open
+        // It's handled inside handleViewOrder now
     }, [viewModalOpen, selectedOrder?.id]);
 
     // Transform order data for Receipt component
@@ -274,6 +318,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         if (!order) return null;
         const bankChargesEnabled = Number(order.bank_charges) > 0;
         const advancePayment = Number(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
+        const paidAmount = Number(order.receipt_paid_amount ?? order.invoice_paid_amount ?? order.paid_amount ?? 0);
+        const customerChanges = Number(order.receipt_customer_changes ?? order.customer_changes ?? 0);
         return {
             id: order.id,
             order_no: order.id,
@@ -302,7 +348,15 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             cashier: order.cashier,
             waiter: order.waiter,
             advance_payment: advancePayment,
-            paid_amount: order.paid_amount,
+            paid_amount: paidAmount,
+            customer_changes: customerChanges,
+            ent_amount: Number(order.invoice_ent_amount || 0),
+            cts_amount: Number(order.invoice_cts_amount || 0),
+            invoice_ent_amount: Number(order.invoice_ent_amount || 0),
+            invoice_cts_amount: Number(order.invoice_cts_amount || 0),
+            invoice_ent_reason: order.invoice_ent_reason || null,
+            invoice_ent_comment: order.invoice_ent_comment || null,
+            invoice_cts_comment: order.invoice_cts_comment || null,
             order_items:
                 order.order_items
                     ?.filter((item) => item.status !== 'cancelled')
@@ -316,44 +370,25 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         };
     };
 
-    const handlePrintReceipt = (order) => {
-        if (!canPrintInvoice(order)) {
-            enqueueSnackbar("Invoice isn't generated for this order.", { variant: 'warning' });
-            return;
-        }
+    const executePrint = (data) => {
+        if (!data) return;
+        const round0 = (n) => Math.round(Number(n) || 0);
         const printWindow = window.open('', '_blank');
-        const customerName = order.member?.full_name || order.customer?.name || order.employee?.name || 'N/A';
-        const memberNo = order.member?.membership_no || '';
-        const guestNo = order.customer?.customer_no || '';
-        const employeeNo = order.employee?.employee_id || '';
-        const guestTypeName = order.customer?.guestType?.name || '';
-        const serviceCharges = parseFloat(order.service_charges || 0);
-        const bankCharges = parseFloat(order.bank_charges || 0);
-
-        const itemsHtml =
-            order.order_items
-                ?.filter((item) => item.status !== 'cancelled')
-                .map((item) => {
-                    const name = item.order_item?.name || 'Item';
-                    const qty = item.order_item?.quantity || 1;
-                    const price = item.order_item?.price || 0;
-                    const total = item.order_item?.total_price || qty * price;
-                    return `
-              <div style="margin-bottom: 10px;">
-                <div><strong>${name}</strong></div>
-                <div class="row">
-                  <div>${qty} x Rs ${price}</div>
-                  <div>Rs ${total}</div>
-                </div>
-              </div>
-            `;
-                })
-                .join('') || '<div>No items</div>';
+        const printTotalAmount = round0(data.total_price);
+        const printAdvancePaid = round0(data.advance_payment || data.data?.advance_deducted || 0);
+        const printPaidCash = round0(data.receipt_paid_amount ?? data.paid_amount ?? 0);
+        const isSettled = String(data.payment_status || data.invoice_status || '').toLowerCase() === 'paid' || printPaidCash > 0;
+        const printEntAmount = isSettled ? round0(data.ent_amount || data.invoice_ent_amount || data.data?.ent_amount || 0) : 0;
+        const printCtsAmount = isSettled ? round0(data.cts_amount || data.invoice_cts_amount || data.data?.cts_amount || 0) : 0;
+        const printNetPayable = Math.max(0, printTotalAmount - printAdvancePaid - printEntAmount - printCtsAmount);
+        const printRemainingDue = Math.max(0, printNetPayable - printPaidCash);
+        const explicitPrintChange = round0(data.receipt_customer_changes ?? data.customer_changes ?? 0);
+        const printCustomerChange = explicitPrintChange > 0 ? explicitPrintChange : Math.max(0, printPaidCash - printNetPayable);
 
         const content = `
         <html>
           <head>
-            <title>Receipt - Order #${order.id}</title>
+            <title>Receipt</title>
             <style>
               body { font-family: monospace; padding: 20px; max-width: 300px; margin: 0 auto; }
               .header { text-align: center; margin-bottom: 10px; }
@@ -366,39 +401,172 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             </style>
           </head>
           <body>
-            <div class="header"><img src='/assets/Logo.png' class="logo"/></div>
-            <div class="header"><div>${order.start_date ? new Date(order.start_date).toLocaleString() : ''}</div></div>
-            <div class="order-id"><div>Order Id</div><div><strong>#${order.id}</strong></div></div>
-            <div class="row"><div>Cashier</div><div>${order.cashier?.name || user?.name || 'N/A'}</div></div>
-            ${order.waiter ? `<div class="row"><div>Waiter</div><div>${order.waiter.name}</div></div>` : ''}
+            <div class="header">
+              <div><img src='/assets/Logo.png' class="logo"/></div>
+            </div>
+            <div class="header">
+              <div>${data.start_date || ''}</div>
+            </div>
+
+            <div class="order-id">
+              <div>Order Id</div>
+              <div><strong>#${data.id || data.order_no || 'N/A'}</strong></div>
+            </div>
+
             <div class="divider"></div>
-            <div class="row"><div>Customer Name</div><div>${customerName}</div></div>
-            ${memberNo ? `<div class="row"><div>Member Id</div><div>${memberNo}</div></div>` : ''}
-            ${!memberNo && employeeNo ? `<div class="row"><div>Employee ID</div><div>${employeeNo}</div></div>` : ''}
-            ${!memberNo && !employeeNo && guestNo ? `<div class="row"><div>Guest No</div><div>${guestNo}</div></div>` : ''}
-            ${!memberNo && !employeeNo && guestTypeName ? `<div class="row"><div>Guest Type</div><div>${guestTypeName}</div></div>` : ''}
-            <div class="row"><div>Order Type</div><div>${formatOrderType(order.order_type)}</div></div>
-            ${order.table ? `<div class="row"><div>Table Number</div><div>${order.table.table_no}</div></div>` : ''}
-            ${order.tenant ? `<div class="row"><div>Restaurant</div><div>${order.tenant.name}</div></div>` : ''}
-            <div class="divider"></div>
-            ${itemsHtml}
-            <div class="divider"></div>
-            <div class="row"><div>Subtotal</div><div>Rs ${order.amount || order.total_price || 0}</div></div>
-            <div class="row"><div>Discount</div><div>Rs ${order.discount || 0}</div></div>
-            <div class="row"><div>Tax</div><div>Rs ${order.tax ? Math.round((order.amount || order.total_price) * order.tax) : 0}</div></div>
-            ${serviceCharges > 0 ? `<div class="row"><div>Service Charges</div><div>Rs ${serviceCharges}</div></div>` : ''}
-            ${bankCharges > 0 ? `<div class="row"><div>Bank Charges</div><div>Rs ${bankCharges}</div></div>` : ''}
-            <div class="divider"></div>
-            <div class="row total"><div>Total Amount</div><div>Rs ${(Number(order.total_price || 0)).toFixed(2)}</div></div>
+
+            <div class="row">
+              <div>Customer Name</div>
+              <div>${data.member?.full_name || data.member?.name || data.customer?.name || data.employee?.name || 'N/A'}</div>
+            </div>
+
             ${
-                order.paid_amount
+                data.member
                     ? `
-            <div class="row"><div>Paid Amount</div><div>Rs ${order.paid_amount}</div></div>
-            <div class="row"><div>Change</div><div>Rs ${Number(order.paid_amount || 0) - (Number(order.total_price || 0))}</div></div>
-            `
+                    <div class="row">
+                        <div>Member Id Card</div>
+                        <div>${data.member?.membership_no ?? '-'}</div>
+                    </div>
+                    `
+                    : data.employee
+                      ? `
+                    <div class="row">
+                        <div>Employee ID</div>
+                        <div>${data.employee?.employee_id ?? '-'}</div>
+                    </div>
+                    `
+                      : data.customer
+                        ? `
+                    <div class="row">
+                        <div>Guest No</div>
+                        <div>${data.customer?.customer_no ?? '-'}</div>
+                    </div>
+                    ${
+                        data.customer?.guestType?.name || data.customer?.guest_type?.name
+                            ? `
+                    <div class="row">
+                        <div>Guest Type</div>
+                        <div>${data.customer?.guestType?.name || data.customer?.guest_type?.name}</div>
+                    </div>
+                    `
+                            : ''
+                    }
+                    `
+                        : ''
+            }
+
+            <div class="row">
+              <div>Order Type</div>
+              <div>${data.order_type}</div>
+            </div>
+
+            <div class="row">
+              <div>Table Number</div>
+              <div>${data.table?.table_no ?? '-'}</div>
+            </div>
+            <div class="row">
+              <div>Restaurant</div>
+              <div>${data.tenant?.name ?? '-'}</div>
+            </div>
+
+            <div class="divider"></div>
+
+            ${(data.order_items || [])
+                .filter((item) => item.status !== 'cancelled')
+                .map(
+                    (item) => `
+              <div style="margin-bottom: 10px;">
+                <div><strong>${item.order_item?.name || item.name}</strong></div>
+                <div class="row">
+                  <div>${item.order_item?.quantity || item.quantity} x Rs ${item.order_item?.price || item.price}</div>
+                  <div>Rs ${item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price)}</div>
+                </div>
+              </div>
+            `,
+                )
+                .join('')}
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <div>Subtotal</div>
+              <div>Rs ${round0(data.amount)}</div>
+            </div>
+
+            <div class="row">
+              <div>Discount</div>
+              <div>Rs ${round0(data.discount)}</div>
+            </div>
+
+            <div class="row">
+              <div>Tax (${(Number(data.tax || 0) * 100).toFixed(0)}%)</div>
+              <div>Rs ${round0(data.amount * (Number(data.tax || 0)))}</div>
+            </div>
+
+            ${
+                data.service_charges > 0
+                    ? `
+                <div class="row">
+                  <div>Service Charges${data.service_charges_percentage > 0 ? ` (${data.service_charges_percentage}%)` : ''}</div>
+                  <div>Rs ${round0(data.service_charges)}</div>
+                </div>
+                `
                     : ''
             }
-            <div class="footer"><p>Thanks for having our passion. Drop by again!</p></div>
+
+            ${
+                data.bank_charges > 0
+                    ? `
+                <div class="row">
+                  <div>Bank Charges${data.bank_charges_percentage > 0 ? ` (${data.bank_charges_percentage}%)` : ''}</div>
+                  <div>Rs ${round0(data.bank_charges)}</div>
+                </div>
+                `
+                    : ''
+            }
+
+            <div class="divider"></div>
+
+            <div class="row total">
+              <div>Total Amount</div>
+              <div>Rs ${printTotalAmount}</div>
+            </div>
+
+            ${printAdvancePaid > 0 ? `<div class="row"><div>Advance Paid</div><div>- Rs ${printAdvancePaid}</div></div>` : ''}
+            ${printEntAmount > 0 ? `<div class="row"><div>ENT</div><div>- Rs ${printEntAmount}</div></div>` : ''}
+            ${printCtsAmount > 0 ? `<div class="row"><div>CTS</div><div>- Rs ${printCtsAmount}</div></div>` : ''}
+            <div class="row total">
+              <div>Remaining Due</div>
+              <div>Rs ${printRemainingDue}</div>
+            </div>
+
+            ${
+                printPaidCash > 0
+                    ? `
+                <div class="row">
+                  <div>Total Cash</div>
+                  <div>Rs ${printPaidCash}</div>
+                </div>
+                <div class="row">
+                  <div>Customer Changes</div>
+                  <div>Rs ${printCustomerChange}</div>
+                </div>
+                `
+                    : ''
+            }
+            <div class="row">
+              <div>Cashier</div>
+              <div>${data.cashier ? data.cashier.name : user.name}</div>
+            </div>
+
+            <div class="footer">
+              <p>Thanks for having our passion. Drop by again. If your orders aren't still visible, you're always welcome here!</p>
+            </div>
+
+            <div class="logo">
+              IMAJI Coffee.
+            </div>
+
           </body>
         </html>
         `;
@@ -410,6 +578,26 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             printWindow.print();
             printWindow.close();
         }, 250);
+    };
+
+    const handlePrintReceipt = (order) => {
+        if (!canPrintInvoice(order)) {
+            enqueueSnackbar("Invoice isn't generated for this order.", { variant: 'warning' });
+            return;
+        }
+
+        axios
+            .get(route(routeNameForContext('order.details'), { id: order.id }))
+            .then((response) => {
+                if (response.data) {
+                    const fullOrder = response.data;
+                    executePrint(fullOrder);
+                }
+            })
+            .catch((error) => {
+                console.error("Failed to fetch order details for print:", error);
+                enqueueSnackbar("Failed to load order details for printing", { variant: "error" });
+            });
     };
 
     // MenuProps for styled dropdowns
@@ -431,6 +619,24 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             },
         },
     };
+
+    const orderHistoryPageTotals = (orders?.data || []).reduce(
+        (acc, order) => {
+            const round0 = (n) => Math.round(Number(n) || 0);
+            const total = round0(order.total_price || 0);
+            const advance = round0(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
+            const paid = round0(order.paid_amount || 0) + advance;
+            const entAmount = round0(order.invoice_ent_amount || 0);
+            const ctsAmount = round0(order.invoice_cts_amount || 0);
+            const bankCharges = round0(order.invoice_bank_charges_amount || 0);
+            const balance = round0(total + bankCharges - paid - entAmount - ctsAmount);
+            acc.amount += total;
+            acc.paid += paid;
+            acc.balance += balance;
+            return acc;
+        },
+        { amount: 0, paid: 0, balance: 0 },
+    );
 
     return (
         <>
@@ -670,7 +876,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                         </TableHead>
                         <TableBody>
                             {orders?.data?.length > 0 ? (
-                                orders.data.map((order) => {
+                                <>
+                                    {orders.data.map((order) => {
                                     const round0 = (n) => Math.round(Number(n) || 0);
                                     const gross = round0(order.amount || 0);
                                     const discount = round0(order.discount || 0);
@@ -755,7 +962,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                                             </IconButton>
                                                         </Tooltip>
                                                     )}
-                                                    {Boolean(canEditAfterBill) && (
+                                                    {(Boolean(canEditAfterBill) || canEditOrderBeforePayment(order)) && (
                                                         <Tooltip title="Edit Order">
                                                             <IconButton size="small" onClick={() => handleOpenEdit(order)} sx={{ color: '#003153' }}>
                                                                 <EditIcon fontSize="small" />
@@ -766,7 +973,17 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                             </TableCell>
                                         </TableRow>
                                     );
-                                })
+                                    })}
+                                    <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                                        <TableCell colSpan={10} sx={{ fontWeight: 700, color: '#063455' }}>
+                                            Grand Total (Current Page)
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>{orderHistoryPageTotals.amount.toLocaleString()}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>{orderHistoryPageTotals.paid.toLocaleString()}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: orderHistoryPageTotals.balance > 0 ? 'error.main' : 'success.main' }}>{orderHistoryPageTotals.balance.toLocaleString()}</TableCell>
+                                        <TableCell colSpan={8} />
+                                    </TableRow>
+                                </>
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={15} align="center">
@@ -822,7 +1039,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                             }}
                         >
                             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <Receipt invoiceData={getReceiptData(selectedOrder)} openModal={viewModalOpen} showButtons={false} layout="modal" />
+                                <Receipt invoiceData={getReceiptData(selectedOrder)} openModal={viewModalOpen} showButtons={false} layout="modal" includePaymentBreakdown={false} />
                             </Box>
                             <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, boxShadow: 'none' }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>
@@ -943,6 +1160,31 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                             </Typography>
                                         </Box>
                                     )}
+                                    {Number(selectedOrder.invoice_ent_amount) > 0 && (
+                                        <Box sx={{ gridColumn: 'span 2' }}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                ENT Details
+                                            </Typography>
+                                            <Typography variant="body1">Amount: Rs. {selectedOrder.invoice_ent_amount}</Typography>
+                                            <Typography variant="body2" sx={{ color: '#455a64' }}>
+                                                Reason: {selectedOrder.invoice_ent_reason || '-'}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: '#455a64' }}>
+                                                Comment: {selectedOrder.invoice_ent_comment || '-'}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                    {Number(selectedOrder.invoice_cts_amount) > 0 && (
+                                        <Box sx={{ gridColumn: 'span 2' }}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                CTS Details
+                                            </Typography>
+                                            <Typography variant="body1">Amount: Rs. {selectedOrder.invoice_cts_amount}</Typography>
+                                            <Typography variant="body2" sx={{ color: '#455a64' }}>
+                                                Comment: {selectedOrder.invoice_cts_comment || '-'}
+                                            </Typography>
+                                        </Box>
+                                    )}
 
                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                     Order Items
@@ -1059,8 +1301,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                         </Box>
                     )}
                 </DialogContent>
-                <EditOrderModal open={editModalOpen} allrestaurants={allrestaurants} onClose={handleCloseEdit} order={selectedOrder} orderItems={editOrderItems} setOrderItems={setEditOrderItems} onSave={(status) => handleSaveEdit(status)} onSaveAndPrint={null} allowUpdateAndPrint={false} />
             </Dialog>
+            <EditOrderModal open={editModalOpen} allrestaurants={allrestaurants} onClose={handleCloseEdit} order={selectedOrder} orderItems={editOrderItems} setOrderItems={setEditOrderItems} onSave={(status, clientMeta) => handleSaveEdit(status, clientMeta)} onSaveAndPrint={null} allowUpdateAndPrint={false} />
             {/* </Box > */}
         </>
     );

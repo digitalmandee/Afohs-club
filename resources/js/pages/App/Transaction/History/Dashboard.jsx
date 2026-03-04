@@ -125,7 +125,11 @@ const Dashboard = ({ orders, filters, totals }) => {
     // Transform order data for Receipt component
     const getReceiptData = (order) => {
         if (!order) return null;
-        const bankChargesEnabled = Number(order.bank_charges) > 0;
+        const bankChargesAmount = Number(order.invoice_bank_charges_amount || order.bank_charges || 0);
+        const advancePayment = Number(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
+        const paidAmount = Number(order.receipt_paid_amount ?? order.invoice_paid_amount ?? order.paid_amount ?? 0);
+        const customerChanges = Number(order.receipt_customer_changes ?? order.customer_changes ?? 0);
+        const bankChargesEnabled = bankChargesAmount > 0;
         return {
             id: order.id,
             order_no: order.id,
@@ -146,7 +150,15 @@ const Dashboard = ({ orders, filters, totals }) => {
             table: order.table,
             cashier: order.cashier,
             waiter: order.waiter,
-            paid_amount: order.paid_amount,
+            advance_payment: advancePayment,
+            paid_amount: paidAmount,
+            customer_changes: customerChanges,
+            ent_amount: Number(order.invoice_ent_amount || 0),
+            cts_amount: Number(order.invoice_cts_amount || 0),
+            invoice_ent_amount: Number(order.invoice_ent_amount || 0),
+            invoice_cts_amount: Number(order.invoice_cts_amount || 0),
+            invoice_ent_reason: order.invoice_ent_reason || null,
+            invoice_cts_comment: order.invoice_cts_comment || null,
             payment_method: order.payment_method,
             order_items:
                 order.order_items?.map((item) => ({
@@ -158,9 +170,9 @@ const Dashboard = ({ orders, filters, totals }) => {
                 })) || [],
             data: {
                 bank_charges_enabled: bankChargesEnabled,
-                bank_charges_amount: Number(order.bank_charges || 0),
+                bank_charges_amount: bankChargesAmount,
                 bank_charges_type: order.bank_charges_percentage > 0 ? 'percentage' : 'fixed',
-                bank_charges_value: order.bank_charges_percentage > 0 ? Number(order.bank_charges_percentage) : Number(order.bank_charges),
+                bank_charges_value: order.bank_charges_percentage > 0 ? Number(order.bank_charges_percentage) : bankChargesAmount,
             },
         };
     };
@@ -218,11 +230,6 @@ const Dashboard = ({ orders, filters, totals }) => {
             <div class="order-id">
               <div>Order Id</div>
               <div><strong>#${order.id}</strong></div>
-            </div>
-
-            <div class="row">
-              <div>Cashier</div>
-              <div>${order.cashier?.name || user?.name || 'N/A'}</div>
             </div>
 
             ${order.waiter
@@ -334,6 +341,10 @@ const Dashboard = ({ orders, filters, totals }) => {
             `
                 : ''
             }
+            <div class="row">
+              <div>Cashier</div>
+              <div>${order.cashier?.name || user?.name || 'N/A'}</div>
+            </div>
 
             <div class="footer">
               <p>Thanks for having our passion. Drop by again!</p>
@@ -350,6 +361,24 @@ const Dashboard = ({ orders, filters, totals }) => {
             printWindow.close();
         }, 250);
     };
+
+    const transactionHistoryPageTotals = (orders?.data || []).reduce(
+        (acc, order) => {
+            const round0 = (n) => Math.round(Number(n) || 0);
+            const total = round0(order.total_price || 0);
+            const entVal = round0(order.invoice_ent_amount || 0);
+            const ctsVal = round0(order.invoice_cts_amount || 0);
+            const bankCharges = round0(order.invoice_bank_charges_amount || 0);
+            const advance = round0(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
+            const paid = round0(order.paid_amount || 0) + advance;
+            const balance = Math.max(0, round0(total + bankCharges - paid - entVal - ctsVal));
+            acc.amount += total;
+            acc.paid += paid;
+            acc.balance += balance;
+            return acc;
+        },
+        { amount: 0, paid: 0, balance: 0 },
+    );
 
     return (
         <>
@@ -655,47 +684,16 @@ const Dashboard = ({ orders, filters, totals }) => {
                         </TableHead>
                         <TableBody>
                             {orders?.data?.length > 0 ? (
-                                orders.data.map((order) => {
-                                    // Parse ENT/CTS from comments - this is a bit hacky if not in separate columns,
-                                    // but we just added them to DB. Let's assume they might be in comments OR new columns if we reload.
-                                    // Ideally, the backend should return these values.
-                                    // For now, let's extract value from comment string if columns are null (backward comp)
-                                    // OR better, we know we added columns ent_reason, ent_comment etc.
-                                    // Use regex to extract value from brackets [ENT... Value: 100] if needed or use logic similar to controller.
-
-                                    // Actually, we should calculate balance: Total - Paid - ENT_Value - CTS_Value
-                                    // We need to parse the value from the new comment format IF the new columns aren't populous or if we just want to display what was saved.
-                                    // The controller logic: "[ENT Items: ... - Value: 123.00]"
-
-                                    const getEntValue = (o) => {
-                                        if (o.ent_comment) {
-                                            const match = o.ent_comment.match(/Value:\s*([\d,]+\.?\d*)/);
-                                            return match ? parseFloat(match[1].replace(/,/g, '')) : 0;
-                                        }
-                                        return 0;
-                                    };
-                                    const getCtsValue = (o) => {
-                                        if (o.cts_comment) {
-                                            const match = o.cts_comment.match(/Partial CTS Amount:\s*([\d,]+\.?\d*)/);
-                                            // If full CTS, comment is just comment, amount is total - paid (usually 0 if full cts)
-                                            // But wait, if full CTS, paid_amount is 0?
-                                            // Let's rely on the fact that Balance = Total - Paid - ENT - CTS.
-                                            // If balance is 0, then we are good.
-                                            // Let's just try to parse what we can.
-                                            if (match) return parseFloat(match[1].replace(/,/g, ''));
-                                            // If method is CTS and no partial amount, maybe full amount?
-                                            // best to leave 0 if not explicit.
-                                            return 0;
-                                        }
-                                        return 0;
-                                    };
-
-                                    const entVal = getEntValue(order);
-                                    const ctsVal = getCtsValue(order);
-                                    const bankCharges = Number(order.invoice?.data?.bank_charges_amount || 0);
-                                    const advance = Number(order.invoice?.advance_payment || order.down_payment || order.invoice?.data?.advance_deducted || 0);
-                                    const paidTotal = Number(order.paid_amount || 0) + advance;
-                                    const balance = (order.total_price || 0) + bankCharges - paidTotal - entVal - ctsVal;
+                                <>
+                                    {orders.data.map((order) => {
+                                    const round0 = (n) => Math.round(Number(n) || 0);
+                                    const total = round0(order.total_price || 0);
+                                    const entVal = round0(order.invoice_ent_amount || 0);
+                                    const ctsVal = round0(order.invoice_cts_amount || 0);
+                                    const bankCharges = round0(order.invoice_bank_charges_amount || 0);
+                                    const advance = round0(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
+                                    const paidTotal = round0(order.paid_amount || 0) + advance;
+                                    const balance = round0(total + bankCharges - paidTotal - entVal - ctsVal);
 
                                     return (
                                         <TableRow key={order.id} hover>
@@ -704,14 +702,30 @@ const Dashboard = ({ orders, filters, totals }) => {
                                             <TableCell>{formatOrderType(order.order_type)}</TableCell>
                                             <TableCell>{getClientName(order)}</TableCell>
                                             <TableCell>{order.table?.table_no || '-'}</TableCell>
-                                            <TableCell>Rs. {order.total_price?.toLocaleString()}</TableCell>
+                                            <TableCell>Rs. {total.toLocaleString()}</TableCell>
                                             <TableCell>Rs. {paidTotal?.toLocaleString()}</TableCell>
                                             <TableCell sx={{ color: balance > 5 ? 'error.main' : 'success.main', fontWeight: 'bold' }}>Rs. {Math.max(0, balance).toLocaleString()}</TableCell>
                                             <TableCell>
                                                 <Chip label={formatPaymentMethod(order.payment_method)} size="small" color="primary" variant="outlined" />
                                             </TableCell>
-                                            <TableCell>{entVal > 0 ? `Rs. ${entVal.toLocaleString()}` : '-'}</TableCell>
-                                            <TableCell>{ctsVal > 0 ? `Rs. ${ctsVal.toLocaleString()}` : '-'}</TableCell>
+                                            <TableCell>
+                                                {entVal > 0 ? (
+                                                    <Tooltip title={order.invoice_ent_reason || 'ENT Applied'}>
+                                                        <Chip label={`Rs. ${entVal.toLocaleString()}`} size="small" sx={{ bgcolor: '#e3f2fd', color: '#1565c0' }} />
+                                                    </Tooltip>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {ctsVal > 0 ? (
+                                                    <Tooltip title={order.invoice_cts_comment || 'CTS Applied'}>
+                                                        <Chip label={`Rs. ${ctsVal.toLocaleString()}`} size="small" sx={{ bgcolor: '#fff3e0', color: '#ef6c00' }} />
+                                                    </Tooltip>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </TableCell>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', gap: 0.5 }}>
                                                     <Tooltip title="View Details">
@@ -728,7 +742,17 @@ const Dashboard = ({ orders, filters, totals }) => {
                                             </TableCell>
                                         </TableRow>
                                     );
-                                })
+                                    })}
+                                    <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                                        <TableCell colSpan={5} sx={{ fontWeight: 700, color: '#063455' }}>
+                                            Grand Total (Current Page)
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Rs. {transactionHistoryPageTotals.amount.toLocaleString()}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Rs. {transactionHistoryPageTotals.paid.toLocaleString()}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: transactionHistoryPageTotals.balance > 0 ? 'error.main' : 'success.main' }}>Rs. {transactionHistoryPageTotals.balance.toLocaleString()}</TableCell>
+                                        <TableCell colSpan={4} />
+                                    </TableRow>
+                                </>
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={12} align="center">

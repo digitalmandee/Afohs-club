@@ -268,7 +268,7 @@ class BookingController extends Controller
             // But simpler: just validate against new remaining.
         }
 
-        // Allow partial payment even with orders?
+        // Allow split amount payment even with orders?
         // User said "add one time this total and then paid".
         // Let's assume if pay_orders is checked, we add the cost to invoice PERMANENTLY?
         // Or just for this transaction?

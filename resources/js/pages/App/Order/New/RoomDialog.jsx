@@ -44,16 +44,19 @@ const RoomDialog = ({ guestTypes, roomTypes, loading, selectedRestaurant }) => {
     const handleMemberType = (value) => {
         handleOrderDetailChange('member_type', value);
         handleOrderDetailChange('member', {});
+        handleOrderDetailChange('room', null);
     };
 
     const handleMemberSelection = (newValue) => {
         if (!newValue) {
             handleOrderDetailChange('member', {});
+            handleOrderDetailChange('room', null);
             return;
         }
 
         if (newValue.booking_type !== 'member') {
             handleOrderDetailChange('member', newValue);
+            handleOrderDetailChange('room', null);
             return;
         }
 
@@ -66,6 +69,7 @@ const RoomDialog = ({ guestTypes, roomTypes, loading, selectedRestaurant }) => {
         if (status === 'expired') {
             enqueueSnackbar(`The membership has EXPIRED!${reason ? ` Reason: ${reason}` : ''}`, { variant: 'warning' });
             handleOrderDetailChange('member', newValue);
+            handleOrderDetailChange('room', null);
             return;
         }
 
@@ -73,35 +77,45 @@ const RoomDialog = ({ guestTypes, roomTypes, loading, selectedRestaurant }) => {
         if (blocked.has(status)) {
             enqueueSnackbar(`Please consult Accounts Manager in order to continue with this Order.${reason ? ` Reason: ${reason}` : ''}`, { variant: 'error' });
             handleOrderDetailChange('member', {});
+            handleOrderDetailChange('room', null);
             return;
         }
 
         handleOrderDetailChange('member', newValue);
+        handleOrderDetailChange('room', null);
+    };
+
+    const findCheckedInRoomForMember = (member, memberType) => {
+        if (!member || !member.id) return null;
+        for (const type of roomTypes) {
+            if (!Array.isArray(type.rooms)) continue;
+            const matched = type.rooms.find((r) => {
+                const booking = r.current_booking;
+                if (!booking || booking.status !== 'checked_in') return false;
+                if (memberType == 0) return booking.member_id == member.id;
+                if (String(memberType).startsWith('guest-') || memberType == 2) return booking.customer_id == member.id;
+                if (memberType == 3) return booking.employee_id == member.id;
+                return false;
+            });
+            if (matched) {
+                return { typeId: type.id, room: matched };
+            }
+        }
+        return null;
     };
 
     // Auto-select room based on selected member
     useEffect(() => {
         if (orderDetails.member && orderDetails.member.id && roomTypes.length > 0) {
-            for (const type of roomTypes) {
-                if (type.rooms) {
-                    const foundRoom = type.rooms.find((r) => {
-                        const booking = r.current_booking;
-                        if (!booking) return false;
-                        if (orderDetails.member_type == 0) return booking.member_id == orderDetails.member.id;
-                        if (String(orderDetails.member_type).startsWith('guest-') || orderDetails.member_type == 2) return booking.customer_id == orderDetails.member.id;
-                        if (orderDetails.member_type == 3) return booking.employee_id == orderDetails.member.id;
-                        return false;
-                    });
-
-                    if (foundRoom) {
-                        handleOrderDetailChange('room_type', type.id);
-                        handleOrderDetailChange('room', foundRoom);
-                        break;
-                    }
-                }
+            const matched = findCheckedInRoomForMember(orderDetails.member, orderDetails.member_type);
+            if (matched) {
+                handleOrderDetailChange('room_type', matched.typeId);
+                handleOrderDetailChange('room', matched.room);
+            } else {
+                handleOrderDetailChange('room', null);
             }
         }
-    }, [orderDetails.member, roomTypes]);
+    }, [orderDetails.member, orderDetails.member_type, roomTypes]);
 
     const currentRoomType = roomTypes.find((r) => r.id === orderDetails.room_type);
 
@@ -436,7 +450,7 @@ const RoomDialog = ({ guestTypes, roomTypes, loading, selectedRestaurant }) => {
                                     </Box>
                                     <Box>
                                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textTransform: 'capitalize' }}>
-                                            Room Status: {orderDetails.room?.current_booking?.status?.replace('_', ' ') || 'Occupied'}
+                                            Room Status: {orderDetails.room?.current_booking?.status?.replace('_', ' ') || 'Not Checked In'}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                                             Check-In: {orderDetails.room?.current_booking?.check_in_date}

@@ -483,14 +483,6 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
                                             {selectedTable?.table_no}
                                         </Typography>
                                     </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1, fontSize: '16px', color: '#7F7F7F' }}>
-                                            Capacity:
-                                        </Typography>
-                                        <Typography variant="body1" fontWeight="600" color="#063455">
-                                            {selectedTable?.capacity} Persons
-                                        </Typography>
-                                    </Box>
                                 </>
                             )}
                         </Paper>
@@ -568,7 +560,7 @@ const ReservationDialog = ({ guestTypes, floorTables = [], tablesReloadKey = 0, 
                                     </MenuItem>
                                     {allTables.map((table) => (
                                         <MenuItem key={table.id} value={table.id}>
-                                            {table.floor_name ? `${table.floor_name} - ` : ''}Table {table.table_no} (Capacity: {table.capacity})
+                                            {table.floor_name ? `${table.floor_name} - ` : ''}Table {table.table_no}
                                         </MenuItem>
                                     ))}
                                 </Select>

@@ -26,8 +26,6 @@ export default function TransactionDashboard({ statistics, recent_transactions }
                 return 'success';
             case 'unpaid':
                 return 'error';
-            case 'partial':
-                return 'warning';
             default:
                 return 'default';
         }

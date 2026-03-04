@@ -723,7 +723,7 @@ class FinancialController extends Controller
         try {
             $updatedCount = 0;
             $invoices = FinancialInvoice::whereIn('id', $request->ids)
-                ->whereIn('status', ['unpaid', 'partial'])  // Only allow modifying unpaid/partial
+                ->whereNotIn('status', ['paid', 'cancelled'])
                 ->get();
 
             foreach ($invoices as $invoice) {
@@ -800,7 +800,7 @@ class FinancialController extends Controller
                     $invoice->customer_charges = 0;
                     $invoice->save();
                 } elseif ($paid > 0) {
-                    $invoice->status = 'partial';
+                    $invoice->status = 'unpaid';
                     $invoice->save();
                 }
 
@@ -828,7 +828,7 @@ class FinancialController extends Controller
         try {
             $updatedCount = 0;
             $invoices = FinancialInvoice::whereIn('id', $request->ids)
-                ->whereIn('status', ['unpaid', 'partial'])
+                ->whereNotIn('status', ['paid', 'cancelled'])
                 ->get();
 
             foreach ($invoices as $invoice) {
@@ -862,7 +862,7 @@ class FinancialController extends Controller
                     $invoice->status = 'paid';
                     $invoice->customer_charges = 0;
                 } elseif ($paid > 0) {
-                    $invoice->status = 'partial';
+                    $invoice->status = 'unpaid';
                 }
                 $invoice->save();
 

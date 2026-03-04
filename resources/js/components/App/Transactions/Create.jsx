@@ -38,13 +38,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         description: '',
         qty: 1,
         amount: '',
-        tax_percentage: 0,
+        tax_percentage: '',
         overdue_percentage: 0,
         discount_type: 'fixed',
-        discount_value: 0,
+        discount_value: '',
         discount_amount: 0,
-        additional_charges: 0,
-        extra_percentage: 0,
+        additional_charges: '',
+        extra_percentage: '',
         valid_from: null,
         valid_to: null,
         days: '',
@@ -1108,7 +1108,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const statusStyles = {
         paid: { bg: '#d4edda', color: '#155724' },
         unpaid: { bg: '#f8d7da', color: '#721c24' },
-        partial: { bg: '#fff3cd', color: '#856404' },
         default: { bg: '#e2e3e5', color: '#383d41' },
     };
 

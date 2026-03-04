@@ -287,9 +287,14 @@ class InventoryController extends Controller
     // Get Single Product
     public function getProduct($id)
     {
-        $product = Product::with(['variants:id,product_id,name', 'variants.values', 'kitchen'])
+        $product = Product::with(['variants:id,product_id,name', 'variants.values', 'kitchen', 'category'])
             ->find($id);
         return response()->json(['success' => true, 'product' => $product], 200);
+    }
+
+    public function singleProduct($id)
+    {
+        return $this->getProduct($id);
     }
 
     /**

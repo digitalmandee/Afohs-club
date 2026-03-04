@@ -510,7 +510,6 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                     const styles = {
                                                         paid: { bg: '#d4edda', color: '#155724', text: 'Paid' },
                                                         unpaid: { bg: '#f8d7da', color: '#721c24', text: 'Unpaid' },
-                                                        partial: { bg: '#fff3cd', color: '#856404', text: 'Partial' },
                                                         default: { bg: '#e2e3e5', color: '#383d41', text: status || 'N/A' },
                                                     };
                                                     return styles[status] || styles.default;

@@ -383,11 +383,11 @@ const DineDialog = ({ guestTypes, floorTables, allrestaurants, selectedRestauran
                     <Grid container spacing={1}>
                         {filteredTables.length > 0 &&
                             filteredTables.map((table) => (
-                                <Grid item xs={6} key={table.id}>
+                                <Grid item xs={4} sm={3} md={2} key={table.id}>
                                     <Paper
                                         elevation={0}
                                         sx={{
-                                            p: 1.5,
+                                            p: 1,
                                             bgcolor: table.id === orderDetails.table?.id ? '#FCF7EF' : table.is_available ? 'white' : '#f5f5f5',
                                             border: table.id === orderDetails.table?.id ? '1px solid #A27B5C' : '1px solid #e0e0e0',
                                             borderRadius: 1,
@@ -410,9 +410,6 @@ const DineDialog = ({ guestTypes, floorTables, allrestaurants, selectedRestauran
                                                     alignItems: 'center',
                                                 }}
                                             >
-                                                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                                    {table.capacity} person
-                                                </Typography>
                                                 {table.is_available ? (
                                                     <FormControlLabel
                                                         value={JSON.stringify(table)}

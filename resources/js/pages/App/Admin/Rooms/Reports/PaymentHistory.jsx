@@ -28,7 +28,6 @@ const PaymentHistoryReport = ({ bookings = {}, filters = {} }) => {
         const colors = {
             paid: 'success',
             unpaid: 'error',
-            partial: 'warning',
         };
         return colors[status] || 'default';
     };
@@ -108,7 +107,7 @@ const PaymentHistoryReport = ({ bookings = {}, filters = {} }) => {
                                         const total = parseFloat(booking.grand_total || 0);
                                         const paid = parseFloat(invoice ? invoice.paid_amount : 0);
                                         const balance = total - paid;
-                                        const status = balance <= 0 ? (total > 0 ? 'paid' : 'unpaid') : paid > 0 ? 'partial' : 'unpaid';
+                                        const status = balance <= 0 ? (total > 0 ? 'paid' : 'unpaid') : 'unpaid';
 
                                         return (
                                             <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
