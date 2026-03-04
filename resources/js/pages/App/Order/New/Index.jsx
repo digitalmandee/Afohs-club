@@ -126,20 +126,23 @@ const NewOrder = ({ orderNo, guestTypes, allrestaurants, activeTenantId, activeP
         const table = query.get('table');
         const floor = query.get('floor');
         const type = query.get('type');
+        const preserve = query.get('preserve');
 
-        resetOrderDetails();
+        if (!preserve) {
+            resetOrderDetails();
 
-        setInitialOrder({
-            orderNo,
-            guestTypes,
-            floorTables: floor ? [{ id: floor }] : floorTables,
-            table: table ? table : null,
-            time: dayjs().format('HH:mm'),
-        });
+            setInitialOrder({
+                orderNo,
+                guestTypes,
+                floorTables: floor ? [{ id: floor }] : floorTables,
+                table: table ? table : null,
+                time: dayjs().format('HH:mm'),
+            });
 
-        // Auto-select order type from URL
-        if (type) {
-            handleOrderTypeChange(type);
+            // Auto-select order type from URL
+            if (type) {
+                handleOrderTypeChange(type);
+            }
         }
     }, []);
 

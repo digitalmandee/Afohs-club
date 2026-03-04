@@ -417,7 +417,7 @@ const OrderMenu = () => {
                                 // bgcolor: "white",
                             }}
                         >
-                            <IconButton onClick={() => router.visit(route(routeNameForContext('order.new')))} sx={{ mr: 1 }}>
+                            <IconButton onClick={() => router.visit(route(routeNameForContext('order.new'), { preserve: 1 }))} sx={{ mr: 1 }}>
                                 <ArrowBack />
                             </IconButton>
                             <Typography sx={{ color: '#063455', fontSize: '30px', fontWeight: 500 }}>Back</Typography>
