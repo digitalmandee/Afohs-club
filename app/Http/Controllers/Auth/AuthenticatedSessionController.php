@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\UserLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -49,6 +50,15 @@ class AuthenticatedSessionController extends Controller
                 ->onlyInput('email');
         }
 
+        if ($user) {
+            UserLog::create([
+                'user_id' => $user->id,
+                'type' => 'login',
+                'logged_at' => now(),
+                'restaurant_id' => null,
+            ]);
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -57,6 +67,16 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::guard('web')->user();
+        if ($user) {
+            UserLog::create([
+                'user_id' => $user->id,
+                'type' => 'logout',
+                'logged_at' => now(),
+                'restaurant_id' => null,
+            ]);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

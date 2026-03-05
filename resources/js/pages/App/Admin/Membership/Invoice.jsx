@@ -36,7 +36,12 @@ const handlePrintReceipt = (invoice) => {
     if (itemsList.length > 0) {
         if (hasInvoiceItems) {
             // New System
-            subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.sub_total || item.amount) || 0), 0);
+            subTotal = itemsList.reduce((sum, item) => {
+                const qty = parseFloat(item.qty || 1) || 1;
+                const rate = parseFloat(item.amount || 0) || 0;
+                const base = qty * rate;
+                return sum + (Number.isFinite(base) ? base : 0);
+            }, 0);
             const itemsDiscountSum = itemsList.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
             discountTotal = Math.max(itemsDiscountSum, parseFloat(invoice.discount_amount || 0) || 0);
             taxTotal = parseFloat(invoice.tax_amount || 0);
@@ -49,6 +54,9 @@ const handlePrintReceipt = (invoice) => {
             remainingTotal = invoice.customer_charges !== null && invoice.customer_charges !== undefined ? parseFloat(invoice.customer_charges || 0) : Math.max(0, grandTotal - paidTotal);
             overdueTotal = parseFloat(invoice.overdue_amount || 0);
             additionalTotal = parseFloat(invoice.additional_charges || 0);
+            if (additionalTotal === 0) {
+                additionalTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.additional_charges) || 0), 0);
+            }
         } else if (hasDataItems) {
             // Legacy Data Blob
             subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.original_amount || item.amount) || 0), 0);
@@ -90,13 +98,26 @@ const handlePrintReceipt = (invoice) => {
     }
 
     // Map data to invoiceData for consistency with JSX
+    const guestTypeName = invoice.customer?.guest_type?.name || invoice.customer?.guestType?.name || invoice.customer?.guest_type_name || null;
+    const billToCategory =
+        invoice.customer
+            ? guestTypeName || 'Guest'
+            : invoice.invoice_type === 'applied_member'
+              ? 'Applied Member'
+              : invoice.member
+                ? invoice.member?.member_type?.name || invoice.member?.memberType?.name || 'Member'
+                : invoice.corporate_member
+                  ? invoice.corporate_member?.member_type?.name || invoice.corporate_member?.memberType?.name || 'Corporate Member'
+                  : invoice.data?.member_category || invoice.data?.category || 'Member';
+
+    const billToIdLabel = invoice.customer ? 'Guest #' : 'Membership #';
+
     const invoiceData = {
         billTo: {
             name: invoice.member?.full_name || invoice.member?.name || invoice.corporate_member?.full_name || invoice.customer?.name || invoice.data?.member_name || 'N/A',
-            category: invoice.member?.member_type?.name || 'Member',
+            category: billToCategory,
             membershipId: invoice.member?.membership_no || invoice.corporate_member?.membership_no || invoice.customer?.customer_no || 'N/A',
             contactNumber: invoice.member?.mobile_number_a || invoice.corporate_member?.mobile_number_a || invoice.customer?.contact || 'N/A',
-            city: invoice.member?.current_city || invoice.corporate_member?.current_city || invoice.customer?.address || 'N/A',
             familyMember: 'Non',
         },
         details: {
@@ -128,11 +149,27 @@ const handlePrintReceipt = (invoice) => {
             let netAmount = 0;
             let remainingAmount = 0;
             let paidAmount = 0;
+            let discountType = null;
+            let discountValue = 0;
+            let taxPercentage = 0;
+            let taxAmount = 0;
+            let overduePercentage = 0;
+            let overdueAmount = 0;
+            let additionalCharges = 0;
+            let extraPercentage = 0;
 
             if (hasInvoiceItems) {
                 originalAmount = parseFloat(item.sub_total || item.amount || 0);
                 discount = parseFloat(item.discount_amount || 0);
                 netAmount = parseFloat(item.total || item.amount || 0);
+                discountType = item.discount_type ?? null;
+                discountValue = parseFloat(item.discount_value || 0);
+                taxPercentage = parseFloat(item.tax_percentage || 0);
+                taxAmount = parseFloat(item.tax_amount || 0);
+                overduePercentage = parseFloat(item.overdue_percentage || 0);
+                overdueAmount = parseFloat(item.overdue_amount || 0);
+                additionalCharges = parseFloat(item.additional_charges || 0);
+                extraPercentage = parseFloat(item.extra_percentage || 0);
 
                 if (invoice.status === 'paid') {
                     paidAmount = netAmount;
@@ -168,6 +205,14 @@ const handlePrintReceipt = (invoice) => {
                 subscriptionCategory: item.subscriptionCategory?.name || item.subscription_category_name || 'N/A',
                 originalAmount: originalAmount,
                 discount: discount,
+                discountType,
+                discountValue,
+                taxPercentage,
+                taxAmount,
+                overduePercentage,
+                overdueAmount,
+                additionalCharges,
+                extraPercentage,
                 invoiceAmount: netAmount,
                 remainingAmount: remainingAmount,
                 paidAmount: paidAmount,
@@ -192,6 +237,17 @@ const handlePrintReceipt = (invoice) => {
         amountInWords: toWords(grandTotal),
         sentBy: 'Admin',
     };
+
+    const num = (val) => {
+        if (val === null || val === undefined || val === '') return 0;
+        const n = parseFloat(String(val).replace(/,/g, ''));
+        return Number.isFinite(n) ? n : 0;
+    };
+
+    const showItemDiscount = invoice.fee_type !== 'subscription_fee' && invoiceData.items.some((it) => num(it.discount) > 0);
+    const showItemTax = invoiceData.items.some((it) => num(it.taxAmount) > 0);
+    const showItemOverdue = invoiceData.items.some((it) => num(it.overdueAmount) > 0);
+    const showItemAdditional = invoiceData.items.some((it) => num(it.additionalCharges) > 0);
 
     const printWindow = window.open('', '_blank');
 
@@ -270,9 +326,9 @@ const handlePrintReceipt = (invoice) => {
               <div class="info-column">
                 <div class="section-title">Bill To: ${invoiceData.billTo.membershipId}</div>
                 <div class="info-row"><span class="info-label">Name:</span><span class="info-value">${invoiceData.billTo.name}</span></div>
-                <div class="info-row"><span class="info-label">Membership #:</span><span class="info-value">${invoiceData.billTo.membershipId}</span></div>
+                <div class="info-row"><span class="info-label">Category:</span><span class="info-value">${invoiceData.billTo.category}</span></div>
+                <div class="info-row"><span class="info-label">${billToIdLabel}:</span><span class="info-value">${invoiceData.billTo.membershipId}</span></div>
                 <div class="info-row"><span class="info-label">Contact #:</span><span class="info-value">${invoiceData.billTo.contactNumber}</span></div>
-                <div class="info-row"><span class="info-label">City:</span><span class="info-value">${invoiceData.billTo.city}</span></div>
               </div>
               <div class="info-column">
                 <div class="section-title">Details</div>
@@ -291,6 +347,10 @@ const handlePrintReceipt = (invoice) => {
                     <th>SR #</th>
                     <th>Description</th>
                     ${invoice.fee_type === 'subscription_fee' ? `<th>Type</th><th>Category</th><th>Fee</th><th>Disc</th>` : ''}
+                    ${showItemDiscount ? `<th>Disc</th>` : ''}
+                    ${showItemAdditional ? `<th>Add. Chrgs</th>` : ''}
+                    ${showItemTax ? `<th>Tax</th>` : ''}
+                    ${showItemOverdue ? `<th>Overdue</th>` : ''}
                     <th>Net Amount</th>
                     <th>Remaining</th>
                     <th>Paid</th>
@@ -304,6 +364,10 @@ const handlePrintReceipt = (invoice) => {
                       <td>${item.srNo}</td>
                       <td>${item.description}</td>
                        ${invoice.fee_type === 'subscription_fee' ? `<td>${item.subscriptionType}</td><td>${item.subscriptionCategory}</td><td>${item.originalAmount}</td><td>${item.discount}</td>` : ''}
+                      ${showItemDiscount ? `<td>${num(item.discount) > 0 ? `Rs ${item.discount}` : ''}</td>` : ''}
+                      ${showItemAdditional ? `<td>${num(item.additionalCharges) > 0 ? `Rs ${item.additionalCharges}` : ''}</td>` : ''}
+                      ${showItemTax ? `<td>${num(item.taxAmount) > 0 ? `${item.taxPercentage}% (Rs ${item.taxAmount})` : ''}</td>` : ''}
+                      ${showItemOverdue ? `<td>${num(item.overdueAmount) > 0 ? `${item.overduePercentage}% (Rs ${item.overdueAmount})` : ''}</td>` : ''}
                       <td>${item.invoiceAmount}</td>
                       <td>${item.remainingAmount}</td>
                       <td>${item.paidAmount}</td>
@@ -455,7 +519,12 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
     if (itemsList.length > 0) {
         if (hasInvoiceItems) {
             // New System: FinancialInvoiceItem models
-            subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.sub_total || item.amount) || 0), 0);
+            subTotal = itemsList.reduce((sum, item) => {
+                const qty = parseFloat(item.qty || 1) || 1;
+                const rate = parseFloat(item.amount || 0) || 0;
+                const base = qty * rate;
+                return sum + (Number.isFinite(base) ? base : 0);
+            }, 0);
             const itemsDiscountSum = itemsList.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
             discountTotal = Math.max(itemsDiscountSum, parseFloat(invoice.discount_amount || 0) || 0);
             taxTotal = parseFloat(invoice.tax_amount || 0); // Header tax is usually sum of items tax
@@ -472,6 +541,9 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
 
             overdueTotal = parseFloat(invoice.overdue_amount || 0);
             additionalTotal = parseFloat(invoice.additional_charges || 0);
+            if (additionalTotal === 0) {
+                additionalTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.additional_charges) || 0), 0);
+            }
         } else if (hasDataItems) {
             // Legacy Data Blob
             subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.original_amount || item.amount) || 0), 0);
@@ -512,6 +584,31 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
         paidTotal = parseFloat(invoice.paid_amount || 0);
         remainingTotal = parseFloat(invoice.customer_charges || 0);
     }
+
+    const num = (val) => {
+        if (val === null || val === undefined || val === '') return 0;
+        const n = parseFloat(String(val).replace(/,/g, ''));
+        return Number.isFinite(n) ? n : 0;
+    };
+
+    const showRowDiscount = invoice?.fee_type !== 'subscription_fee' && itemsList.some((it) => num(it.discount_amount) > 0);
+    const showRowTax = itemsList.some((it) => num(it.tax_amount) > 0);
+    const showRowOverdue = itemsList.some((it) => num(it.overdue_amount) > 0);
+    const showRowAdditional = itemsList.some((it) => num(it.additional_charges) > 0);
+
+    const guestTypeName = invoice?.customer?.guest_type?.name || invoice?.customer?.guestType?.name || invoice?.customer?.guest_type_name || null;
+    const billToCategory =
+        invoice?.customer
+            ? guestTypeName || 'Guest'
+            : invoice?.invoice_type === 'applied_member'
+              ? 'Applied Member'
+              : invoice?.member
+                ? invoice.member?.member_type?.name || invoice.member?.memberType?.name || 'Member'
+                : invoice?.corporate_member
+                  ? invoice.corporate_member?.member_type?.name || invoice.corporate_member?.memberType?.name || 'Corporate Member'
+                  : invoice?.data?.member_category || invoice?.data?.category || 'Member';
+
+    const billToIdLabel = invoice?.customer ? 'Guest #' : 'Membership #';
 
     return (
         <Drawer
@@ -596,16 +693,16 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                             {invoice.member?.full_name || invoice.corporate_member?.full_name || invoice.customer?.name}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                            <span style={{ fontWeight: 'bold' }}>Membership #: </span>
+                                            <span style={{ fontWeight: 'bold' }}>Category: </span>
+                                            {billToCategory}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                            <span style={{ fontWeight: 'bold' }}>{billToIdLabel}: </span>
                                             {invoice.member?.membership_no || invoice.corporate_member?.membership_no || invoice.customer?.customer_no}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Contact #: </span>
                                             {invoice.member?.mobile_number_a || invoice.corporate_member?.mobile_number_a || invoice.customer?.contact}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                            <span style={{ fontWeight: 'bold' }}>City: </span>
-                                            {invoice.member?.current_city || invoice.corporate_member?.current_city || invoice.customer?.address}
                                         </Typography>
                                     </Box>
                                 </Grid>
@@ -701,6 +798,10 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                                     <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Disc</TableCell>
                                                 </>
                                             )}
+                                            {showRowDiscount && <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Disc</TableCell>}
+                                            {showRowAdditional && <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Add. Chrgs</TableCell>}
+                                            {showRowTax && <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Tax</TableCell>}
+                                            {showRowOverdue && <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Overdue</TableCell>}
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Net Amount</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Remaining Amount</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Paid Amount</TableCell>
@@ -716,12 +817,22 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                             let netAmount = 0;
                                             let paidAmount = 0;
                                             let remainingAmount = 0;
+                                            let taxAmount = 0;
+                                            let taxPercentage = 0;
+                                            let overdueAmount = 0;
+                                            let overduePercentage = 0;
+                                            let addCharges = 0;
 
                                             if (hasInvoiceItems) {
                                                 // New System
                                                 originalAmount = parseFloat(item.sub_total || item.amount || 0);
                                                 discount = parseFloat(item.discount_amount || 0);
                                                 netAmount = parseFloat(item.total || item.amount || 0);
+                                                taxAmount = parseFloat(item.tax_amount || 0);
+                                                taxPercentage = parseFloat(item.tax_percentage || 0);
+                                                overdueAmount = parseFloat(item.overdue_amount || 0);
+                                                overduePercentage = parseFloat(item.overdue_percentage || 0);
+                                                addCharges = parseFloat(item.additional_charges || 0);
 
                                                 // Basic paid logic (can be refined if items have individual status)
                                                 // For now assuming if header is paid, item is fully paid, unless item has paid_amount
@@ -765,6 +876,10 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                                             <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{discount}</TableCell>
                                                         </>
                                                     )}
+                                                    {showRowDiscount && <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{discount > 0 ? `Rs ${discount}` : ''}</TableCell>}
+                                                    {showRowAdditional && <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{addCharges > 0 ? `Rs ${addCharges}` : ''}</TableCell>}
+                                                    {showRowTax && <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{taxAmount > 0 ? `${taxPercentage}% (Rs ${taxAmount})` : ''}</TableCell>}
+                                                    {showRowOverdue && <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{overdueAmount > 0 ? `${overduePercentage}% (Rs ${overdueAmount})` : ''}</TableCell>}
                                                     <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{netAmount}</TableCell>
                                                     <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{remainingAmount}</TableCell>
                                                     <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{paidAmount}</TableCell>

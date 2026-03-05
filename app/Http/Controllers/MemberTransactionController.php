@@ -1355,7 +1355,7 @@ class MemberTransactionController extends Controller
 
     public function payInvoiceView($id)
     {
-        $invoice = FinancialInvoice::with(['items.transactions', 'member', 'corporateMember', 'customer'])
+        $invoice = FinancialInvoice::with(['items.transactions', 'member', 'corporateMember', 'customer', 'customer.guestType'])
             ->findOrFail($id);
 
         $allTransactionTypes = \App\Models\TransactionType::all();

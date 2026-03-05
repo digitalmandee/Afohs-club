@@ -4,6 +4,11 @@ import { Box, Button, IconButton, Paper, Typography } from '@mui/material';
 
 const EmployeeProfileScreen = ({ setProfileView, onClose }) => {
     const { auth } = usePage().props;
+    const user = auth?.user || {};
+    const employee = user?.employee || null;
+    const employeeId = employee?.employee_id || user?.employee_id || 'N/A';
+    const phoneNo = employee?.phone_no || user?.phone_no || user?.phone || 'N/A';
+    const address = employee?.address || user?.address || 'N/A';
     return (
         <Paper
             elevation={1}
@@ -40,10 +45,10 @@ const EmployeeProfileScreen = ({ setProfileView, onClose }) => {
                 }}
             >
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                    {auth.user?.name}
+                    {user?.name}
                 </Typography>
                 <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', textAlign: 'right' }}>
-                    {auth.role}
+                    {auth?.role}
                 </Typography>
             </Box>
 
@@ -62,28 +67,28 @@ const EmployeeProfileScreen = ({ setProfileView, onClose }) => {
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Employee ID
                     </Typography>
-                    <Typography variant="body2">{auth.user.employee.employee_id}</Typography>
+                    <Typography variant="body2">{employeeId}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 1.5 }}>
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Email
                     </Typography>
-                    <Typography variant="body2">{auth.user.email}</Typography>
+                    <Typography variant="body2">{user?.email || 'N/A'}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 1.5 }}>
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Phone number
                     </Typography>
-                    <Typography variant="body2">{auth.user.employee.phone_no || 'N/A'}</Typography>
+                    <Typography variant="body2">{phoneNo}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 2 }}>
                     <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                         Address
                     </Typography>
-                    <Typography variant="body2">{auth.user.employee?.address || 'N/A'}</Typography>
+                    <Typography variant="body2">{address}</Typography>
                 </Box>
             </Box>
 

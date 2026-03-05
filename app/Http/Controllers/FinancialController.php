@@ -420,6 +420,7 @@ class FinancialController extends Controller
             'member.memberType',
             'corporateMember',
             'customer',
+            'customer.guestType',
             'subscriptionType',
             'subscriptionCategory',
             'invoiceable',

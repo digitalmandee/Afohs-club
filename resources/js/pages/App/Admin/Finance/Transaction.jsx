@@ -5,7 +5,6 @@ import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import TransactionFilter from './Filter';
-import InvoiceSlip from '../Subscription/Invoice';
 import MembershipInvoiceSlip from '../Membership/Invoice';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
@@ -20,10 +19,7 @@ import dayjs from 'dayjs';
 const Transaction = ({ transactions, filters, users, transactionTypes, subscriptionCategories, financialChargeTypes }) => {
     // Modal state
     // const [open, setOpen] = useState(true);
-    const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openMembershipInvoiceModal, setOpenMembershipInvoiceModal] = useState(false);
-    const [selectedInvoice, setSelectedInvoice] = useState(null);
-    const [selectedMemberUserId, setSelectedMemberUserId] = useState(null);
     const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
     const [showRoomInvoiceModal, setShowRoomInvoiceModal] = useState(false);
     const [showEventInvoiceModal, setShowEventInvoiceModal] = useState(false);
@@ -469,13 +465,9 @@ const Transaction = ({ transactions, filters, users, transactionTypes, subscript
                                                             } else if (transaction.invoice_type === 'event_booking' && transaction.invoiceable_id) {
                                                                 setSelectedBookingId(transaction.invoiceable_id);
                                                                 setShowEventInvoiceModal(true);
-                                                            } else if (transaction.member || transaction.corporate_member) {
-                                                                setSelectedInvoiceId(transaction.id);
-                                                                setSelectedMemberUserId(null);
-                                                                setOpenMembershipInvoiceModal(true);
                                                             } else {
-                                                                setSelectedInvoice(transaction);
-                                                                setOpenInvoiceModal(true);
+                                                                setSelectedInvoiceId(transaction.id);
+                                                                setOpenMembershipInvoiceModal(true);
                                                             }
                                                         }}
                                                     >
@@ -533,20 +525,16 @@ const Transaction = ({ transactions, filters, users, transactionTypes, subscript
                 </div>
                 {/* <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} currentFilters={filters} onApply={handleFilterApply} /> */}
 
-                {/* Fallback Invoice Modal (for non-member transactions) */}
-                <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedInvoice} />
-
                 {/* Membership Invoice Modal - Used for Membership, Subscription & Maintenance Fees */}
                 <MembershipInvoiceSlip
                     open={openMembershipInvoiceModal}
                     onClose={() => {
                         setOpenMembershipInvoiceModal(false);
-                        setSelectedMemberUserId(null);
                         setSelectedInvoiceId(null);
                     }}
-                    invoiceNo={selectedMemberUserId}
                     invoiceId={selectedInvoiceId}
                 />
+
 
                 {/* Room Booking Invoice Modal */}
                 <BookingInvoiceModal

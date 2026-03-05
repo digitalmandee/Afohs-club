@@ -178,6 +178,16 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        if (!$user->can('pos.view')) {
+            Auth::guard('tenant')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('pos.login')->withErrors([
+                'employee_id' => 'Access denied. You do not have POS access.',
+            ]);
+        }
+
         $request->session()->forget('active_pos_location_id');
 
         UserLog::create([

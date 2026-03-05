@@ -60,6 +60,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\VoucherController;
+use App\Models\PosLocation;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -75,7 +78,34 @@ Route::get('/', function () {
 // });
 
 Route::prefix('pos')->middleware('web')->group(function () {
-    Route::get('/', fn() => redirect()->route('pos.login'));
+    Route::get('/', function (\Illuminate\Http\Request $request) {
+        $posLocationId = (int) $request->session()->get('active_pos_location_id');
+        $hasActivePosLocation = $posLocationId && PosLocation::where('id', $posLocationId)->where('status', 'active')->exists();
+
+        $webUser = Auth::guard('web')->user();
+        if ($webUser) {
+            if ($webUser->can('pos.view')) {
+                Auth::guard('tenant')->login($webUser);
+                $request->session()->regenerate();
+                return redirect()->route($hasActivePosLocation ? 'pos.dashboard' : 'pos.select-pos-location');
+            }
+
+            return redirect()->route('pos.login');
+        }
+
+        $tenantUser = Auth::guard('tenant')->user();
+        if ($tenantUser) {
+            if ($tenantUser->can('pos.view')) {
+                return redirect()->route($hasActivePosLocation ? 'pos.dashboard' : 'pos.select-pos-location');
+            }
+
+            Auth::guard('tenant')->logout();
+            $request->session()->forget('active_pos_location_id');
+            return redirect()->route('pos.login');
+        }
+
+        return redirect()->route('pos.login');
+    });
     Route::get('login', [\App\Http\Controllers\App\Auth\AuthenticatedSessionController::class, 'createPos'])->name('pos.login');
     Route::post('login', [\App\Http\Controllers\App\Auth\AuthenticatedSessionController::class, 'storePos']);
     Route::post('check-user-id', [\App\Http\Controllers\App\Auth\AuthController::class, 'checkUserId'])->name('pos.check-user-id');
@@ -245,6 +275,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
     // admin dashboard routes
     Route::get('dashboard', [AdminController::class, 'index'])->name('dashboard')->middleware('super.admin:dashboard.view');
     Route::get('activity-log', [App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activity-log');
+    Route::get('api/employee-logs', [\App\Http\Controllers\EmployeeController::class, 'employeeLog'])->name('admin.api.employee-logs');
     Route::post('notifications/{id}/read', [AdminController::class, 'markNotificationRead'])->name('notifications.read');
     Route::get('dashboard/print', [AdminController::class, 'printDashboard'])->name('dashboard.print')->middleware('super.admin:dashboard.view');
 
