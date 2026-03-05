@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Add, Delete, Edit } from '@mui/icons-material';
+import { Add, Delete, Edit, Search } from '@mui/icons-material';
 import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import AdminLayout from '@/layouts/AdminLayout';
 import { useSnackbar } from 'notistack';
+import { FaEdit } from 'react-icons/fa';
 
 const PosLocationsIndex = () => {
     const { props } = usePage();
@@ -115,24 +116,91 @@ const PosLocationsIndex = () => {
 
     return (
         <AdminLayout>
-            <Head title="POS Locations" />
+            {/* <Head title="POS Locations" /> */}
 
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ p: 2 }}>
                 <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455', mb: 2 }}>POS Locations</Typography>
 
-                <Paper sx={{ p: 2, mb: 2 }}>
+                <Box sx={{ mb: 2 }}>
                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                            <TextField label="Search" value={search} onChange={(e) => setSearch(e.target.value)} size="small" />
-                            <FormControl size="small" sx={{ minWidth: 160 }}>
+                            <TextField
+                                label="Search"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
+                            />
+                            <FormControl
+                                size="small"
+                                sx={{
+                                    minWidth: 160,
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}>
                                 <InputLabel>Status</InputLabel>
-                                <Select label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
-                                    <MenuItem value="">All</MenuItem>
-                                    <MenuItem value="active">Active</MenuItem>
-                                    <MenuItem value="inactive">Inactive</MenuItem>
+                                <Select
+                                    label="Status"
+                                    value={status}
+                                    onChange={(e) => setStatus(e.target.value)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                borderRadius: '16px', // dropdown container rounded
+                                                padding: '8px',
+                                            },
+                                        },
+                                    }}>
+                                    <MenuItem
+                                        value=""
+                                        sx={{
+                                            borderRadius: '16px',
+                                            '&:hover': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                        }}
+                                    >
+                                        All
+                                    </MenuItem>
+
+                                    <MenuItem
+                                        value="active"
+                                        sx={{
+                                            borderRadius: '16px',
+                                            '&:hover': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                        }}
+                                    >
+                                        Active
+                                    </MenuItem>
+
+                                    <MenuItem
+                                        value="inactive"
+                                        sx={{
+                                            borderRadius: '16px',
+                                            '&:hover': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                        }}
+                                    >
+                                        Inactive
+                                    </MenuItem>
                                 </Select>
                             </FormControl>
-                            <Button variant="contained" onClick={handleSearch} sx={{ bgcolor: '#063455', textTransform: 'none', borderRadius: 16 }}>
+                            <Button 
+                            variant="contained" 
+                            startIcon={<Search/>}
+                            onClick={handleSearch} 
+                            sx={{ bgcolor: '#063455', textTransform: 'none', borderRadius: 16 }}>
                                 Search
                             </Button>
                         </Box>
@@ -148,7 +216,7 @@ const PosLocationsIndex = () => {
                             </Button>
                         </Box>
                     </Box>
-                </Paper>
+                </Box>
 
                 <Paper>
                     <TableContainer sx={{ borderRadius: '12px', overflowX: 'auto' }}>
@@ -169,7 +237,7 @@ const PosLocationsIndex = () => {
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                                     <IconButton size="small" color="primary" onClick={() => openEdit(loc)}>
-                                                        <Edit fontSize="small" />
+                                                        <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
                                                     </IconButton>
                                                     <IconButton size="small" color="error" onClick={() => confirmDelete(loc)}>
                                                         <Delete fontSize="small" />

@@ -273,7 +273,7 @@ const AddMenu = ({ openMenu, onClose }) => {
                 }}
             >
                 <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h5" fontWeight="bold">
+                    <Typography sx={{fontWeight:'700', fontSize:'30px', color:'#063455'}}>
                         Add Menu
                     </Typography>
                     <IconButton onClick={onClose}>

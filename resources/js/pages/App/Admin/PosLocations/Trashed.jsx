@@ -67,27 +67,40 @@ const PosLocationsTrashed = () => {
 
     return (
         <AdminLayout>
-            <Head title="Trashed POS Locations" />
+            {/* <Head title="Trashed POS Locations" /> */}
 
-            <Box sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Box sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <IconButton href={route('pos-locations.index')} sx={{ color: '#063455' }}>
                         <ArrowBack />
                     </IconButton>
                     <Box>
                         <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Trashed POS Locations</Typography>
-                        <Typography sx={{ fontWeight: 600, fontSize: '15px', color: '#063455' }}>Restore or permanently delete removed POS locations.</Typography>
                     </Box>
                 </Box>
+                <Typography sx={{ fontWeight: 600, fontSize: '15px', color: '#063455' }}>Restore or permanently delete removed POS locations.</Typography>
 
-                <Paper sx={{ p: 2, mb: 2 }}>
+                <Box sx={{ mt: 2, mb: 2 }}>
                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <TextField label="Search" value={search} onChange={(e) => setSearch(e.target.value)} size="small" />
-                        <Button variant="contained" onClick={handleSearch} sx={{ bgcolor: '#063455', textTransform: 'none', borderRadius: 16 }}>
+                        <TextField
+                            label="Search"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            size="small"
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                },
+                            }}
+                        />
+                        <Button 
+                        variant="contained" 
+                        startIcon={<Search/>}
+                        onClick={handleSearch} sx={{ bgcolor: '#063455', textTransform: 'none', borderRadius: 16 }}>
                             Search
                         </Button>
                     </Box>
-                </Paper>
+                </Box>
 
                 <Paper>
                     <TableContainer sx={{ borderRadius: '12px', overflowX: 'auto' }}>

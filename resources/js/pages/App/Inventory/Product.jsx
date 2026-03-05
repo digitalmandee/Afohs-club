@@ -9,9 +9,8 @@ import { ChevronDown } from 'lucide-react';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useRef, useState } from 'react';
 import { routeNameForContext } from '@/lib/utils';
+import POSLayout from "@/components/POSLayout";
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
 
 const AddProduct = ({ product, id }) => {
     const [open, setOpen] = useState(true);
@@ -497,21 +496,24 @@ const AddProduct = ({ product, id }) => {
     // Render
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
-            <div
-                style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
+            <Box
+                sx={{
+                    p:2,
+                    minHeight:'100vh',
+                    bgcolor:'#f5f5f5'
                 }}
             >
-                <Box sx={{ p: 3, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                    <ArrowBackIcon sx={{ fontSize: 24, color: '#063455', cursor: 'pointer' }} onClick={() => router.visit(route(routeNameForContext('inventory.index')))} />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+                    <ArrowBackIcon 
+                    sx={{ color: '#063455', cursor: 'pointer' }} 
+                    onClick={() => router.visit(route(routeNameForContext('inventory.index')))} 
+                    />
                     <Typography
-                        fontWeight="bold"
                         sx={{
                             fontSize: '30px',
                             color: '#063455',
+                            fontWeight:'700',
                             marginLeft: 3,
                         }}
                     >
@@ -1483,9 +1485,9 @@ const AddProduct = ({ product, id }) => {
                         )}
                     </DialogActions>
                 </Box>
-            </div>
+            </Box>
         </>
     );
 };
-AddProduct.layout = (page) => page;
+AddProduct.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default AddProduct;
