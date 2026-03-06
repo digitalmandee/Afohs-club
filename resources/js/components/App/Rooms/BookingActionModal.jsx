@@ -26,8 +26,8 @@ const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
 
     const isCancel = action === 'cancel';
     const isRefund = action === 'refund';
-    const title = isCancel ? 'Cancel Booking' : isRefund ? 'Process Refund' : 'Undo Cancellation';
-    const confirmText = isCancel ? 'Confirm Cancel' : isRefund ? 'Confirm Refund' : 'Confirm Undo';
+    const title = isCancel ? 'Cancel Booking' : isRefund ? 'Return Advance' : 'Undo Cancellation';
+    const confirmText = isCancel ? 'Confirm Cancel' : isRefund ? 'Confirm Return' : 'Confirm Undo';
     const confirmColor = isCancel || isRefund ? 'error' : 'primary';
 
     const handleConfirm = () => {
@@ -41,10 +41,12 @@ const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
 
     // Check if refund is applicable (Advance/Security Deposit was taken)
     // We check invoice.paid_amount. If > 0, we show refund form.
-    const paidAmount = booking.invoice?.paid_amount || 0;
-    const advanceAmount = booking.invoice?.advance_payment || booking.security_deposit || 0;
-    const maxRefundable = Math.max(paidAmount, advanceAmount);
-    const showRefundForm = (isCancel || isRefund) && maxRefundable > 0;
+    const maxRefundable = booking.invoice?.advance_payment || booking.invoice?.paid_amount || 0;
+    const bookingDate = booking.booking_date || booking.created_at;
+    const withinTwoDays = bookingDate ? dayjs().diff(dayjs(bookingDate), 'day') <= 2 : false;
+    const showRefundForm = isRefund && booking.status === 'cancelled' && withinTwoDays && maxRefundable > 0;
+    const amountValue = parseFloat(refundData.amount);
+    const canConfirm = isRefund ? showRefundForm && !Number.isNaN(amountValue) && amountValue >= 1 : true;
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
@@ -102,19 +104,19 @@ const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
                 {showRefundForm && (
                     <Box sx={{ mb: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
                         <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="primary">
-                            Return Payment Details (Max Refundable: {maxRefundable})
+                            Return Advance Details (Max Returnable: {maxRefundable})
                         </Typography>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Refund Amount"
+                                    label="Return Amount"
                                     type="number"
                                     size="small"
                                     value={refundData.amount}
                                     onChange={(e) => {
                                         const val = parseFloat(e.target.value);
-                                        if (val > maxRefundable) return; // Prevent exceeding
+                                        if (!Number.isNaN(val) && val > maxRefundable) return;
                                         setRefundData({ ...refundData, amount: e.target.value });
                                     }}
                                     InputProps={{
@@ -144,18 +146,22 @@ const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
                 )}
 
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                    {isCancel ? 'Are you sure you want to cancel this booking? This action can be undone later.' : isRefund ? 'Process a refund for this booking.' : 'Are you sure you want to undo the cancellation and restore this booking?'}
+                    {isCancel
+                        ? 'Are you sure you want to cancel this booking? This action can be undone later.'
+                        : isRefund
+                        ? 'Return advance for this cancelled booking.'
+                        : 'Are you sure you want to undo the cancellation and restore this booking?'}
                 </Typography>
 
                 {isCancel && <TextField fullWidth label="Cancellation Reason" multiline rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter reason for cancellation..." variant="outlined" sx={{ mt: 1 }} />}
 
-                {isRefund && <TextField fullWidth label="Refund Note" multiline rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter note for refund..." variant="outlined" sx={{ mt: 1 }} />}
+                {isRefund && <TextField fullWidth label="Return Note" multiline rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter note..." variant="outlined" sx={{ mt: 1 }} />}
             </DialogContent>
             <DialogActions sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
                 <Button onClick={onClose} variant="outlined" color="inherit" sx={{ borderRadius: '8px', textTransform: 'none' }}>
                     Close
                 </Button>
-                <Button onClick={handleConfirm} variant="contained" color={confirmColor} sx={{ borderRadius: '8px', textTransform: 'none' }}>
+                <Button onClick={handleConfirm} disabled={!canConfirm} variant="contained" color={confirmColor} sx={{ borderRadius: '8px', textTransform: 'none' }}>
                     {confirmText}
                 </Button>
             </DialogActions>

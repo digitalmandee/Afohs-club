@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { useState } from 'react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableFooter, Paper, IconButton, Chip, Tooltip } from '@mui/material';
@@ -7,9 +8,12 @@ import Pagination from '@/components/Pagination';
 import dayjs from 'dayjs';
 
 import RoomBookingFilter from '../../Booking/BookingFilter';
+import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 
 const CheckOutReport = ({ bookings = {}, filters = {} }) => {
     const bookingList = bookings.data || [];
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [selectedBookingId, setSelectedBookingId] = useState(null);
 
     const handlePrint = () => {
         const params = new URLSearchParams(window.location.search);
@@ -78,7 +82,14 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                     </Box>
                 </Box>
 
-                <RoomBookingFilter routeName="rooms.reports.check-out" showStatus={false} showRoomType={true} showDates={{ booking: false, checkIn: false, checkOut: true }} dateLabels={{ checkOut: 'Check-Out Date' }} />
+                <RoomBookingFilter
+                    routeName="rooms.reports.check-out"
+                    showStatus={false}
+                    showRoomType={true}
+                    showDates={{ booking: false, checkIn: true, checkOut: true }}
+                    dateLabels={{ checkIn: 'Check-In Date', checkOut: 'Check-Out Date' }}
+                    dateMode={{ checkIn: 'single', checkOut: 'single' }}
+                />
 
                 <Box sx={{ mb: 2 }}>
                     <Chip label={`Total Records: ${bookings.total || 0}`} color="primary" variant="outlined" />
@@ -90,7 +101,8 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>ID</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-In Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-Out Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Type</TableCell>
@@ -105,12 +117,13 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Inv Total</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Paid</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Balance</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {bookingList.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={16} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={18} align="center" sx={{ py: 4 }}>
                                             <Typography color="textSecondary">No data found</Typography>
                                         </TableCell>
                                     </TableRow>
@@ -131,7 +144,8 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                                         return (
                                             <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                                 <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM') : ''}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                     <Tooltip title={guestName} arrow>
                                                         <span>{guestName}</span>
@@ -150,6 +164,18 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                                                 <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{Math.round(invoiceTotal)}</TableCell>
                                                 <TableCell sx={{ fontWeight: 600, color: 'green', whiteSpace: 'nowrap' }}>{Math.round(paid)}</TableCell>
                                                 <TableCell sx={{ fontWeight: 600, color: 'red', whiteSpace: 'nowrap' }}>{Math.round(balance)}</TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => {
+                                                            setSelectedBookingId(booking.id);
+                                                            setShowInvoiceModal(true);
+                                                        }}
+                                                        sx={{ color: '#063455' }}
+                                                    >
+                                                        <PrintIcon fontSize="small" />
+                                                    </IconButton>
+                                                </TableCell>
                                             </TableRow>
                                         );
                                     })
@@ -158,7 +184,7 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                             {bookingList.length > 0 && (
                                 <TableFooter>
                                     <TableRow sx={{ backgroundColor: '#f0f0f0' }}>
-                                        <TableCell colSpan={7} sx={{ fontWeight: 'bold' }}>
+                                        <TableCell colSpan={8} sx={{ fontWeight: 'bold' }}>
                                             Grand Total
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookingList.reduce((sum, b) => sum + (b.nights || 1), 0))}</TableCell>
@@ -193,6 +219,7 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                                                 }, 0),
                                             )}
                                         </TableCell>
+                                        <TableCell />
                                     </TableRow>
                                 </TableFooter>
                             )}
@@ -202,6 +229,16 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
 
                 <Pagination data={bookings} />
             </Box>
+
+            <BookingInvoiceModal
+                open={showInvoiceModal}
+                onClose={() => {
+                    setShowInvoiceModal(false);
+                    setSelectedBookingId(null);
+                }}
+                bookingId={selectedBookingId}
+                type="ROOM_BOOKING"
+            />
         </AdminLayout>
     );
 };

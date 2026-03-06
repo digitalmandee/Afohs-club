@@ -655,6 +655,9 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
                 Route::get('payment-history/print', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryPrint'])->name('rooms.reports.payment-history.print')->middleware('super.admin:rooms.reports.payment-history');
                 Route::get('payment-history/export', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryExport'])->name('rooms.reports.payment-history.export')->middleware('permission:rooms.reports.payment-history');
 
+                // Receivables
+                Route::get('receivables', [\App\Http\Controllers\RoomReportController::class, 'receivables'])->name('rooms.reports.receivables');
+
                 // Booking
                 Route::get('booking', [\App\Http\Controllers\RoomReportController::class, 'booking'])->name('rooms.reports.booking')->middleware('super.admin:rooms.reports.booking');
                 Route::get('booking/print', [\App\Http\Controllers\RoomReportController::class, 'bookingPrint'])->name('rooms.reports.booking.print')->middleware('super.admin:rooms.reports.booking');

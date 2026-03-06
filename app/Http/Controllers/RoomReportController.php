@@ -7,6 +7,7 @@ use App\Models\RoomBooking;
 use App\Models\RoomBookingMiniBarItem;
 use App\Models\RoomBookingOtherCharge;
 use App\Models\RoomType;
+use App\Models\FinancialReceipt;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -99,6 +100,15 @@ class RoomReportController extends Controller
                 'color' => '#063455',
                 'route' => 'rooms.reports.complementary',
                 'stats' => 'Free Items'
+            ],
+            [
+                'id' => 10,
+                'title' => 'Receivables Report',
+                'description' => 'Receipts received against room booking invoices',
+                'icon' => 'History',
+                'color' => '#063455',
+                'route' => 'rooms.reports.receivables',
+                'stats' => 'Receipts'
             ],
         ];
 
@@ -596,6 +606,51 @@ class RoomReportController extends Controller
             'bookings' => $bookings,
             'filters' => $filters,
             'generatedAt' => now()->format('d M Y, h:i A')
+        ]);
+    }
+
+    /**
+     * Room Receivables Report (Receipts linked to room booking invoices)
+     */
+    public function receivables(Request $request)
+    {
+        $filters = $request->all();
+        if (empty($filters['receipt_date_from']) && empty($filters['receipt_date_to'])) {
+            $filters['receipt_date_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $filters['receipt_date_to'] = Carbon::now()->format('Y-m-d');
+        }
+
+        $query = FinancialReceipt::query()
+            ->with(['paymentAccount', 'payer', 'links.invoice.invoiceable.room'])
+            ->whereHas('links.invoice', function ($q) {
+                $q->where('invoice_type', 'room_booking');
+            })
+            ->when(!empty($filters['receipt_date_from']), function ($q) use ($filters) {
+                $q->whereDate('receipt_date', '>=', $filters['receipt_date_from']);
+            })
+            ->when(!empty($filters['receipt_date_to']), function ($q) use ($filters) {
+                $q->whereDate('receipt_date', '<=', $filters['receipt_date_to']);
+            })
+            ->when(!empty($filters['search']), function ($q) use ($filters) {
+                $search = $filters['search'];
+                $q->where(function ($inner) use ($search) {
+                    $inner->where('receipt_no', 'like', "%{$search}%")
+                        ->orWhere('remarks', 'like', "%{$search}%")
+                        ->orWhereHas('links.invoice.invoiceable', function ($invoiceableQ) use ($search) {
+                            $invoiceableQ->where('booking_no', 'like', "%{$search}%")
+                                ->orWhere('guest_first_name', 'like', "%{$search}%")
+                                ->orWhere('guest_last_name', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->orderByDesc('receipt_date')
+            ->orderByDesc('id');
+
+        $receipts = $query->paginate(30)->appends($request->query());
+
+        return Inertia::render('App/Admin/Rooms/Reports/Receivables', [
+            'receipts' => $receipts,
+            'filters' => $filters,
         ]);
     }
 

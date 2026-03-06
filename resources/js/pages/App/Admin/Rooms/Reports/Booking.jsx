@@ -5,6 +5,7 @@ import AdminLayout from '@/layouts/AdminLayout';
 import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Print as PrintIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
 import Pagination from '@/components/Pagination';
+import dayjs from 'dayjs';
 
 import RoomBookingFilter from '../../Booking/BookingFilter';
 
@@ -107,9 +108,11 @@ const BookingReport = ({ bookings = {}, filters = {} }) => {
                                     </TableRow>
                                 ) : (
                                     bookingList.map((booking) => {
-                                        const total = parseFloat(booking.grand_total || 0);
-                                        const paid = parseFloat(booking.invoice?.paid_amount || 0);
-                                        const due = total - paid;
+                                        const total = parseFloat(booking.grand_total || booking.invoice?.total_price || 0);
+                                        const paidCash = parseFloat(booking.invoice?.paid_amount || 0);
+                                        const advance = parseFloat(booking.invoice?.advance_payment || 0);
+                                        const paid = paidCash + advance;
+                                        const due = ['cancelled', 'refunded'].includes(booking.status) ? 0 : Math.max(0, total - paid);
                                         return (
                                             <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                                 <TableCell>{booking.booking_no || booking.id}</TableCell>
@@ -120,8 +123,8 @@ const BookingReport = ({ bookings = {}, filters = {} }) => {
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell>{getGuestName(booking)}</TableCell>
-                                                <TableCell>{booking.check_in_date}</TableCell>
-                                                <TableCell>{booking.check_out_date}</TableCell>
+                                                <TableCell>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : '-'}</TableCell>
+                                                <TableCell>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : '-'}</TableCell>
                                                 <TableCell>
                                                     <Chip label={booking.status} size="small" color={getStatusColor(booking.status)} />
                                                 </TableCell>

@@ -1392,9 +1392,6 @@ class RoomBookingController extends Controller
     {
         $request->validate([
             'cancellation_reason' => 'nullable|string|max:500',
-            'refund_amount' => 'nullable|numeric|min:0',
-            'refund_mode' => 'nullable|string|required_with:refund_amount',
-            'refund_account' => 'nullable|string',
         ]);
 
         $booking = RoomBooking::with('invoice')->findOrFail($id);
@@ -1405,78 +1402,8 @@ class RoomBookingController extends Controller
             $notes .= ' Reason: ' . $request->cancellation_reason;
         }
 
-        // Handle Refund
-        if ($request->filled('refund_amount') && $request->refund_amount > 0) {
-            $invoice = $booking->invoice;
-            if ($invoice) {
-                $maxRefundable = max($invoice->paid_amount, $invoice->advance_payment);
-
-                if ($request->refund_amount > $maxRefundable) {
-                    return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than refundable amount (' . $maxRefundable . ').']);
-                }
-
-                // Update Invoice Paid Amount
-                if ($invoice->paid_amount > 0) {
-                    $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
-                }
-                // Also deduct from advance_payment if available
-                if ($invoice->advance_payment > 0) {
-                    $invoice->advance_payment = max(0, $invoice->advance_payment - $request->refund_amount);
-                }
-
-                $invoice->save();
-
-                // ✅ Determine Payer Details for Ledger
-                $payerDetails = $this->getPayerDetails($invoice);
-
-                // Find main invoice item to attach refund to
-                $invoiceItem = $invoice->items()->where('fee_type', '1')->first() ?? $invoice->items()->first();
-
-                // ✅ Create Refund Ledger Entry (Debit)
-                Transaction::create([
-                    'type' => 'debit',
-                    'amount' => $request->refund_amount,
-                    'date' => now(),
-                    'description' => 'Refund processed for Booking Cancellation #' . $booking->booking_no,
-                    'payable_type' => $payerDetails['type'],
-                    'payable_id' => $payerDetails['id'],
-                    'reference_type' => $invoiceItem ? FinancialInvoiceItem::class : FinancialInvoice::class,
-                    'reference_id' => $invoiceItem ? $invoiceItem->id : $invoice->id,
-                    'invoice_id' => $invoice->id,
-                    'created_by' => Auth::id(),
-                ]);
-
-                $notes .= "\n[Refund Processed: " . $request->refund_amount . ' via ' . $request->refund_mode . ']';
-                if ($request->filled('refund_account')) {
-                    $notes .= ' Account: ' . $request->refund_account;
-                }
-            }
-        }
-
         $booking->additional_notes .= $notes;
         $booking->save();
-
-        if ($booking->invoice) {
-            $invoice = $booking->invoice->refresh();  // Refresh to get updated amounts
-            if ($invoice->paid_amount == 0 && $invoice->advance_payment == 0) {
-                // If balance is clear, status should be 'refunded' (if we refunded) or 'cancelled' (if it was unpaid)
-                // Since we are checking post-logic, if we processed a refund, it might be 'refunded'.
-                // Let's use 'refunded' if it was previously paid check, or 'cancelled' broadly.
-                // Actually, if we just cancelled and it had 0 paid, it is 'cancelled'.
-                // If we had paid > 0 and refunded it to 0, it is 'refunded'.
-                // Simple logic: If balance is 0, match booking status (cancelled) or better 'refunded' if there was a transaction?
-                // Let's check if we did a refund.
-                if ($request->filled('refund_amount') && $request->refund_amount > 0) {
-                    $invoice->update(['status' => 'refunded']);
-                    $booking->status = 'refunded';  // Also update booking to refunded for consistency? Or keep cancelled? User wants 'refunded' if money returned.
-                    $booking->save();
-                } else {
-                    // Just cancelled without refund (presumably unpaid or holding money).
-                    // User requested NOT to change invoice status to 'cancelled'.
-                    // So we keep it as 'paid' or 'unpaid'.
-                }
-            }
-        }
 
         return redirect()->back()->with('success', 'Booking cancelled successfully');
     }
@@ -1493,21 +1420,42 @@ class RoomBookingController extends Controller
         $booking = RoomBooking::with('invoice')->findOrFail($id);
         $invoice = $booking->invoice;
 
-        $maxRefundable = max($invoice->paid_amount, $invoice->advance_payment);
-
-        if (!$invoice || $request->refund_amount > $maxRefundable) {
-            return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than remaining refundable amount (' . $maxRefundable . ').']);
+        if (!$invoice) {
+            return redirect()->back()->withErrors(['refund_amount' => 'No invoice found for this booking.']);
         }
 
-        // Deduct logic: Prefer deducting from paid_amount first (if > 0), else from advance
-        if ($invoice->paid_amount > 0) {
+        if ($booking->status !== 'cancelled') {
+            return redirect()->back()->withErrors(['refund_amount' => 'Advance return is allowed only for cancelled bookings.']);
+        }
+
+        $bookingDate = $booking->booking_date ? Carbon::parse($booking->booking_date)->startOfDay() : $booking->created_at?->copy()->startOfDay();
+        if ($bookingDate && $bookingDate->diffInDays(now()->startOfDay()) > 2) {
+            return redirect()->back()->withErrors(['refund_amount' => 'Advance return is allowed within 2 days of booking only.']);
+        }
+
+        $maxRefundable = (float) ($invoice->advance_payment ?? 0);
+        $refundFromPaidAmount = false;
+        if ($maxRefundable <= 0) {
+            $maxRefundable = (float) ($invoice->paid_amount ?? 0);
+            $refundFromPaidAmount = true;
+        }
+        if ($maxRefundable <= 0) {
+            return redirect()->back()->withErrors(['refund_amount' => 'No refundable advance found for this booking.']);
+        }
+        if ($request->refund_amount > $maxRefundable) {
+            return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than refundable advance amount (' . $maxRefundable . ').']);
+        }
+
+        if ($refundFromPaidAmount) {
             $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
-        }
-        // Also deduct from advance_payment if available, to reflect the 'advance returned' request
-        if ($invoice->advance_payment > 0) {
+        } else {
             $invoice->advance_payment = max(0, $invoice->advance_payment - $request->refund_amount);
         }
         $invoice->save();
+
+        if (!is_null($booking->advance_amount)) {
+            $booking->advance_amount = max(0, (float) $booking->advance_amount - (float) $request->refund_amount);
+        }
 
         // ✅ Determine Payer Details for Ledger
         $payerDetails = $this->getPayerDetails($invoice);
@@ -1529,17 +1477,7 @@ class RoomBookingController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        // FINAL SETTLEMENT LOGIC:
-        // We do NOT zero out the balance, so we keep record of what was retained (e.g. 100 tax).
-        // But we mark status as 'refunded' so the UI hides the refund button (no more refunds allowed).
-
-        $invoice->status = 'refunded';  // Mark as fully refunded/settled
-        $invoice->save();
-
-        // Update Booking Status
-        $booking->status = 'refunded';
-
-        $notes = "\n[Refund Processed (Post-Cancel): " . now()->toDateTimeString() . ']';
+        $notes = "\n[Advance Returned (Cancelled Booking): " . now()->toDateTimeString() . ']';
         $notes .= ' Amount: ' . $request->refund_amount . ' via ' . $request->refund_mode;
         if ($request->filled('refund_account')) {
             $notes .= ' Account: ' . $request->refund_account;
