@@ -11,9 +11,12 @@ const CorporateMembershipDashboardFilter = () => {
         sort: props.filters?.sort || 'asc',
         sortBy: props.filters?.sortBy || 'id',
         membership_no: props.filters?.membership_no || '',
+        barcode: props.filters?.barcode || '',
         name: props.filters?.name || '',
         cnic: props.filters?.cnic || '',
         contact: props.filters?.contact || '',
+        city: props.filters?.city || '',
+        duration: props.filters?.duration || 'all',
         card_status: props.filters?.card_status || 'all',
         status: props.filters?.status || 'all',
         member_category: props.filters?.member_category || 'all', // Changed from member_type
@@ -31,9 +34,12 @@ const CorporateMembershipDashboardFilter = () => {
             sort: 'asc',
             sortBy: 'id',
             membership_no: '',
+            barcode: '',
             name: '',
             cnic: '',
             contact: '',
+            city: '',
+            duration: 'all',
             card_status: 'all',
             status: 'all',
             member_category: 'all',
@@ -245,6 +251,18 @@ const CorporateMembershipDashboardFilter = () => {
                 />
 
                 <TextField
+                    label="Barcode"
+                    size="small"
+                    value={filters.barcode}
+                    onChange={(e) => handleFilterChange('barcode', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                />
+                <TextField
                     label="CNIC"
                     size="small"
                     value={filters.cnic}
@@ -268,6 +286,60 @@ const CorporateMembershipDashboardFilter = () => {
                         },
                     }}
                 />
+                <TextField
+                    label="City"
+                    size="small"
+                    value={filters.city}
+                    onChange={(e) => handleFilterChange('city', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                />
+                <TextField
+                    select
+                    label="Duration"
+                    size="small"
+                    value={filters.duration}
+                    onChange={(e) => handleFilterChange('duration', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 0.5,
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                            },
+                        },
+                    }}
+                >
+                    <MenuItem value="all" sx={{ borderRadius: '16px' }}>
+                        All
+                    </MenuItem>
+                    <MenuItem value="lt1y" sx={{ borderRadius: '16px' }}>
+                        Less than 1 year
+                    </MenuItem>
+                    <MenuItem value="1to3y" sx={{ borderRadius: '16px' }}>
+                        1 to 3 years
+                    </MenuItem>
+                    <MenuItem value="3to5y" sx={{ borderRadius: '16px' }}>
+                        3 to 5 years
+                    </MenuItem>
+                    <MenuItem value="gt5y" sx={{ borderRadius: '16px' }}>
+                        More than 5 years
+                    </MenuItem>
+                </TextField>
                 <TextField
                     select
                     label="Card Status"

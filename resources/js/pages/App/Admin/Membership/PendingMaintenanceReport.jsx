@@ -32,7 +32,8 @@ const PendingMaintenanceReport = () => {
         contact_search: filters?.contact_search || '',
         status: filters?.status || [],
         categories: filters?.categories || [],
-        quarters_pending: filters?.quarters_pending || '',
+        quarters_pending: filters?.quarters_pending || '1',
+        per_page: filters?.per_page || '15',
         date: filters?.date || dayjs().format('DD-MM-YYYY'),
     });
 
@@ -86,13 +87,7 @@ const PendingMaintenanceReport = () => {
     // Fixed status options from AddForm3.jsx
     const statusOptions = ['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'];
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-PK', {
-            style: 'currency',
-            currency: 'PKR',
-            minimumFractionDigits: 0,
-        }).format(amount || 0);
-    };
+    const formatCurrency = (amount) => new Intl.NumberFormat('en-PK', { maximumFractionDigits: 0 }).format(amount || 0);
 
     const formatDate = (date) => {
         if (!date) return '-';
@@ -137,8 +132,9 @@ const PendingMaintenanceReport = () => {
             contact_search: '',
             status: [],
             categories: [],
-            quarters_pending: '',
-            date: dayjs().format('YYYY-MM-DD'),
+            quarters_pending: '1',
+            per_page: '15',
+            date: dayjs().format('DD-MM-YYYY'),
         });
         router.get(route('membership.pending-maintenance-report'));
     };
@@ -303,6 +299,26 @@ const PendingMaintenanceReport = () => {
                             }}
                         >
                             Print
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            onClick={() => {
+                                const url = route('membership.pending-maintenance-report.export', allFilters);
+                                window.open(url, '_blank');
+                            }}
+                            sx={{
+                                ml: 2,
+                                color: '#063455',
+                                borderColor: '#063455',
+                                textTransform: 'none',
+                                borderRadius: '16px',
+                                '&:hover': {
+                                    backgroundColor: '#f3f4f6',
+                                    borderColor: '#063455',
+                                },
+                            }}
+                        >
+                            Export
                         </Button>
                     </Box>
                 </div>
@@ -682,7 +698,7 @@ const PendingMaintenanceReport = () => {
                                 }}
                             >
                                 <InputLabel>Quarters Pending</InputLabel>
-                                <Select value={allFilters.quarters_pending || ''}
+                                <Select value={allFilters.quarters_pending || '1'}
                                     label="Quarters Pending"
                                     onChange={(e) => handleFilterChange('quarters_pending', e.target.value)}
                                     MenuProps={{
@@ -715,12 +731,39 @@ const PendingMaintenanceReport = () => {
                                         },
                                     }}
                                 >
-                                    <MenuItem value="">All</MenuItem>
                                     {quartersOptions.map((opt) => (
                                         <MenuItem key={opt.value} value={opt.value}>
                                             {opt.label}
                                         </MenuItem>
                                     ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12} md={3}>
+                            <FormControl
+                                fullWidth
+                                size="small"
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        borderRadius: "16px",
+                                    },
+                                    "& fieldset": {
+                                        borderRadius: "16px",
+                                    },
+                                }}
+                            >
+                                <InputLabel>Rows</InputLabel>
+                                <Select
+                                    value={allFilters.per_page || '15'}
+                                    label="Rows"
+                                    onChange={(e) => handleFilterChange('per_page', e.target.value)}
+                                >
+                                    <MenuItem value="15">15</MenuItem>
+                                    <MenuItem value="30">30</MenuItem>
+                                    <MenuItem value="50">50</MenuItem>
+                                    <MenuItem value="100">100</MenuItem>
+                                    <MenuItem value="all">All</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -806,8 +849,14 @@ const PendingMaintenanceReport = () => {
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>ID</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Member</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Name</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Per Quarter</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Total Pending</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Contact</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Address</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Per Quarter</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Discount</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Debit</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Credit</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Balance</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Pending</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Status</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Print</TableCell>
                                 </TableRow>
@@ -831,18 +880,14 @@ const PendingMaintenanceReport = () => {
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{member.id}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{member.membership_no}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{member.full_name}</TableCell>
-                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.monthly_fee * 3).replace('PKR', 'Rs.')}</TableCell>
-                                            <TableCell
-                                                sx={{
-                                                    color: getPendingQuartersColor(member.pending_quarters),
-                                                    fontWeight: 700,
-                                                    fontSize: '14px',
-                                                }}
-                                            >
-                                                {formatCurrency(member.total_pending_amount).replace('PKR', 'Rs.')}
-                                                <br />
-                                                <small>({member.pending_quarters} Qtrs)</small>
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{member.contact || '-'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.address || '-'}</TableCell>
+                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.quarterly_fee)}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.discount)}</TableCell>
+                                            <TableCell sx={{ color: '#dc2626', fontWeight: 700, fontSize: '14px' }}>{formatCurrency(member.debit)}</TableCell>
+                                            <TableCell sx={{ color: '#059669', fontWeight: 700, fontSize: '14px' }}>{formatCurrency(member.credit)}</TableCell>
+                                            <TableCell sx={{ color: '#111827', fontWeight: 800, fontSize: '14px' }}>{formatCurrency(member.balance)}</TableCell>
+                                            <TableCell sx={{ color: '#111827', fontWeight: 800, fontSize: '14px' }}>{formatCurrency(member.total_pending_amount)}</TableCell>
                                             <TableCell>
                                                 <Chip label={member.status} color={getStatusColor(member.status)} size="small" sx={{ textTransform: 'capitalize' }} />
                                             </TableCell>
@@ -865,7 +910,7 @@ const PendingMaintenanceReport = () => {
                                                         },
                                                     }}
                                                 >
-                                                    Unpaid
+                                                    Print
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
@@ -874,17 +919,15 @@ const PendingMaintenanceReport = () => {
                                 {/* Footer Row */}
                                 {members?.data && members.data.length > 0 && (
                                     <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={6}>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={7}>
                                             TOTAL ({statistics?.total_members || 0} Members)
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
-                                            {formatCurrency(statistics?.total_pending_amount || 0).replace('PKR', 'Rs.')}
-                                            <br />
-                                            <small>({statistics?.total_pending_quarters || 0} Qtrs)</small>
-                                        </TableCell>
-                                        <TableCell colSpan={2} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
-                                            {/* {statistics?.total_pending_quarters || 0} Quarters Pending */}
-                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statistics?.total_discount || 0)}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statistics?.total_debit || 0)}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statistics?.total_credit || 0)}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statistics?.total_balance || 0)}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>{formatCurrency(statistics?.total_pending_amount || 0)}</TableCell>
+                                        <TableCell colSpan={2} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }} />
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -892,7 +935,7 @@ const PendingMaintenanceReport = () => {
                     </TableContainer>
 
                     {/* Pagination */}
-                    {members?.data && members.data.length > 0 && (
+                    {allFilters.per_page !== 'all' && members?.data && members.data.length > 0 && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                             <Pagination
                                 count={members.last_page}

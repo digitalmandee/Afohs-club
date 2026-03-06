@@ -56,9 +56,14 @@ const MembershipDashboardFilter = () => {
         orderStatus: props.filters?.orderStatus || 'all',
         targetDate: props.filters?.targetDate || '',
         membership_no: props.filters?.membership_no || '',
+        barcode: props.filters?.barcode || '',
         name: props.filters?.name || '',
         cnic: props.filters?.cnic || '',
         contact: props.filters?.contact || '',
+        city: props.filters?.city || '',
+        member_category: props.filters?.member_category || 'all',
+        duration: props.filters?.duration || 'all',
+        kinship_filter: props.filters?.kinship_filter || 'include',
         card_status: props.filters?.card_status || 'all',
         status: props.filters?.status || 'all',
     });
@@ -79,9 +84,14 @@ const MembershipDashboardFilter = () => {
             orderStatus: 'all',
             targetDate: '',
             membership_no: '',
+            barcode: '',
             name: '',
             cnic: '',
             contact: '',
+            city: '',
+            member_category: 'all',
+            duration: 'all',
+            kinship_filter: 'include',
             status: 'all',
         };
         setFilters(reset);
@@ -294,6 +304,18 @@ const MembershipDashboardFilter = () => {
                 />
 
                 <TextField
+                    label="Barcode"
+                    size="small"
+                    value={filters.barcode}
+                    onChange={(e) => handleFilterChange('barcode', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                />
+                <TextField
                     label="CNIC"
                     size="small"
                     value={filters.cnic}
@@ -317,6 +339,151 @@ const MembershipDashboardFilter = () => {
                         },
                     }}
                 />
+                <TextField
+                    label="City"
+                    size="small"
+                    value={filters.city}
+                    onChange={(e) => handleFilterChange('city', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                />
+                <TextField
+                    select
+                    label="Category"
+                    size="small"
+                    value={filters.member_category}
+                    onChange={(e) => handleFilterChange('member_category', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 0.5,
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto',
+                                },
+                            },
+                        },
+                    }}
+                >
+                    <MenuItem
+                        value="all"
+                        sx={{
+                            borderRadius: '16px',
+                            '&:hover': {
+                                backgroundColor: '#063455 !important',
+                                color: '#fff !important',
+                            },
+                        }}
+                    >
+                        All
+                    </MenuItem>
+                    {props.memberCategories &&
+                        props.memberCategories.map((cat) => (
+                            <MenuItem
+                                key={cat.id}
+                                value={cat.id}
+                                sx={{
+                                    borderRadius: '16px',
+                                    '&:hover': {
+                                        backgroundColor: '#063455 !important',
+                                        color: '#fff !important',
+                                    },
+                                }}
+                            >
+                                {cat.name}
+                            </MenuItem>
+                        ))}
+                </TextField>
+                <TextField
+                    select
+                    label="Duration"
+                    size="small"
+                    value={filters.duration}
+                    onChange={(e) => handleFilterChange('duration', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 0.5,
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto',
+                                },
+                            },
+                        },
+                    }}
+                >
+                    <MenuItem value="all" sx={{ borderRadius: '16px' }}>
+                        All
+                    </MenuItem>
+                    <MenuItem value="lt1y" sx={{ borderRadius: '16px' }}>
+                        Less than 1 year
+                    </MenuItem>
+                    <MenuItem value="1to3y" sx={{ borderRadius: '16px' }}>
+                        1 to 3 years
+                    </MenuItem>
+                    <MenuItem value="3to5y" sx={{ borderRadius: '16px' }}>
+                        3 to 5 years
+                    </MenuItem>
+                    <MenuItem value="gt5y" sx={{ borderRadius: '16px' }}>
+                        More than 5 years
+                    </MenuItem>
+                </TextField>
+                <TextField
+                    select
+                    label="Kinships"
+                    size="small"
+                    value={filters.kinship_filter}
+                    onChange={(e) => handleFilterChange('kinship_filter', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 0.5,
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto',
+                                },
+                            },
+                        },
+                    }}
+                >
+                    <MenuItem value="include" sx={{ borderRadius: '16px' }}>
+                        Include kinships
+                    </MenuItem>
+                    <MenuItem value="exclude" sx={{ borderRadius: '16px' }}>
+                        Exclude kinships
+                    </MenuItem>
+                    <MenuItem value="only" sx={{ borderRadius: '16px' }}>
+                        Only kinships
+                    </MenuItem>
+                </TextField>
                 <TextField
                     select
                     label="Card Status"

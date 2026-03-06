@@ -41,11 +41,7 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-PK', {
-            style: 'currency',
-            currency: 'PKR',
-            minimumFractionDigits: 0,
-        }).format(amount || 0).replace('PKR', 'Rs');
+        return new Intl.NumberFormat('en-PK', { maximumFractionDigits: 0 }).format(amount || 0);
     };
 
     const getFilterText = () => {
@@ -80,6 +76,11 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
 
         if (filters.contact_search) {
             filterText.push(`Contact: ${filters.contact_search}`);
+        }
+
+        if (filters.quarters_pending) {
+            const q = filters.quarters_pending === '6+' ? '6+' : `${filters.quarters_pending}`;
+            filterText.push(`Quarters Pending: ${q}`);
         }
 
         return filterText.length > 0 ? filterText.join(' | ') : 'All Records';
@@ -232,16 +233,16 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                             <div className="summary-label">Members with Pending</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{statistics?.total_pending_quarters || 0}</div>
-                            <div className="summary-label">Total Pending Quarters</div>
+                            <div className="summary-value">{formatCurrency(statistics?.total_debit || 0)}</div>
+                            <div className="summary-label">Total Debit</div>
                         </div>
                         <div className="summary-item">
                             <div className="summary-value">{formatCurrency(statistics?.total_pending_amount || 0)}</div>
                             <div className="summary-label">Total Pending Amount</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{formatCurrency(statistics?.average_pending_per_member || 0)}</div>
-                            <div className="summary-label">Average per Member</div>
+                            <div className="summary-value">{formatCurrency(statistics?.total_balance || 0)}</div>
+                            <div className="summary-label">Total Balance</div>
                         </div>
                     </div>
                 </div>
@@ -258,11 +259,13 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                             <th style={{ width: '8%' }}>Contact</th>
                             <th style={{ width: '12%' }}>Address</th>
                             <th style={{ width: '8%' }}>Maintenance Per Quarter</th>
-                            <th style={{ width: '7%' }}>Total Debit</th>
-                            <th style={{ width: '7%' }}>Total Credit</th>
-                            <th style={{ width: '8%' }}>Total Balance</th>
+                            <th style={{ width: '7%' }}>Discount</th>
+                            <th style={{ width: '7%' }}>Debit</th>
+                            <th style={{ width: '7%' }}>Credit</th>
+                            <th style={{ width: '8%' }}>Balance</th>
+                            <th style={{ width: '8%' }}>Pending</th>
+                            <th style={{ width: '7%' }}>Invoice #</th>
                             <th style={{ width: '6%' }}>Status</th>
-                            <th style={{ width: '6%' }}>Print</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -278,28 +281,35 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                                 <td className="text-right" style={{ color: '#059669', fontWeight: 'bold' }}>
                                     {formatCurrency(member.quarterly_fee)}
                                 </td>
+                                <td className="text-right" style={{ color: '#374151', fontWeight: 'bold' }}>
+                                    {formatCurrency(member.discount || 0)}
+                                </td>
                                 <td className="text-right" style={{ color: '#dc2626', fontWeight: 'bold' }}>
-                                    {formatCurrency(member.total_debit_amount || 0)}
+                                    {formatCurrency(member.debit || 0)}
                                 </td>
                                 <td className="text-right" style={{ color: '#059669', fontWeight: 'bold' }}>
-                                    {formatCurrency(member.total_paid_amount || 0)}
+                                    {formatCurrency(member.credit || 0)}
                                 </td>
-                                <td className="text-right font-bold" style={{ color: '#dc2626' }}>
-                                    {formatCurrency(member.total_pending_amount)}
+                                <td className="text-right font-bold" style={{ color: '#111827' }}>
+                                    {formatCurrency(member.balance || 0)}
                                 </td>
+                                <td className="text-right font-bold" style={{ color: '#111827' }}>
+                                    {formatCurrency(member.total_pending_amount || 0)}
+                                </td>
+                                <td className="text-center font-bold">{member.invoice_no || '-'}</td>
                                 <td className={`text-center status-${member.status}`}>
                                     {member.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                                 </td>
-                                <td className="text-center">Unpaid</td>
                             </tr>
                         ))}
 
                         {/* Total Row */}
                         <tr className="total-row">
-                            <td colSpan="7" className="text-center font-bold">TOTAL ({statistics?.total_members || 0} Members)</td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.average_pending_per_member || 0)}</td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.total_debit_amount || 0)}</td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.total_paid_amount || 0)}</td>
+                            <td colSpan="8" className="text-center font-bold">TOTAL ({statistics?.total_members || 0} Members)</td>
+                            <td className="text-right font-bold">{formatCurrency(statistics?.total_discount || 0)}</td>
+                            <td className="text-right font-bold">{formatCurrency(statistics?.total_debit || 0)}</td>
+                            <td className="text-right font-bold">{formatCurrency(statistics?.total_credit || 0)}</td>
+                            <td className="text-right font-bold">{formatCurrency(statistics?.total_balance || 0)}</td>
                             <td className="text-right font-bold">{formatCurrency(statistics?.total_pending_amount || 0)}</td>
                             <td className="text-center font-bold">-</td>
                             <td className="text-center font-bold">-</td>
