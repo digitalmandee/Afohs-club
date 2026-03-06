@@ -13,7 +13,7 @@ class EventVenueController extends Controller
         $this->middleware('super.admin:events.venue.view')->only('index');
         $this->middleware('super.admin:events.venue.create')->only('create', 'store');
         $this->middleware('super.admin:events.venue.edit')->only('edit', 'update');
-        $this->middleware('permission:events.venue.delete')->only('destroy');
+        $this->middleware('permission:events.venue.delete')->only('destroy', 'trashed', 'restore', 'forceDelete');
     }
 
     // List all event venues with search and pagination

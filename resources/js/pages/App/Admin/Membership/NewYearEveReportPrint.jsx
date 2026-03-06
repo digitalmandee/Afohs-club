@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { format } from 'date-fns';
 
-export default function NewYearEveReportPrint({ transactions, statistics, filters, all_categories }) {
+export default function NewYearEveReportPrint({ transactions, statistics, filters, all_categories, all_cashiers }) {
     useEffect(() => {
         // Auto-print when page loads
         const timer = setTimeout(() => {
@@ -41,7 +41,7 @@ export default function NewYearEveReportPrint({ transactions, statistics, filter
 
     const getFilterText = () => {
         let filterText = [];
-        
+
         if (filters.date_from && filters.date_to) {
             filterText.push(`Period: ${formatDate(filters.date_from)} to ${formatDate(filters.date_to)}`);
         } else if (filters.date_from) {
@@ -49,27 +49,27 @@ export default function NewYearEveReportPrint({ transactions, statistics, filter
         } else if (filters.date_to) {
             filterText.push(`Until: ${formatDate(filters.date_to)}`);
         }
-        
+
         if (filters.member_search) {
             filterText.push(`Member: ${filters.member_search}`);
         }
-        
+
         if (filters.invoice_search) {
             filterText.push(`Invoice: ${filters.invoice_search}`);
         }
-        
+
         if (filters.city) {
             filterText.push(`City: ${filters.city}`);
         }
-        
+
         if (filters.payment_method) {
             filterText.push(`Payment: ${filters.payment_method}`);
         }
-        
+
         if (filters.gender) {
             filterText.push(`Gender: ${filters.gender}`);
         }
-        
+
         if (filters.categories && filters.categories.length > 0) {
             const categoryNames = filters.categories.map(catId => {
                 const category = all_categories?.find(cat => cat.id == catId);
@@ -77,119 +77,124 @@ export default function NewYearEveReportPrint({ transactions, statistics, filter
             });
             filterText.push(`Categories: ${categoryNames.join(', ')}`);
         }
-        
+
+        if (filters.cashier) {
+            const cashier = all_cashiers?.find((c) => c.id == filters.cashier);
+            filterText.push(`Cashier: ${cashier?.name || filters.cashier}`);
+        }
+
         return filterText.length > 0 ? filterText.join(' | ') : 'All Records';
     };
 
     return (
         <>
             <Head title="New Year Eve Report - Print" />
-            
+
             <style jsx global>{`
                 @media print {
-                    body { 
-                        margin: 0; 
+                    body {
+                        margin: 0;
                         padding: 15px;
                         font-family: Arial, sans-serif;
                         font-size: 11px;
                         line-height: 1.2;
                     }
                     .no-print { display: none !important; }
-                    
+
                     .report-header {
                         text-align: center;
                         margin-bottom: 20px;
                         border-bottom: 2px solid #000;
                         padding-bottom: 10px;
                     }
-                    
+
                     .report-title {
                         font-size: 18px;
                         font-weight: bold;
                         margin: 5px 0;
                         color: #000;
                     }
-                    
+
                     .report-subtitle {
                         font-size: 14px;
                         font-weight: bold;
                         margin: 3px 0;
                         color: #333;
                     }
-                    
+
                     .report-info {
                         font-size: 10px;
                         margin: 2px 0;
                         color: #666;
                     }
-                    
+
                     .summary-section {
                         margin: 20px 0;
                         padding: 10px;
                         border: 1px solid #000;
                         background-color: #f9f9f9;
                     }
-                    
+
                     .summary-grid {
                         display: grid;
                         grid-template-columns: repeat(3, 1fr);
                         gap: 15px;
                         margin: 10px 0;
                     }
-                    
+
                     .summary-item {
                         text-align: center;
                         padding: 8px;
                         border: 1px solid #ccc;
                         background-color: #fff;
                     }
-                    
+
                     .summary-value {
                         font-size: 14px;
                         font-weight: bold;
                         margin-bottom: 3px;
                     }
-                    
+
                     .summary-label {
                         font-size: 9px;
                         color: #666;
                     }
-                    
+
                     table {
                         width: 100%;
                         border-collapse: collapse;
                         margin: 20px 0;
                     }
-                    
+
                     th, td {
                         border: 1px solid #000;
                         padding: 6px 4px;
                         text-align: left;
                         font-size: 9px;
                     }
-                    
+
                     th {
                         background-color: #000;
                         color: #fff;
                         font-weight: bold;
                         text-align: center;
                     }
-                    
+
                     .total-row {
                         background-color: #000;
                         color: #fff;
                         font-weight: bold;
                     }
-                    
+
                     .total-row td {
                         font-size: 10px;
                     }
-                    
+
                     .text-center { text-align: center; }
                     .text-right { text-align: right; }
                     .font-bold { font-weight: bold; }
                 }
-                
+
                 @media screen {
                     body {
                         background-color: #f5f5f5;
@@ -207,7 +212,7 @@ export default function NewYearEveReportPrint({ transactions, statistics, filter
                     <div className="report-info">Filters: {getFilterText()}</div>
                     {transactions?.current_page && (
                         <div className="report-info">
-                            Page {transactions.current_page} of {transactions.last_page} 
+                            Page {transactions.current_page} of {transactions.last_page}
                             (Showing {transactions.from} to {transactions.to} of {transactions.total} records)
                         </div>
                     )}
@@ -247,34 +252,36 @@ export default function NewYearEveReportPrint({ transactions, statistics, filter
                             <th style={{ width: '8%' }}>Dated</th>
                             <th style={{ width: '17%' }}>Duration</th>
                             <th style={{ width: '10%' }}>Membership #</th>
+                            <th style={{ width: '10%' }}>User</th>
                         </tr>
                     </thead>
                     <tbody>
                         {transactions?.data && transactions.data.length > 0 ? (
                             transactions.data.map((transaction, index) => (
                                 <tr key={transaction.id}>
-                                    <td className="text-center font-bold">{transaction.invoice_no}</td>
-                                    <td className="text-center">{transaction.member?.current_city || 'N/A'}</td>
-                                    <td className="font-bold">{transaction.member?.full_name}</td>
-                                    <td className="text-right font-bold">{formatCurrency(transaction.total_price)}</td>
-                                    <td className="text-center">{transaction.payment_method}</td>
-                                    <td>{transaction.member?.member_category?.name || 'N/A'}</td>
+                                    <td className="text-center font-bold">{transaction.invoice?.invoice_no || '-'}</td>
+                                    <td className="text-center">{transaction.invoice?.member?.current_city || 'N/A'}</td>
+                                    <td className="font-bold">{transaction.invoice?.member?.full_name || 'N/A'}</td>
+                                    <td className="text-right font-bold">{formatCurrency(transaction.total)}</td>
+                                    <td className="text-center">{transaction.invoice?.payment_method || '-'}</td>
+                                    <td>{transaction.invoice?.member?.member_category?.name || transaction.invoice?.member?.memberCategory?.name || 'N/A'}</td>
                                     <td className="text-center">{formatDate(transaction.created_at)}</td>
                                     <td className="text-center">
-                                        {transaction.quarter_start_date && transaction.quarter_end_date 
-                                            ? `${formatDate(transaction.quarter_start_date)} - ${formatDate(transaction.quarter_end_date)}`
+                                        {transaction.start_date && transaction.end_date
+                                            ? `${formatDate(transaction.start_date)} - ${formatDate(transaction.end_date)}`
                                             : 'N/A'
                                         }
                                     </td>
-                                    <td className="text-center">{transaction.member?.membership_no}</td>
+                                    <td className="text-center">{transaction.invoice?.member?.membership_no || '-'}</td>
+                                    <td className="text-center">{transaction.invoice?.created_by?.name || transaction.invoice?.createdBy?.name || '-'}</td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="9" className="text-center">No New Year Eve subscription records found</td>
+                                <td colSpan="10" className="text-center">No New Year Eve subscription records found</td>
                             </tr>
                         )}
-                        
+
                         {/* Total Row */}
                         {transactions?.data && transactions.data.length > 0 && (
                             <tr className="total-row">
@@ -287,7 +294,7 @@ export default function NewYearEveReportPrint({ transactions, statistics, filter
                                 <td colSpan="2" className="text-center font-bold">
                                     Avg: {formatCurrency(statistics?.average_amount || 0)}
                                 </td>
-                                <td colSpan="3" className="text-center font-bold">
+                                <td colSpan="4" className="text-center font-bold">
                                     New Year Eve Subscription Collection Report
                                 </td>
                             </tr>
@@ -305,7 +312,7 @@ export default function NewYearEveReportPrint({ transactions, statistics, filter
                         </Grid>
                         <Grid item xs={6} sx={{ textAlign: 'right' }}>
                             <Typography variant="caption">
-                                {transactions?.current_page 
+                                {transactions?.current_page
                                     ? `Page ${transactions.current_page} of ${transactions.last_page} | Records: ${transactions.from}-${transactions.to} of ${transactions.total}`
                                     : `Total Records: ${transactions?.data?.length || 0}`
                                 }

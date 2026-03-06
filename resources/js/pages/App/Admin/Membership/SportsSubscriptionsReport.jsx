@@ -12,7 +12,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const SportsSubscriptionsReport = () => {
     // Get props first
-    const { transactions, statistics, filters, all_cities, all_payment_methods, all_categories, all_genders, all_family_members, subscription_categories, all_cashiers } = usePage().props;
+    const { transactions, statistics, filters, all_cities, all_payment_methods, all_categories, all_genders, all_family_members, subscription_categories, guest_types, all_cashiers } = usePage().props;
 
     // Suggestions State (dynamic API)
     const [suggestions, setSuggestions] = useState([]);
@@ -29,12 +29,12 @@ const SportsSubscriptionsReport = () => {
         date_to: filters?.date_to || '',
         city: filters?.city || '',
         payment_method: filters?.payment_method || '',
-        categories: filters?.categories || [],
+        categories: (filters?.categories || []).map((v) => Number(v)),
         gender: filters?.gender || '',
         family_member: filters?.family_member || '',
         customer_type: filters?.customer_type || 'all',
         subscription_category_id: filters?.subscription_category_id || '',
-        cashier: filters?.cashier || '',
+        cashier: filters?.cashier ? Number(filters.cashier) : '',
     });
 
     // Fetch Suggestions - debounced API call
@@ -354,7 +354,12 @@ const SportsSubscriptionsReport = () => {
                                     <MenuItem value="all">All</MenuItem>
                                     <MenuItem value="member">Member</MenuItem>
                                     <MenuItem value="corporate">Corporate</MenuItem>
-                                    <MenuItem value="guest">Guest</MenuItem>
+                                    <MenuItem value="guest">All Guests</MenuItem>
+                                    {guest_types?.map((t) => (
+                                        <MenuItem key={t.id} value={`guest-${t.id}`}>
+                                            {t.name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -662,6 +667,49 @@ const SportsSubscriptionsReport = () => {
                                     />} />
                         </Grid>
                         <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                multiple
+                                fullWidth
+                                size="small"
+                                options={all_categories || []}
+                                value={(all_categories || []).filter((c) => (allFilters.categories || []).includes(c.id))}
+                                onChange={(e, value) => handleFilterChange('categories', value.map((v) => v.id))}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300,
+                                        px: 1,
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
+                                getOptionLabel={(option) => option.name || ''}
+                                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Category"
+                                        placeholder="Select category"
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                                    />
+                                )}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
                                 <InputLabel>Details</InputLabel>
                                 <Select
@@ -878,7 +926,7 @@ const SportsSubscriptionsReport = () => {
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no || transaction.invoice?.corporateMember?.membership_no || transaction.invoice?.customer?.customer_no || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.subscription_type?.name || transaction.data?.subscription_type_name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.subscription_category?.name || transaction.data?.subscription_category_name || transaction.subscription_type?.name || transaction.data?.subscription_type_name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={transaction.invoice?.customer_id ? 'Guest' : transaction.data?.family_member_relation || 'SELF'}
@@ -904,7 +952,15 @@ const SportsSubscriptionsReport = () => {
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.subscription_category?.name || transaction.subscription_type?.subscription_category?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
+                                                {transaction.invoice?.member?.member_category?.name ||
+                                                    transaction.invoice?.member?.memberCategory?.name ||
+                                                    transaction.invoice?.corporateMember?.member_category?.name ||
+                                                    transaction.invoice?.corporateMember?.memberCategory?.name ||
+                                                    transaction.invoice?.corporate_member?.member_category?.name ||
+                                                    transaction.invoice?.corporate_member?.memberCategory?.name ||
+                                                    ''}
+                                            </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || 'System'}</TableCell>
                                         </TableRow>
                                     ))

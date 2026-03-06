@@ -459,7 +459,8 @@ class EventBookingController extends Controller
             'eventVenue',
             'menu',
             'menuAddOns',
-            'otherCharges'
+            'otherCharges',
+            'invoice'
         ])->findOrFail($id);
 
         // Get the same data as create form
@@ -590,13 +591,45 @@ class EventBookingController extends Controller
             $guestCharges = $perPersonCharges * $request->numberOfGuests;
             $otherCharges = $this->calculateOtherChargesTotal($request->other_charges ?? []);
 
+            $guestName = $request->guest['name'] ?? '';
+            $guestAddress = $request->guest['address'] ?? '';
+            $guestCnic = $request->guest['cnic'] ?? '';
+            $guestMobile = $request->guest['phone'] ?? '';
+            $guestEmail = $request->guest['email'] ?? '';
+
+            $memberId = null;
+            $customerId = null;
+            $corporateMemberId = null;
+            $bookingType = '1';
+
+            if (!empty($request->guest['is_corporate']) || ($request->guest['booking_type'] ?? '') == '2') {
+                $corporateMemberId = (int) $request->guest['id'];
+                $bookingType = '2';
+            } elseif (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
+                $memberId = (int) $request->guest['id'];
+                $bookingType = '0';
+            } else {
+                $customerId = (int) $request->guest['id'];
+                $bookingType = '1';
+            }
+
             $updateData = [
                 'booked_by' => $request->bookedBy,
                 'nature_of_event' => $request->natureOfEvent,
+                'family_id' => $request->familyMember ?? null,
+                'name' => $guestName,
+                'address' => $guestAddress,
+                'cnic' => $guestCnic,
+                'mobile' => $guestMobile,
+                'email' => $guestEmail,
                 'event_date' => $request->eventDate,
                 'event_time_from' => $request->eventTimeFrom,
                 'event_time_to' => $request->eventTimeTo,
                 'event_venue_id' => $request->venue,
+                'member_id' => $memberId,
+                'customer_id' => $customerId,
+                'corporate_member_id' => $corporateMemberId,
+                'booking_type' => $bookingType,
                 'no_of_guests' => $request->numberOfGuests,
                 'reduction_type' => $request->discountType,
                 'reduction_amount' => $request->discount ?? 0,
@@ -1032,13 +1065,15 @@ class EventBookingController extends Controller
     public function manage(Request $request)
     {
         $query = EventBooking::with([
-            'customer:id,name,email,contact',
+            'customer:id,name,email,contact,customer_no,guest_type_id',
+            'customer.guestType:id,name',
             'member:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name',
+            'menu:id,event_booking_id,event_menu_id,name,amount',
             'invoice'
-        ]);
+        ])->where('status', 'confirmed');
 
         $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues', 'status', 'membership_no']);
         $this->applyFilters($query, $filters);
@@ -1050,48 +1085,19 @@ class EventBookingController extends Controller
             });
         }
 
-        // Filter by status (specific extra logic for manage page)
         if ($request->filled('status') && is_array($request->status)) {
-            $query->where(function ($q) use ($request) {
-                $bookingStatuses = [];
-                $includesPaid = false;
-                $includesUnpaid = false;
+            $includesPaid = in_array('paid', $request->status, true);
+            $includesUnpaid = in_array('unpaid', $request->status, true);
 
-                foreach ($request->status as $status) {
-                    if (in_array($status, ['confirmed', 'completed', 'cancelled'])) {
-                        $bookingStatuses[] = $status;
-                    } elseif ($status === 'paid') {
-                        $includesPaid = true;
-                    } elseif ($status === 'unpaid') {
-                        $includesUnpaid = true;
-                    }
-                }
-
-                if (!empty($bookingStatuses)) {
-                    $q->orWhereIn('status', $bookingStatuses);
-                }
-
-                if ($includesPaid) {
-                    $q->orWhereExists(function ($subQ) {
-                        $subQ
-                            ->select(DB::raw(1))
-                            ->from('financial_invoices')
-                            ->where('invoice_type', 'event_booking')
-                            ->whereRaw('JSON_CONTAINS(data, JSON_OBJECT("booking_id", event_bookings.id))')
-                            ->where('status', 'paid');
-                    });
-                }
-                if ($includesUnpaid) {
-                    $q->orWhereExists(function ($subQ) {
-                        $subQ
-                            ->select(DB::raw(1))
-                            ->from('financial_invoices')
-                            ->where('invoice_type', 'event_booking')
-                            ->whereRaw('JSON_CONTAINS(data, JSON_OBJECT("booking_id", event_bookings.id))')
-                            ->where('status', 'unpaid');
-                    });
-                }
-            });
+            if ($includesPaid && !$includesUnpaid) {
+                $query->whereHas('invoice', function ($q) {
+                    $q->where('status', 'paid')->orWhere('paid_amount', '>', 0);
+                });
+            } elseif ($includesUnpaid && !$includesPaid) {
+                $query->whereHas('invoice', function ($q) {
+                    $q->where('status', 'unpaid')->orWhere('paid_amount', '<=', 0);
+                });
+            }
         }
 
         $aggregates = (clone $query)
@@ -1122,11 +1128,13 @@ class EventBookingController extends Controller
     public function completed(Request $request)
     {
         $query = EventBooking::with([
-            'customer:id,name,email,contact',
+            'customer:id,name,email,contact,customer_no,guest_type_id',
+            'customer.guestType:id,name',
             'member:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name',
+            'menu:id,event_booking_id,event_menu_id,name,amount',
             'invoice'
         ])->where('status', 'completed');
 
@@ -1167,11 +1175,13 @@ class EventBookingController extends Controller
     public function cancelled(Request $request)
     {
         $query = EventBooking::with([
-            'customer:id,name,email,contact',
+            'customer:id,name,email,contact,customer_no,guest_type_id',
+            'customer.guestType:id,name',
             'member:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name',
+            'menu:id,event_booking_id,event_menu_id,name,amount',
             'invoice'
         ])->whereIn('status', ['cancelled', 'refunded']);
 
@@ -1327,6 +1337,171 @@ class EventBookingController extends Controller
         return response()->json($venues);
     }
 
+    public function searchCustomers(Request $request)
+    {
+        $query = $request->input('query');
+        $type = $request->input('type', 'all');
+        $includeInactive = filter_var($request->input('include_inactive', false), FILTER_VALIDATE_BOOLEAN);
+
+        if (!$type) {
+            $type = 'all';
+        }
+
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        $normalizedQuery = preg_replace('/[^A-Za-z0-9]/', '', (string) $query);
+
+        $results = collect();
+
+        if ($type === 'all' || $type === 'member') {
+            $members = \App\Models\Member::query()
+                ->when(!$includeInactive, function ($q) {
+                    $q->where('status', 'active');
+                })
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('full_name', 'like', "%{$query}%")
+                        ->orWhere('membership_no', 'like', "%{$query}%")
+                        ->orWhere('cnic_no', 'like', "%{$query}%")
+                        ->orWhere('mobile_number_a', 'like', "%{$query}%")
+                        ->orWhere('mobile_number_b', 'like', "%{$query}%")
+                        ->orWhere('telephone_number', 'like', "%{$query}%")
+                        ->orWhere('personal_email', 'like', "%{$query}%");
+                })
+                ->when($normalizedQuery, function ($q) use ($normalizedQuery) {
+                    $q->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(membership_no, '-', ''), ' ', ''), '/', '') like ?",
+                        ["%{$normalizedQuery}%"]
+                    );
+                })
+                ->limit(40)
+                ->get()
+                ->map(function ($m) {
+                    return [
+                        'label' => "{$m->full_name} (Member - {$m->membership_no})",
+                        'value' => $m->full_name,
+                        'type' => 'Member',
+                        'name' => $m->full_name,
+                        'membership_no' => $m->membership_no,
+                        'status' => $m->status,
+                        'cnic' => $m->cnic_no,
+                        'contact' => $m->mobile_number_a,
+                    ];
+                });
+            $results = $results->merge($members);
+        }
+
+        if ($type === 'all' || $type === 'corporate') {
+            $corporate = \App\Models\CorporateMember::query()
+                ->when(!$includeInactive, function ($q) {
+                    $q->where('status', 'active');
+                })
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('full_name', 'like', "%{$query}%")
+                        ->orWhere('membership_no', 'like', "%{$query}%");
+                })
+                ->when($normalizedQuery, function ($q) use ($normalizedQuery) {
+                    $q->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(membership_no, '-', ''), ' ', ''), '/', '') like ?",
+                        ["%{$normalizedQuery}%"]
+                    );
+                })
+                ->limit(40)
+                ->get()
+                ->map(function ($m) {
+                    return [
+                        'label' => "{$m->full_name} (Corporate - {$m->membership_no})",
+                        'value' => $m->full_name,
+                        'type' => 'Corporate',
+                        'name' => $m->full_name,
+                        'membership_no' => $m->membership_no,
+                        'status' => $m->status,
+                    ];
+                });
+            $results = $results->merge($corporate);
+        }
+
+        if ($type === 'all' || $type === 'guest') {
+            $guests = \App\Models\Customer::query()
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('customer_no', 'like', "%{$query}%");
+                })
+                ->when($normalizedQuery, function ($q) use ($normalizedQuery) {
+                    $q->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(customer_no, '-', ''), ' ', ''), '/', '') like ?",
+                        ["%{$normalizedQuery}%"]
+                    );
+                })
+                ->limit(40)
+                ->get()
+                ->map(function ($c) {
+                    return [
+                        'label' => "{$c->name} (Guest - {$c->customer_no})",
+                        'value' => $c->name,
+                        'type' => 'Guest',
+                        'name' => $c->name,
+                        'customer_no' => $c->customer_no,
+                        'id' => $c->id,
+                        'status' => null,
+                        'guest_type_id' => $c->guest_type_id,
+                        'booking_type' => 'guest',
+                    ];
+                });
+            $results = $results->merge($guests);
+
+            $eventGuests = \App\Models\EventBooking::where('name', 'like', "%{$query}%")
+                ->select('name')
+                ->distinct()
+                ->limit(5)
+                ->get()
+                ->map(function ($eb) {
+                    return [
+                        'label' => "{$eb->name} (Event Guest)",
+                        'value' => $eb->name,
+                        'type' => 'Guest',
+                        'name' => $eb->name,
+                        'membership_no' => 'N/A',
+                        'status' => 'active',
+                    ];
+                });
+
+            $results = $results->merge($eventGuests);
+        }
+
+        if (is_string($type) && str_starts_with($type, 'guest-')) {
+            $guestTypeId = str_replace('guest-', '', $type);
+            $guests = \App\Models\Customer::query()
+                ->where('guest_type_id', $guestTypeId)
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('customer_no', 'like', "%{$query}%");
+                })
+                ->limit(30)
+                ->get()
+                ->map(function ($c) {
+                    return [
+                        'label' => "{$c->name} (Guest - {$c->customer_no})",
+                        'value' => $c->name,
+                        'type' => 'Guest',
+                        'name' => $c->name,
+                        'customer_no' => $c->customer_no,
+                        'id' => $c->id,
+                        'status' => null,
+                        'booking_type' => 'guest',
+                    ];
+                });
+            $results = $results->merge($guests);
+        }
+
+        return response()->json($results);
+    }
+
     /**
      * Calculate original amount before discount
      */
@@ -1452,11 +1627,20 @@ class EventBookingController extends Controller
         $booking = EventBooking::with('invoice')->findOrFail($id);
         $invoice = $booking->invoice;
 
-        if (!$invoice || $invoice->paid_amount <= 0) {
+        if ($booking->status !== 'cancelled') {
+            return redirect()->back()->withErrors(['refund_amount' => 'Advance return is only allowed for cancelled bookings.']);
+        }
+
+        $bookingDate = $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date) : $booking->created_at;
+        if ($bookingDate && $bookingDate->diffInDays(now()) > 2) {
+            return redirect()->back()->withErrors(['refund_amount' => 'Advance return is only allowed within 2 days of booking.']);
+        }
+
+        if (!$invoice || $invoice->paid_amount <= 0 || ($booking->advance_amount ?? 0) <= 0) {
             return redirect()->back()->withErrors(['refund_amount' => 'No refundable amount available.']);
         }
 
-        $maxRefundable = $invoice->paid_amount;
+        $maxRefundable = min((float) $invoice->paid_amount, (float) ($booking->advance_amount ?? 0));
 
         if ($request->refund_amount > $maxRefundable) {
             return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than remaining refundable amount (' . $maxRefundable . ').']);
@@ -1465,6 +1649,9 @@ class EventBookingController extends Controller
         // Deduct from paid_amount
         $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
         $invoice->save();
+
+        $booking->advance_amount = max(0, ($booking->advance_amount ?? 0) - $request->refund_amount);
+        $booking->paid_amount = max(0, ($booking->paid_amount ?? 0) - $request->refund_amount);
 
         // Determine Payer Details for Ledger
         $payerDetails = $this->getPayerDetails($invoice);

@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Head, router, useForm } from '@inertiajs/react';
-import { Box, Grid, TextField, Select, MenuItem, FormControl, InputLabel, Typography, Button, IconButton } from '@mui/material';
+import React, { useState } from 'react';
+import { useForm } from '@inertiajs/react';
+import { Autocomplete, Box, Grid, TextField, Select, MenuItem, FormControl, InputLabel, Typography, Button, IconButton } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
-import axios from 'axios';
 
 const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
     // const [open, setOpen] = useState(true);
@@ -23,7 +22,7 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
     const handleItemChange = (index, id) => {
         const item = allItems.find((i) => i.id === id);
         const updated = [...data.items];
-        updated[index] = { id: item.id, name: item.name };
+        updated[index] = item ? { id: item.id, name: item.name } : { id: '', name: '' };
         setData('items', updated);
     };
 
@@ -127,16 +126,30 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                                 {data.items.map((item, index) => (
                                     <Grid container spacing={1} key={index} alignItems="center" sx={{ mb: 1 }}>
                                         <Grid item xs={11}>
-                                            <FormControl fullWidth>
-                                                <InputLabel>Select Item</InputLabel>
-                                                <Select value={item.id || ''} onChange={(e) => handleItemChange(index, e.target.value)}>
-                                                    {allItems.map((opt) => (
-                                                        <MenuItem key={opt.id} value={opt.id}>
-                                                            {opt.name}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
+                                            <Autocomplete
+                                                options={allItems}
+                                                getOptionLabel={(option) => option?.name || ''}
+                                                value={allItems.find((opt) => opt.id === item.id) || null}
+                                                onChange={(_, newValue) => handleItemChange(index, newValue?.id || '')}
+                                                filterOptions={(options, state) => {
+                                                    const input = (state.inputValue || '').trim().toLowerCase();
+                                                    if (!input) return options;
+
+                                                    const startsWith = [];
+                                                    const includes = [];
+
+                                                    for (const opt of options) {
+                                                        const name = (opt?.name || '').toLowerCase();
+                                                        if (!name) continue;
+                                                        if (name.startsWith(input)) startsWith.push(opt);
+                                                        else if (name.includes(input)) includes.push(opt);
+                                                    }
+
+                                                    return [...startsWith, ...includes].slice(0, 50);
+                                                }}
+                                                renderInput={(params) => <TextField {...params} label="Select Item" size="small" />}
+                                                isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                                            />
                                         </Grid>
                                         <Grid item xs={1}>
                                             {index > 0 && (

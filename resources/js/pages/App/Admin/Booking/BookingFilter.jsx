@@ -66,7 +66,7 @@ const RoomBookingFilter = ({
                 }
                 setLoadingSuggestions(true);
                 try {
-                    const response = await axios.get(route('api.bookings.search-customers'), {
+                    const response = await axios.get(route(routeName.includes('events') ? 'api.events.search-customers' : 'api.bookings.search-customers'), {
                         params: { query, type },
                     });
                     setSuggestions(response.data);
@@ -88,7 +88,7 @@ const RoomBookingFilter = ({
                     return;
                 }
                 try {
-                    const response = await axios.get(route('api.bookings.search-customers'), {
+                    const response = await axios.get(route(routeName.includes('events') ? 'api.events.search-customers' : 'api.bookings.search-customers'), {
                         params: { query, type: 'all' }, // Search all types for membership/customer no
                     });
                     setMembershipSuggestions(response.data);

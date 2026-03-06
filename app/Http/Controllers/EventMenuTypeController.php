@@ -13,7 +13,7 @@ class EventMenuTypeController extends Controller
         $this->middleware('super.admin:events.menuType.view')->only('index');
         $this->middleware('super.admin:events.menuType.create')->only('create', 'store');
         $this->middleware('super.admin:events.menuType.edit')->only('edit', 'update');
-        $this->middleware('permission:events.menuType.delete')->only('destroy');
+        $this->middleware('permission:events.menuType.delete')->only('destroy', 'trashed', 'restore', 'forceDelete');
     }
 
     public function index(Request $request)

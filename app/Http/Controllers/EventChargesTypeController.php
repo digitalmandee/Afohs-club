@@ -13,7 +13,7 @@ class EventChargesTypeController extends Controller
         $this->middleware('super.admin:events.chargesType.view')->only('index');
         $this->middleware('super.admin:events.chargesType.create')->only('create', 'store');
         $this->middleware('super.admin:events.chargesType.edit')->only('edit', 'update');
-        $this->middleware('permission:events.chargesType.delete')->only('destroy');
+        $this->middleware('permission:events.chargesType.delete')->only('destroy', 'trashed', 'restore', 'forceDelete');
     }
 
     // List all Event charges types

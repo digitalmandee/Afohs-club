@@ -79,6 +79,27 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
         paymentAccount: '',
     });
 
+    const [paymentAccounts, setPaymentAccounts] = useState([]);
+    const [paymentAccountsLoading, setPaymentAccountsLoading] = useState(false);
+
+    useEffect(() => {
+        const paymentMethodByMode = {
+            Cash: 'cash',
+            'Bank Transfer': 'bank_transfer',
+            'Credit Card': 'credit_card',
+            Online: 'online',
+        };
+
+        const payment_method = paymentMethodByMode[formData.paymentMode] || 'cash';
+
+        setPaymentAccountsLoading(true);
+        axios
+            .get(route('api.finance.payment-accounts'), { params: { payment_method } })
+            .then((res) => setPaymentAccounts(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setPaymentAccounts([]))
+            .finally(() => setPaymentAccountsLoading(false));
+    }, [formData.paymentMode]);
+
     // Auto-populate form from URL parameters (from calendar)
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -588,8 +609,8 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest, 
                             setOptions([]);
                         }}
                     >
-                        <FormControlLabel value="0" control={<Radio disabled={editMode || isCompletionMode} />} label="Member" />
-                        <FormControlLabel value="2" control={<Radio disabled={editMode || isCompletionMode} />} label="Corporate Member" />
+                        <FormControlLabel value="0" control={<Radio disabled={isCompletionMode} />} label="Member" />
+                        <FormControlLabel value="2" control={<Radio disabled={isCompletionMode} />} label="Corporate Member" />
                         {guestTypes.map((type) => (
                             <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
                         ))}
@@ -607,7 +628,7 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest, 
                             options={options}
                             loading={loading}
                             value={formData.guest || null}
-                            disabled={editMode || isCompletionMode}
+                            disabled={isCompletionMode}
                             onInputChange={(event, newInputValue, reason) => {
                                 if (reason === 'input') {
                                     handleSearch(event, newInputValue);
@@ -1102,11 +1123,27 @@ const ChargesInfo = ({ formData, handleChange, isCompletionMode }) => {
                     </Select>
                 </FormControl>
             </Grid>
-            {formData.paymentMode !== 'Cash' && (
-                <Grid item xs={3}>
-                    <TextField label="Payment Account / Reference" name="paymentAccount" value={formData.paymentAccount || ''} onChange={handleChange} fullWidth />
-                </Grid>
-            )}
+            <Grid item xs={3}>
+                <FormControl fullWidth>
+                    <InputLabel>Payment Account</InputLabel>
+                    <Select
+                        name="paymentAccount"
+                        value={formData.paymentAccount || ''}
+                        onChange={handleChange}
+                        label="Payment Account"
+                        disabled={paymentAccountsLoading}
+                    >
+                        <MenuItem value="">
+                            {paymentAccountsLoading ? 'Loading...' : paymentAccounts.length > 0 ? 'Select Payment Account' : 'No Accounts Found'}
+                        </MenuItem>
+                        {paymentAccounts.map((a) => (
+                            <MenuItem key={a.id} value={a.name}>
+                                {a.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            </Grid>
         </Grid>
     );
 };

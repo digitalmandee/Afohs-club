@@ -822,6 +822,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
     Route::get('/api/room-bookings/search-customers', [RoomBookingController::class, 'searchCustomers'])->name('api.bookings.search-customers')->middleware('permission:rooms.bookings.create');
     Route::get('/api/events/calendar', [EventBookingController::class, 'calendarData'])->name('api.events.calendar')->middleware('permission:events.bookings.calendar');
     Route::get('/api/events/venues', [EventBookingController::class, 'getVenues'])->name('api.events.venues')->middleware('permission:events.venue.view');
+    Route::get('/api/events/search-customers', [EventBookingController::class, 'searchCustomers'])->name('api.events.search-customers')->middleware('permission:events.bookings.view|events.bookings.create|events.bookings.edit');
     Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
 
@@ -1119,6 +1120,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
 
         // Membership Maintanance Revenue
         Route::get('maintanance-fee-revenue', [MemberFeeRevenueController::class, 'maintenanceFeeRevenue'])->name('membership.maintanance-fee-revenue')->middleware('super.admin:reports.maintanance-fee-revenue');
+        Route::get('maintanance-fee-revenue/data', [MemberFeeRevenueController::class, 'maintenanceFeeRevenueData'])->name('membership.maintanance-fee-revenue.data')->middleware('super.admin:reports.maintanance-fee-revenue');
         Route::get('maintanance-fee-revenue/print', [MemberFeeRevenueController::class, 'maintenanceFeeRevenuePrint'])->name('membership.maintanance-fee-revenue.print')->middleware('super.admin:reports.maintanance-fee-revenue');
 
         // Pending Maintenance Report
@@ -1146,6 +1148,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
 
         // New Year Eve Report
         Route::get('new-year-eve-report', [MemberFeeRevenueController::class, 'newYearEveReport'])->name('membership.new-year-eve-report')->middleware('super.admin:reports.new-year-eve');
+        Route::get('new-year-eve-report/data', [MemberFeeRevenueController::class, 'newYearEveReportData'])->name('membership.new-year-eve-report.data')->middleware('super.admin:reports.new-year-eve');
         Route::get('new-year-eve-report/print', [MemberFeeRevenueController::class, 'newYearEveReportPrint'])->name('membership.new-year-eve-report.print')->middleware('super.admin:reports.new-year-eve');
 
         // Reinstating Fee Report
