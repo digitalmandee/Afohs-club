@@ -74,7 +74,10 @@ export const generateEventInvoiceContent = (booking) => {
 
     const totalPrice = Number(booking.total_price || 0);
     const invoicePaid = Number(booking.invoice?.paid_amount ?? booking.paid_amount ?? 0) + Number(booking.invoice?.advance_payment ?? 0);
-    const balanceDue = Math.max(0, totalPrice - invoicePaid);
+    const securityDeposit = Number(booking.security_deposit ?? 0);
+    const totalApplied = invoicePaid + securityDeposit;
+    const displayPaid = Math.min(totalPrice, totalApplied);
+    const balanceDue = Math.max(0, totalPrice - totalApplied);
     const advanceAmount = Number(booking.advance_amount ?? 0);
 
     return `<!doctype html>
@@ -248,7 +251,7 @@ export const generateEventInvoiceContent = (booking) => {
                 <div style="margin-bottom: 20px">
                     <div class="subtitle1">Event Booking Details</div>
                     <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_no || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>#${booking.booking_no || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booked By: </span>${booking.booked_by || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${dayjs(booking.booking_date).format('MMMM D, YYYY')}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${getEventBookingTypeLabel(booking.booking_type)}</div>
@@ -360,7 +363,7 @@ export const generateEventInvoiceContent = (booking) => {
                         </div>
                         <div class="summary-row">
                             <span class="typography-body2-bold">Amount Paid</span>
-                            <span class="typography-body2">Rs ${invoicePaid}</span>
+                            <span class="typography-body2">Rs ${displayPaid}</span>
                         </div>
                         <div class="summary-row">
                             <span class="typography-body2-bold">Advance</span>

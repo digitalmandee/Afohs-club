@@ -81,6 +81,7 @@ class EventBookingController extends Controller
             'discountType' => 'required|in:fixed,percentage',
             'discount' => 'nullable|numeric|min:0',
             'grandTotal' => 'required|numeric|min:0',
+            'paymentOption' => 'nullable|in:advance,full',
         ]);
 
         // Check for duplicate booking (overlapping time)
@@ -329,9 +330,19 @@ class EventBookingController extends Controller
             ]);
 
             // ✅ Handle Advance Payment & Security Deposit
-            $advanceAmount = floatval($request->advanceAmount ?? 0);
+            $paymentOption = $request->paymentOption ?? 'advance';
+            $advanceAmountInput = floatval($request->advanceAmount ?? 0);
             $securityDeposit = floatval($request->securityDeposit ?? 0);
-            $totalReceived = $advanceAmount + $securityDeposit;
+            $amountToApplyToInvoice = $paymentOption === 'full' ? (float) $finalAmount : $advanceAmountInput;
+            $advanceAmount = $paymentOption === 'full' ? 0 : $advanceAmountInput;
+
+            if ($paymentOption === 'advance' && $amountToApplyToInvoice <= 0) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'advanceAmount' => ['Advance amount is required.'],
+                ]);
+            }
+
+            $totalReceived = $amountToApplyToInvoice + $securityDeposit;
 
             if ($totalReceived > 0) {
                 // 1. Create Receipt
@@ -342,7 +353,7 @@ class EventBookingController extends Controller
                     'payment_account' => $request->paymentAccount,
                     'receipt_date' => now(),
                     'received_from' => $memberName,
-                    'remarks' => 'Advance (' . $advanceAmount . ') & Security (' . $securityDeposit . ') for Event Booking #' . $bookingNo,
+                    'remarks' => ($paymentOption === 'full' ? 'Full Payment (' . $amountToApplyToInvoice . ')' : 'Advance (' . $amountToApplyToInvoice . ')') . ' & Security (' . $securityDeposit . ') for Event Booking #' . $bookingNo,
                     'created_by' => Auth::id(),
                 ]);
 
@@ -360,27 +371,26 @@ class EventBookingController extends Controller
                     'created_by' => Auth::id(),
                 ]);
 
-                // 3. Link Payment to Invoice (TransactionRelation) - ONLY ADVANCE AMOUNT
-                if ($advanceAmount > 0) {
+                $appliedToInvoice = min((float) $invoice->total_price, (float) $amountToApplyToInvoice);
+
+                // 3. Link Payment to Invoice (TransactionRelation)
+                if ($appliedToInvoice > 0) {
                     TransactionRelation::create([
                         'receipt_id' => $receipt->id,
                         'invoice_id' => $invoice->id,
-                        'amount' => $advanceAmount,
+                        'amount' => $appliedToInvoice,
                     ]);
                 }
 
-                // 4. Update Invoice (Only Advance reduces the invoice balance)
-                $invoice->paid_amount = $advanceAmount;
-                $invoice->status = ($invoice->paid_amount >= $invoice->total_price) ? 'paid' : ($invoice->paid_amount > 0 ? 'unpaid' : 'unpaid');
-                if ($invoice->paid_amount >= $invoice->total_price) {
-                    $invoice->status = 'paid';
-                }
+                // 4. Update Invoice
+                $invoice->paid_amount = $appliedToInvoice;
+                $invoice->status = (($invoice->paid_amount + $securityDeposit) >= $invoice->total_price) ? 'paid' : 'unpaid';
                 $invoice->save();
 
                 // 5. Update Booking Financial Fields
                 $eventBooking->security_deposit = $securityDeposit;
                 $eventBooking->advance_amount = $advanceAmount;
-                $eventBooking->paid_amount = $advanceAmount;
+                $eventBooking->paid_amount = $appliedToInvoice;
                 $eventBooking->save();
             }
 
@@ -518,6 +528,8 @@ class EventBookingController extends Controller
             'venue' => 'required|exists:event_venues,id',
             'numberOfGuests' => 'required|integer|min:1',
             'grandTotal' => 'required|numeric|min:0',
+            'status' => 'nullable|in:completed',
+            'completionPaymentAmount' => 'nullable|numeric|min:0',
         ]);
 
         // Check for duplicate booking (overlapping time)
@@ -760,7 +772,7 @@ class EventBookingController extends Controller
 
                     // Update Invoice Paid Amount
                     $invoice->paid_amount += $diffAdvance;
-                    $invoice->status = ($invoice->paid_amount >= $invoice->total_price) ? 'paid' : 'unpaid';
+                    $invoice->status = (($invoice->paid_amount + $newSecurity) >= $invoice->total_price) ? 'paid' : 'unpaid';
                     $invoice->save();
                 }
 
@@ -888,6 +900,81 @@ class EventBookingController extends Controller
                 }
             }
 
+            if ($request->input('status') === 'completed') {
+                if (in_array($booking->status, ['cancelled', 'refunded'], true)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'status' => ['Cancelled bookings cannot be completed.'],
+                    ]);
+                }
+
+                if (!$invoice) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'status' => ['Cannot complete booking without an invoice.'],
+                    ]);
+                }
+
+                $invoice->refresh();
+                $remainingDue = max(0, (float) $invoice->total_price - ((float) $invoice->paid_amount + (float) ($booking->security_deposit ?? 0)));
+
+                if ($remainingDue > 0) {
+                    $paymentNow = floatval($request->completionPaymentAmount ?? 0);
+                    if ($paymentNow < $remainingDue) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'completionPaymentAmount' => ['Full payment is required to complete the event.'],
+                        ]);
+                    }
+
+                    $receipt = FinancialReceipt::create([
+                        'receipt_no' => 'REC-' . time(),
+                        'amount' => $remainingDue,
+                        'payment_mode' => $request->paymentMode ?? 'Cash',
+                        'payment_account' => $request->paymentAccount,
+                        'receipt_date' => now(),
+                        'received_from' => $request->bookedBy,
+                        'remarks' => 'Event completion payment for Booking #' . $booking->booking_no,
+                        'created_by' => Auth::id(),
+                    ]);
+
+                    $payerDetails = $this->getPayerDetails($invoice);
+                    $invoiceItem = $invoice->items()->first();
+
+                    Transaction::create([
+                        'type' => 'credit',
+                        'amount' => $remainingDue,
+                        'date' => now(),
+                        'description' => 'Completion payment for Event Booking #' . $booking->booking_no,
+                        'payable_type' => $payerDetails['type'],
+                        'payable_id' => $payerDetails['id'],
+                        'reference_type' => $invoiceItem ? FinancialInvoiceItem::class : FinancialInvoice::class,
+                        'reference_id' => $invoiceItem ? $invoiceItem->id : $invoice->id,
+                        'invoice_id' => $invoice->id,
+                        'payment_mode' => $request->paymentMode ?? 'Cash',
+                        'created_by' => Auth::id(),
+                    ]);
+
+                    TransactionRelation::create([
+                        'receipt_id' => $receipt->id,
+                        'invoice_id' => $invoice->id,
+                        'amount' => $remainingDue,
+                    ]);
+
+                    $invoice->paid_amount = (float) $invoice->paid_amount + $remainingDue;
+                }
+
+                $invoice->status = (((float) $invoice->paid_amount + (float) ($booking->security_deposit ?? 0)) >= (float) $invoice->total_price) ? 'paid' : 'unpaid';
+                $invoice->save();
+
+                if ($invoice->status !== 'paid') {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'completionPaymentAmount' => ['Full payment is required to complete the event.'],
+                    ]);
+                }
+
+                $booking->paid_amount = $invoice->paid_amount;
+                $booking->status = 'completed';
+                $booking->save();
+            }
+
             DB::commit();
 
             return response()->json([
@@ -933,7 +1020,15 @@ class EventBookingController extends Controller
             'cancellation_reason' => 'nullable|string'
         ]);
 
-        $booking = EventBooking::findOrFail($id);
+        $booking = EventBooking::with('invoice')->findOrFail($id);
+
+        if ($request->status === 'completed') {
+            if (!$booking->invoice || $booking->invoice->status !== 'paid') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => ['Full payment is required to complete the event.'],
+                ]);
+            }
+        }
 
         $booking->status = $request->status;
 
@@ -1073,7 +1168,7 @@ class EventBookingController extends Controller
             'eventVenue:id,name',
             'menu:id,event_booking_id,event_menu_id,name,amount',
             'invoice'
-        ])->where('status', 'confirmed');
+        ])->where('event_bookings.status', 'confirmed');
 
         $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues', 'status', 'membership_no']);
         $this->applyFilters($query, $filters);
@@ -1136,7 +1231,7 @@ class EventBookingController extends Controller
             'eventVenue:id,name',
             'menu:id,event_booking_id,event_menu_id,name,amount',
             'invoice'
-        ])->where('status', 'completed');
+        ])->where('event_bookings.status', 'completed');
 
         $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues', 'membership_no']);
         $this->applyFilters($query, $filters);
@@ -1183,7 +1278,7 @@ class EventBookingController extends Controller
             'eventVenue:id,name',
             'menu:id,event_booking_id,event_menu_id,name,amount',
             'invoice'
-        ])->whereIn('status', ['cancelled', 'refunded']);
+        ])->whereIn('event_bookings.status', ['cancelled', 'refunded']);
 
         $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues', 'membership_no']);
         $this->applyFilters($query, $filters);
@@ -1556,28 +1651,37 @@ class EventBookingController extends Controller
             $notes .= ' Reason: ' . $request->cancellation_reason;
         }
 
-        // Handle Refund
+        $bookingDate = $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->startOfDay() : $booking->created_at?->copy()->startOfDay();
+
+        // Handle Advance Return (optional at time of cancellation)
         if ($request->filled('refund_amount') && $request->refund_amount > 0) {
+            if ($bookingDate && $bookingDate->diffInDays(now()->startOfDay()) > 2) {
+                return redirect()->back()->withErrors(['refund_amount' => 'Advance return is allowed within 2 days of booking only.']);
+            }
+
             $invoice = $booking->invoice;
             if ($invoice) {
-                // Determine max refundable
-                $maxRefundable = $invoice->paid_amount;
+                $maxRefundable = min((float) ($invoice->paid_amount ?? 0), (float) ($booking->advance_amount ?? 0));
+                if ($maxRefundable <= 0) {
+                    return redirect()->back()->withErrors(['refund_amount' => 'No refundable advance found for this booking.']);
+                }
 
                 if ($request->refund_amount > $maxRefundable) {
                     return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than refundable amount (' . $maxRefundable . ').']);
                 }
 
                 // Update Invoice Paid Amount
-                if ($invoice->paid_amount > 0) {
-                    $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
-                }
+                $invoice->paid_amount = max(0, (float) $invoice->paid_amount - (float) $request->refund_amount);
                 $invoice->save();
+
+                $booking->advance_amount = max(0, (float) ($booking->advance_amount ?? 0) - (float) $request->refund_amount);
+                $booking->paid_amount = max(0, (float) ($booking->paid_amount ?? 0) - (float) $request->refund_amount);
 
                 // Determine Payer Details for Ledger
                 $payerDetails = $this->getPayerDetails($invoice);
 
                 // Find main invoice item to attach refund to (or generic)
-                $invoiceItem = $invoice->items()->first();
+                $invoiceItem = $invoice->items()->where('fee_type', '1')->first() ?? $invoice->items()->first();
 
                 // Create Refund Ledger Entry (Debit)
                 Transaction::create([
@@ -1593,7 +1697,8 @@ class EventBookingController extends Controller
                     'created_by' => Auth::id(),
                 ]);
 
-                $notes .= "\n[Refund Processed: " . $request->refund_amount . ' via ' . $request->refund_mode . ']';
+                $notes .= "\n[Advance Returned (Cancelled Booking): " . now()->toDateTimeString() . ']';
+                $notes .= ' Amount: ' . $request->refund_amount . ' via ' . $request->refund_mode;
                 if ($request->filled('refund_account')) {
                     $notes .= ' Account: ' . $request->refund_account;
                 }
@@ -1602,15 +1707,6 @@ class EventBookingController extends Controller
 
         $booking->additional_notes .= $notes;
         $booking->save();
-
-        if ($booking->invoice) {
-            $invoice = $booking->invoice->refresh();
-            if ($request->filled('refund_amount') && $request->refund_amount > 0) {
-                $invoice->update(['status' => 'refunded']);
-                $booking->status = 'refunded';
-                $booking->save();
-            }
-        }
 
         return redirect()->back()->with('success', 'Event Booking cancelled successfully');
     }
@@ -1631,13 +1727,17 @@ class EventBookingController extends Controller
             return redirect()->back()->withErrors(['refund_amount' => 'Advance return is only allowed for cancelled bookings.']);
         }
 
-        $bookingDate = $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date) : $booking->created_at;
-        if ($bookingDate && $bookingDate->diffInDays(now()) > 2) {
-            return redirect()->back()->withErrors(['refund_amount' => 'Advance return is only allowed within 2 days of booking.']);
+        $bookingDate = $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->startOfDay() : $booking->created_at?->copy()->startOfDay();
+        if ($bookingDate && $bookingDate->diffInDays(now()->startOfDay()) > 2) {
+            return redirect()->back()->withErrors(['refund_amount' => 'Advance return is allowed within 2 days of booking only.']);
         }
 
-        if (!$invoice || $invoice->paid_amount <= 0 || ($booking->advance_amount ?? 0) <= 0) {
-            return redirect()->back()->withErrors(['refund_amount' => 'No refundable amount available.']);
+        if (!$invoice) {
+            return redirect()->back()->withErrors(['refund_amount' => 'No invoice found for this booking.']);
+        }
+
+        if (($invoice->paid_amount ?? 0) <= 0 || ($booking->advance_amount ?? 0) <= 0) {
+            return redirect()->back()->withErrors(['refund_amount' => 'No refundable advance found for this booking.']);
         }
 
         $maxRefundable = min((float) $invoice->paid_amount, (float) ($booking->advance_amount ?? 0));
@@ -1656,7 +1756,7 @@ class EventBookingController extends Controller
         // Determine Payer Details for Ledger
         $payerDetails = $this->getPayerDetails($invoice);
 
-        $invoiceItem = $invoice->items()->first();
+        $invoiceItem = $invoice->items()->where('fee_type', '1')->first() ?? $invoice->items()->first();
 
         // Create Refund Ledger Entry (Debit)
         Transaction::create([
@@ -1672,12 +1772,7 @@ class EventBookingController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        $invoice->status = 'refunded';
-        $invoice->save();
-
-        $booking->status = 'refunded';
-
-        $notes = "\n[Refund Processed (Post-Cancel): " . now()->toDateTimeString() . ']';
+        $notes = "\n[Advance Returned (Cancelled Booking): " . now()->toDateTimeString() . ']';
         $notes .= ' Amount: ' . $request->refund_amount . ' via ' . $request->refund_mode;
         if ($request->filled('refund_account')) {
             $notes .= ' Account: ' . $request->refund_account;

@@ -137,8 +137,15 @@ const EventsCompleted = ({ bookings, filters = {}, aggregates }) => {
                                                 const invoicePaid = Number(booking.invoice?.paid_amount ?? 0) + Number(booking.invoice?.advance_payment ?? 0);
                                                 const totalReceived = invoicePaid + Number(booking.security_deposit ?? 0);
                                                 const totalPrice = Number(booking.total_price ?? 0);
-                                                const membershipOrGuestId = booking.member?.membership_no || booking.corporateMember?.membership_no || booking.customer?.customer_no || 'N/A';
-                                                const guestTypeName = booking.customer?.guest_type?.name || booking.customer?.guestType?.name || (booking.customer ? 'Guest' : booking.member ? 'Member' : booking.corporateMember ? 'Corporate' : 'N/A');
+                                                const membershipOrGuestId = booking.member?.membership_no || booking.corporateMember?.membership_no || booking.corporate_member?.membership_no || booking.customer?.customer_no || '-';
+                                                const guestTypeName =
+                                                    booking.member
+                                                        ? 'Member'
+                                                        : booking.corporateMember || booking.corporate_member
+                                                          ? 'Corporate Member'
+                                                          : booking.customer
+                                                            ? booking.customer?.guest_type?.name || booking.customer?.guestType?.name || 'Guest'
+                                                            : '-';
                                                 const timing = booking.event_time_from && booking.event_time_to ? `${booking.event_time_from} - ${booking.event_time_to}` : booking.event_time_from || booking.event_time_to || 'N/A';
                                                 const menuName = booking.menu?.name || 'N/A';
                                                 return (
