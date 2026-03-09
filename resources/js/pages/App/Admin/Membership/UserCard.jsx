@@ -125,10 +125,10 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .label {
-            margin-top: 18px;
+            margin-top: 15px;
             font-size: 10px;
             font-weight: 700;
-            padding-left: 40px;
+            padding-left: 10px;
             color: #000;
             white-space: nowrap;
         }
@@ -137,7 +137,7 @@ export const handlePrintMembershipCard = (member) => {
             font-size: 10px;
             font-weight: 800;
             color: #000;
-            padding-left: 50px;
+            padding-left: 10px;
             padding-top: 2px
         }
 
@@ -349,10 +349,10 @@ export const MembershipCardContent = ({ member, id }) => {
                             <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
                                 <img src="/assets/Logo.png" alt="AFOHS CLUB" style={{ height: 150 }} />
                             </Box>
-                            <Typography sx={{ fontSize: '16px', fontWeight: 600, pt: 5, pl: 10, whiteSpace: 'nowrap', color: '#000' }}>
+                            <Typography sx={{ fontSize: '16px', fontWeight: 600, pt: 5, pl: 2, whiteSpace: 'nowrap', color: '#000' }}>
                                 Membership No
                             </Typography>
-                            <Typography variant="subtitle1" fontWeight="bold" color="#000" sx={{ ml: 7 }}>
+                            <Typography variant="subtitle1" fontWeight="bold" color="#000" sx={{ ml: 3 }}>
                                 {member?.membership_no || 'N/A'}
                             </Typography>
                         </Box>

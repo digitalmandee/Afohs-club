@@ -83,7 +83,7 @@ const EventMenuTypes = ({ eventMenuTypesData, filters: initialFilters }) => {
                     <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Define menu formats such as Buffet, Hi-Tea, or Plated Service</Typography>
                 </Box>
                 <div className="flex items-center gap-2">
-                    <TextField
+                    {/* <TextField
                         placeholder="Search..."
                         size="small"
                         value={search}
@@ -105,7 +105,7 @@ const EventMenuTypes = ({ eventMenuTypesData, filters: initialFilters }) => {
                     />
                     <Button variant="contained" startIcon={<Search />} onClick={handleSearch} sx={{ backgroundColor: '#063455', borderRadius: '16px', textTransform: 'none' }}>
                         Search
-                    </Button>
+                    </Button> */}
                     <Button 
                     variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px', textTransform: 'none' }} onClick={handleAdd}>
                         Add Menu Type
