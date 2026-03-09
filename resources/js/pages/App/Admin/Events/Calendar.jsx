@@ -76,8 +76,8 @@ const EventCalendar = () => {
                     endMoment = startMoment.clone().endOf('day');
                 }
 
-                const startDateTime = startMoment.format('YYYY-MM-DDTHH:mm');
-                const endDateTime = endMoment.format('YYYY-MM-DDTHH:mm');
+                const startDateTime = startMoment.format('YYYY-MM-DDTHH:mm:ss');
+                const endDateTime = endMoment.format('YYYY-MM-DDTHH:mm:ss');
 
                 return {
                     id: booking.id,

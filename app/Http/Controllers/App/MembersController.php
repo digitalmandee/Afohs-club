@@ -20,6 +20,30 @@ use Spatie\Permission\Models\Role;
 
 class MembersController extends Controller
 {
+    private function extractMembershipBaseNumber(?string $membershipNo): int
+    {
+        $membershipNo = trim((string) $membershipNo);
+        if ($membershipNo === '') {
+            return 0;
+        }
+
+        if (!preg_match('/(\d+)(?:-\d+)?\s*$/', $membershipNo, $matches)) {
+            return 0;
+        }
+
+        $digits = $matches[1] ?? '';
+        if ($digits === '' || strlen($digits) > 6) {
+            return 0;
+        }
+
+        return (int) $digits;
+    }
+
+    private function formatMembershipBaseNumber(int $number): string
+    {
+        return str_pad((string) $number, 3, '0', STR_PAD_LEFT);
+    }
+
     public function index(Request $request)
     {
         $limit = $request->query('limit') ?? 10;
@@ -149,17 +173,10 @@ class MembersController extends Controller
             $maxNumber = 0;
 
             foreach ($allNumbers as $membershipNumber) {
-                $parts = explode(' ', trim($membershipNumber));
-                $numPart = count($parts) >= 2 ? end($parts) : $membershipNumber;
-
-                // Extract base number (before any dash)
-                $baseNum = explode('-', $numPart)[0];
-                if (is_numeric($baseNum)) {
-                    $maxNumber = max($maxNumber, (int) $baseNum);
-                }
+                $maxNumber = max($maxNumber, $this->extractMembershipBaseNumber($membershipNumber));
             }
 
-            $suggestion = $maxNumber + 1;
+            $suggestion = $this->formatMembershipBaseNumber($maxNumber + 1);
         }
 
         return response()->json([
@@ -181,20 +198,13 @@ class MembersController extends Controller
         $maxNumber = 0;
 
         foreach ($allNumbers as $membershipNumber) {
-            $parts = explode(' ', trim($membershipNumber));
-            $numPart = count($parts) >= 2 ? end($parts) : $membershipNumber;
-
-            // Extract base number (before any dash)
-            $baseNum = explode('-', $numPart)[0];
-            if (is_numeric($baseNum)) {
-                $maxNumber = max($maxNumber, (int) $baseNum);
-            }
+            $maxNumber = max($maxNumber, $this->extractMembershipBaseNumber($membershipNumber));
         }
 
         $nextNumber = $maxNumber + 1;
 
         return response()->json([
-            'next_number' => $nextNumber,
+            'next_number' => $this->formatMembershipBaseNumber($nextNumber),
             'message' => 'Next available membership number generated'
         ]);
     }

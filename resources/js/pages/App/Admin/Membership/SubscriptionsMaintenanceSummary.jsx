@@ -91,7 +91,7 @@ const SubscriptionsMaintenanceSummary = () => {
                             <ArrowBack sx={{ color: '#063455' }} />
                         </IconButton>
                         <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>
-                            Subscriptions & Maintenance Summary (Category-wise)
+                            MEMBER REVENUE BY PAYMENT METHOD REPORT
                         </Typography>
                     </div>
                     <Button

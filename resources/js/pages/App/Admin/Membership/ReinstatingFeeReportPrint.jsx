@@ -261,20 +261,20 @@ export default function ReinstatingFeeReportPrint({ transactions, statistics, fi
                         {transactions?.data && transactions.data.length > 0 ? (
                             transactions.data.map((transaction, index) => (
                                 <tr key={transaction.id}>
-                                    <td className="text-center font-bold">{transaction.invoice_no}</td>
-                                    <td className="text-center">{transaction.member?.current_city || 'N/A'}</td>
-                                    <td className="font-bold">{transaction.member?.full_name}</td>
-                                    <td className="text-right font-bold">{formatCurrency(transaction.total_price)}</td>
-                                    <td className="text-center">{transaction.payment_method}</td>
-                                    <td>{transaction.member?.member_category?.name || 'N/A'}</td>
+                                    <td className="text-center font-bold">{transaction.invoice?.invoice_no || '-'}</td>
+                                    <td className="text-center">{transaction.invoice?.member?.current_city || 'N/A'}</td>
+                                    <td className="font-bold">{transaction.invoice?.member?.full_name || 'N/A'}</td>
+                                    <td className="text-right font-bold">{formatCurrency(transaction.total)}</td>
+                                    <td className="text-center">{transaction.invoice?.payment_method || '-'}</td>
+                                    <td>{transaction.invoice?.member?.member_category?.name || transaction.invoice?.member?.memberCategory?.name || 'N/A'}</td>
                                     <td className="text-center">{formatDate(transaction.created_at)}</td>
-                                    <td className="text-center">{transaction.member?.membership_no}</td>
-                                    <td className="text-center">{transaction.invoice?.created_by?.name || 'N/A'}</td>
+                                    <td className="text-center">{transaction.invoice?.member?.membership_no || '-'}</td>
+                                    <td className="text-center">{transaction.invoice?.created_by?.name || transaction.invoice?.createdBy?.name || '-'}</td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="8" className="text-center">
+                                <td colSpan="9" className="text-center">
                                     No reinstating fee records found
                                 </td>
                             </tr>

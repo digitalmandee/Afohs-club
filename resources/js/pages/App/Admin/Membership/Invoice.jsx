@@ -201,6 +201,8 @@ const handlePrintReceipt = (invoice) => {
             return {
                 srNo: index + 1,
                 description: description,
+                startDate: item.start_date || item.startDate || null,
+                endDate: item.end_date || item.endDate || null,
                 subscriptionType: item.subscriptionType?.name || item.subscription_type_name || 'N/A',
                 subscriptionCategory: item.subscriptionCategory?.name || item.subscription_category_name || 'N/A',
                 originalAmount: originalAmount,
