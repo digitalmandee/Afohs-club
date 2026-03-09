@@ -5,6 +5,7 @@ import axios from 'axios';
 import debounce from 'lodash.debounce';
 import { TextField, Chip, IconButton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete, CircularProgress } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
+import PendingMaintenanceInvoiceSlip from './PendingMaintenanceInvoiceSlip';
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -32,6 +33,8 @@ export const PendingMaintenanceReportView = ({
     const [loading, setLoading] = useState(false);
     const [membersData, setMembersData] = useState(initialMembers || null);
     const [statisticsData, setStatisticsData] = useState(initialStatistics || null);
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
     const [allFilters, setAllFilters] = useState({
         member_search: initialFilters?.member_search || '',
         member_id: initialFilters?.member_id || '',
@@ -293,6 +296,50 @@ export const PendingMaintenanceReportView = ({
             member_ids: selectedMembers,
         });
         window.open(url, '_blank');
+    };
+
+    const handlePrintInvoice = async (member) => {
+        const pendingQuarters = Number(member?.pending_quarters || 0);
+        if (!pendingQuarters || pendingQuarters < 1) {
+            alert('No pending quarters found for this member.');
+            return;
+        }
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const res = await axios.post(
+                route('membership.pending-maintenance-report.invoice'),
+                {
+                    member_id: member.id,
+                    pending_quarters: pendingQuarters,
+                    date: allFilters.date,
+                },
+                csrfToken
+                    ? {
+                          headers: {
+                              'X-CSRF-TOKEN': csrfToken,
+                          },
+                      }
+                    : undefined,
+            );
+
+            const invoiceId = res.data?.invoice_id;
+            if (!invoiceId) {
+                alert('Invoice not found.');
+                return;
+            }
+
+            setSelectedInvoiceId(invoiceId);
+            setShowInvoiceModal(true);
+        } catch (e) {
+            const status = e?.response?.status;
+            const serverMsg = e?.response?.data?.error || e?.response?.data?.message;
+            if (status === 419) {
+                alert('Session expired. Please refresh the page and try again.');
+                return;
+            }
+            alert(serverMsg || 'Unable to generate invoice.');
+        }
     };
 
     return (
@@ -989,10 +1036,7 @@ export const PendingMaintenanceReportView = ({
                                                 <Button
                                                     size="small"
                                                     variant="outlined"
-                                                    onClick={() => {
-                                                        const url = route('membership.pending-maintenance-report.bulk-print', { member_ids: [member.id] });
-                                                        window.open(url, '_blank');
-                                                    }}
+                                                    onClick={() => handlePrintInvoice(member)}
                                                     sx={{
                                                         color: '#dc2626',
                                                         borderColor: '#dc2626',
@@ -1059,6 +1103,14 @@ export const PendingMaintenanceReportView = ({
                 </Box>
             </div>
             {/* </div> */}
+            <PendingMaintenanceInvoiceSlip
+                open={showInvoiceModal}
+                onClose={() => {
+                    setShowInvoiceModal(false);
+                    setSelectedInvoiceId(null);
+                }}
+                invoiceId={selectedInvoiceId}
+            />
         </>
     );
 };

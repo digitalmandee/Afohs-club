@@ -197,7 +197,10 @@ class MemberFeeRevenueController extends Controller
 
     public function pendingMaintenanceReport(Request $request)
     {
-        $statusFilter = $request->input('status') ?? [];
+        $statusFilter = array_values(array_filter((array) ($request->input('status') ?? [])));
+        if (empty($statusFilter)) {
+            $statusFilter = ['active'];
+        }
         $categoryFilter = $request->input('categories') ?? [];
         $untilDate = $this->parseDateToYmd($request->input('date')) ?: now()->format('Y-m-d');
         $quartersFilter = (string) ($request->input('quarters_pending') ?? '');
@@ -228,7 +231,10 @@ class MemberFeeRevenueController extends Controller
 
     public function pendingMaintenanceReportData(Request $request)
     {
-        $statusFilter = $request->input('status');
+        $statusFilter = array_values(array_filter((array) ($request->input('status') ?? [])));
+        if (empty($statusFilter)) {
+            $statusFilter = ['active'];
+        }
         $categoryFilter = $request->input('categories');
         $untilDate = $this->parseDateToYmd($request->input('date')) ?: now()->format('Y-m-d');
         $memberSearch = $request->input('member_search');
@@ -309,9 +315,7 @@ class MemberFeeRevenueController extends Controller
             $query->whereIn('member_category_id', (array) $categoryFilter);
         }
 
-        if ($statusFilter) {
-            $query->whereIn('status', (array) $statusFilter);
-        }
+        $query->whereIn('status', $statusFilter);
 
         $nameSearch = $request->input('name_search');
         $noSearch = $request->input('membership_no_search');
@@ -407,6 +411,7 @@ class MemberFeeRevenueController extends Controller
                     'status' => $member->status,
                     'last_payment_date' => $member->last_payment_date,
                     'paid_until_date' => $member->last_valid_date,
+                    'pending_quarters' => $pendingQuarters,
                     'monthly_fee' => $monthlyFee,
                     'quarterly_fee' => $quarterlyFee,
                     'discount' => $discount,
@@ -458,6 +463,7 @@ class MemberFeeRevenueController extends Controller
                     'status' => $member->status,
                     'last_payment_date' => $member->last_payment_date,
                     'paid_until_date' => $member->last_valid_date,
+                    'pending_quarters' => $pendingQuarters,
                     'monthly_fee' => $monthlyFee,
                     'quarterly_fee' => $quarterlyFee,
                     'discount' => $discount,
@@ -486,9 +492,85 @@ class MemberFeeRevenueController extends Controller
         ]);
     }
 
+    public function pendingMaintenanceReportInvoice(Request $request)
+    {
+        $request->validate([
+            'member_id' => 'required|integer|exists:members,id',
+            'pending_quarters' => 'required|integer|min:1',
+            'date' => 'nullable|string',
+        ]);
+
+        $untilDate = $this->parseDateToYmd($request->input('date')) ?: now()->format('Y-m-d');
+        $pendingQuarters = (int) $request->input('pending_quarters');
+
+        $member = Member::whereNull('parent_id')->findOrFail((int) $request->input('member_id'));
+
+        $monthlyFee = (float) ($member->total_maintenance_fee ?? 0);
+        if ($monthlyFee <= 0) {
+            $monthlyFee = (float) ($member->maintenance_fee ?? 0);
+        }
+        if ($monthlyFee <= 0) {
+            $category = $member->memberCategory()->select('id', 'subscription_fee')->first();
+            $monthlyFee = (float) ($category?->subscription_fee ?? 0);
+        }
+
+        $quarterlyFee = $monthlyFee * 3;
+        $amount = $quarterlyFee * $pendingQuarters;
+
+        if ($amount <= 0) {
+            return response()->json(['error' => 'Maintenance fee is not set for this member'], 422);
+        }
+
+        $baseStart = null;
+        $lastPaidItem = \App\Models\FinancialInvoiceItem::query()
+            ->select('financial_invoice_items.end_date')
+            ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
+            ->where('financial_invoice_items.fee_type', '4')
+            ->where('financial_invoices.member_id', $member->id)
+            ->where('financial_invoices.status', 'paid')
+            ->orderByDesc('financial_invoice_items.end_date')
+            ->first();
+
+        if ($lastPaidItem && !empty($lastPaidItem->end_date)) {
+            $baseStart = \Carbon\Carbon::parse($lastPaidItem->end_date)->addDay();
+        } elseif (!empty($member->membership_date)) {
+            $baseStart = \Carbon\Carbon::parse($member->membership_date);
+        } else {
+            $baseStart = \Carbon\Carbon::parse($member->created_at);
+        }
+
+        $issueDate = \Carbon\Carbon::parse($untilDate)->format('Y-m-d');
+        $batchKey = 'pm_batch:' . $member->id . ':' . $issueDate . ':' . $baseStart->toDateString() . ':' . $pendingQuarters;
+
+        $invoices = [];
+        for ($i = 0; $i < $pendingQuarters; $i++) {
+            $startDate = $baseStart->copy()->addMonths($i * 3)->startOfDay();
+            $endDate = $startDate->copy()->addMonths(3)->subDay()->startOfDay();
+
+            $inv = $this->ensurePendingMaintenanceQuarterInvoice($member, $startDate, $endDate, $untilDate, $quarterlyFee, $batchKey);
+            if ($inv) {
+                $invoices[] = $inv;
+            }
+        }
+
+        $invoice = $invoices[0] ?? null;
+
+        if (!$invoice) {
+            return response()->json(['error' => 'Unable to generate invoice'], 422);
+        }
+
+        return response()->json([
+            'invoice_id' => $invoice->id,
+            'invoice_no' => $invoice->invoice_no,
+        ]);
+    }
+
     public function pendingMaintenanceReportPrint(Request $request)
     {
-        $statusFilter = $request->input('status');
+        $statusFilter = array_values(array_filter((array) ($request->input('status') ?? [])));
+        if (empty($statusFilter)) {
+            $statusFilter = ['active'];
+        }
         $categoryFilter = $request->input('categories');
 
         $untilDate = $this->parseDateToYmd($request->input('date')) ?: now()->format('Y-m-d');
@@ -1034,6 +1116,107 @@ class MemberFeeRevenueController extends Controller
                 'data' => [
                     'member_name' => $member->full_name,
                     'action' => 'pending_maintenance_report_print',
+                ],
+            ]);
+
+            $item = \App\Models\FinancialInvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'fee_type' => '4',
+                'description' => 'Maintenance Fee (Pending)',
+                'qty' => 1,
+                'amount' => (int) round($amount, 0),
+                'sub_total' => (int) round($amount, 0),
+                'tax_percentage' => 0,
+                'tax_amount' => 0,
+                'discount_amount' => 0,
+                'total' => (int) round($amount, 0),
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+            ]);
+
+            \App\Models\Transaction::create([
+                'payable_type' => Member::class,
+                'payable_id' => $member->id,
+                'type' => 'debit',
+                'amount' => (int) round($amount, 0),
+                'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                'reference_id' => $item->id,
+                'invoice_id' => $invoice->id,
+                'description' => "Invoice #{$invoice->invoice_no} - Maintenance Fee (Pending)",
+                'date' => $issueDate,
+                'created_by' => \Illuminate\Support\Facades\Auth::id(),
+            ]);
+
+            return $invoice;
+        });
+    }
+
+    private function ensurePendingMaintenanceQuarterInvoice($member, \Carbon\Carbon $startDate, \Carbon\Carbon $endDate, string $untilDate, float $amount, string $batchKey): ?FinancialInvoice
+    {
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $startDate = $startDate->copy()->startOfDay();
+        $endDate = $endDate->copy()->startOfDay();
+
+        $existingItem = \App\Models\FinancialInvoiceItem::query()
+            ->where('fee_type', '4')
+            ->whereDate('start_date', $startDate->toDateString())
+            ->whereDate('end_date', $endDate->toDateString())
+            ->whereHas('invoice', function ($q) use ($member) {
+                $q
+                    ->where('member_id', $member->id)
+                    ->whereNotIn('status', ['cancelled', 'refunded']);
+            })
+            ->with('invoice')
+            ->first();
+
+        if ($existingItem && $existingItem->invoice) {
+            $invoice = $existingItem->invoice;
+            $data = (array) ($invoice->data ?? []);
+            $data = array_merge($data, [
+                'member_name' => $member->full_name,
+                'action' => 'pending_maintenance_report_print',
+                'pm_batch' => $batchKey,
+                'pm_period_start' => $startDate->toDateString(),
+                'pm_period_end' => $endDate->toDateString(),
+            ]);
+            $invoice->data = $data;
+            $invoice->valid_from = $startDate->toDateString();
+            $invoice->valid_to = $endDate->toDateString();
+            $invoice->save();
+
+            return $invoice;
+        }
+
+        return DB::transaction(function () use ($member, $startDate, $endDate, $untilDate, $amount, $batchKey) {
+            $issueDate = \Carbon\Carbon::parse($untilDate)->startOfDay();
+            $invoiceNo = $this->generateNextInvoiceNumber();
+
+            $invoice = FinancialInvoice::create([
+                'invoice_no' => $invoiceNo,
+                'member_id' => $member->id,
+                'invoiceable_id' => $member->id,
+                'invoiceable_type' => Member::class,
+                'fee_type' => 'maintenance_fee',
+                'invoice_type' => 'invoice',
+                'amount' => (int) round($amount, 0),
+                'total_price' => (int) round($amount, 0),
+                'paid_amount' => 0,
+                'customer_charges' => (int) round($amount, 0),
+                'status' => 'unpaid',
+                'issue_date' => $issueDate,
+                'due_date' => $issueDate->copy()->addDays(10),
+                'valid_from' => $startDate->toDateString(),
+                'valid_to' => $endDate->toDateString(),
+                'created_by' => \Illuminate\Support\Facades\Auth::id(),
+                'data' => [
+                    'member_name' => $member->full_name,
+                    'action' => 'pending_maintenance_report_print',
+                    'pm_batch' => $batchKey,
+                    'pm_period_start' => $startDate->toDateString(),
+                    'pm_period_end' => $endDate->toDateString(),
                 ],
             ]);
 

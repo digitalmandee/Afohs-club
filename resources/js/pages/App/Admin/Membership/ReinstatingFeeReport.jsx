@@ -96,6 +96,24 @@ const ReinstatingFeeReport = () => {
         }));
     };
 
+    const getStatusColor = (status) => {
+        switch (String(status || '').toLowerCase()) {
+            case 'active':
+                return 'success';
+            case 'suspended':
+            case 'cancelled':
+            case 'terminated':
+                return 'error';
+            case 'expired':
+            case 'in_suspension_process':
+                return 'warning';
+            default:
+                return 'default';
+        }
+    };
+
+    const formatStatusLabel = (status) => String(status || '').replace(/_/g, ' ').trim();
+
     const handleReset = () => {
         setAllFilters({
             member_search: '',
@@ -283,13 +301,23 @@ const ReinstatingFeeReport = () => {
                                 }}
                                 renderOption={(props, option) => (
                                     <li {...props} key={option?.id ?? props.id}>
-                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                            <Typography sx={{ fontSize: '14px', fontWeight: 600 }}>
-                                                {option?.full_name || '-'}
-                                            </Typography>
-                                            <Typography sx={{ fontSize: '12px', opacity: 0.85 }}>
-                                                {option?.membership_no || ''}
-                                            </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 1 }}>
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                                                <Typography sx={{ fontSize: '14px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {option?.full_name || '-'}
+                                                </Typography>
+                                                <Typography sx={{ fontSize: '12px', opacity: 0.85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {option?.membership_no || ''}
+                                                </Typography>
+                                            </Box>
+                                            {option?.status ? (
+                                                <Chip
+                                                    size="small"
+                                                    label={formatStatusLabel(option.status)}
+                                                    color={getStatusColor(option.status)}
+                                                    sx={{ textTransform: 'capitalize' }}
+                                                />
+                                            ) : null}
                                         </Box>
                                     </li>
                                 )}

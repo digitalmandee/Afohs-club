@@ -79,7 +79,7 @@ const PendingMaintenanceQuartersReport = () => {
             membership_no_search: '',
             cnic_search: '',
             contact_search: '',
-            status: [],
+            status: ['active'],
             categories: detailModal.categoryId ? [detailModal.categoryId] : [],
             quarters_pending: quarters,
             per_page: '15',

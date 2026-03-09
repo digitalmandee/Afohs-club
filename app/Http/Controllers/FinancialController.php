@@ -464,6 +464,54 @@ class FinancialController extends Controller
             $invoice->customer_charges = max(0, (float) ($invoice->total_price ?? 0) - (float) $paid);
         }
 
+        $batchKey = data_get($invoice->data, 'pm_batch');
+        if (!empty($batchKey) && $invoice->member_id) {
+            $related = FinancialInvoice::with(['items.transactions'])
+                ->where('member_id', $invoice->member_id)
+                ->where('data->pm_batch', $batchKey)
+                ->whereNotIn('status', ['cancelled', 'refunded'])
+                ->orderBy('valid_from')
+                ->get()
+                ->map(function ($inv) {
+                    if ($inv->items) {
+                        $inv->items->each(function ($item) {
+                            $item->paid_amount = $item->transactions
+                                ->where('type', 'credit')
+                                ->sum('amount');
+                        });
+
+                        $paid = $inv->items->sum(function ($item) {
+                            return $item->transactions->where('type', 'credit')->sum('amount');
+                        });
+                        $inv->paid_amount = $paid;
+                        $inv->customer_charges = max(0, (float) ($inv->total_price ?? 0) - (float) $paid);
+                    }
+
+                    $firstItem = $inv->items ? $inv->items->first() : null;
+                    $description = $firstItem?->description;
+                    if (!$description) {
+                        $description = 'Maintenance Fee (Pending)';
+                    }
+
+                    return [
+                        'id' => $inv->id,
+                        'invoice_no' => $inv->invoice_no,
+                        'description' => $description,
+                        'status' => $inv->status,
+                        'issue_date' => $inv->issue_date,
+                        'payment_method' => $inv->payment_method,
+                        'total_price' => $inv->total_price,
+                        'paid_amount' => $inv->paid_amount,
+                        'customer_charges' => $inv->customer_charges,
+                        'start_date' => $firstItem?->start_date ?: $inv->valid_from,
+                        'end_date' => $firstItem?->end_date ?: $inv->valid_to,
+                    ];
+                })
+                ->values();
+
+            $invoice->related_invoices = $related;
+        }
+
         return response()->json(['invoice' => $invoice]);
     }
 
