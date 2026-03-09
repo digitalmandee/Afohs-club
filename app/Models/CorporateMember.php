@@ -150,8 +150,21 @@ class CorporateMember extends BaseModel
             ->whereNull('parent_id')
             ->pluck('membership_no')
             ->map(function ($number) {
-                preg_match('/\b(\d+)\b/', $number, $matches);
-                return isset($matches[1]) ? (int) $matches[1] : 0;
+                $number = trim((string) $number);
+                if ($number === '') {
+                    return 0;
+                }
+
+                if (!preg_match('/(\d+)(?:-\d+)?\s*$/', $number, $matches)) {
+                    return 0;
+                }
+
+                $digits = $matches[1] ?? '';
+                if ($digits === '' || strlen($digits) > 6) {
+                    return 0;
+                }
+
+                return (int) $digits;
             })
             ->max() ?? 0;
 

@@ -60,7 +60,7 @@ export default function SubscriptionsMaintenanceSummaryPrint({ summary, grand_to
 
     return (
         <>
-            <Head title="Subscriptions & Maintenance Summary - Print" />
+            <Head title="MEMBER REVENUE BY PAYMENT METHOD REPORT - Print" />
             
             <style jsx global>{`
                 @media print {
@@ -179,7 +179,7 @@ export default function SubscriptionsMaintenanceSummaryPrint({ summary, grand_to
                 {/* Header */}
                 <div className="report-header">
                     <div className="report-title">AFOHS CLUB</div>
-                    <div className="report-subtitle">Subscriptions & Maintenance Summary (Category-wise)</div>
+                    <div className="report-subtitle">MEMBER REVENUE BY PAYMENT METHOD REPORT</div>
                     <div className="report-info">Generated on: {format(new Date(), 'MM/dd/yyyy HH:mm:ss')}</div>
                     <div className="report-info">Filters: {getFilterText()}</div>
                 </div>

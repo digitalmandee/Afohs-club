@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
 import { TextField, Chip, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete } from '@mui/material';
@@ -7,6 +7,8 @@ import dayjs from "dayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import axios from 'axios';
+import debounce from 'lodash/debounce';
 
 const ReinstatingFeeReport = () => {
     // Get props first
@@ -25,6 +27,33 @@ const ReinstatingFeeReport = () => {
         gender: filters?.gender || '',
         cashier: filters?.cashier ? Number(filters.cashier) : '',
     });
+
+    const [memberSuggestions, setMemberSuggestions] = useState([]);
+
+    const fetchMemberSuggestions = useMemo(
+        () =>
+            debounce(async (query) => {
+                if (!query || query.length < 2) {
+                    setMemberSuggestions([]);
+                    return;
+                }
+
+                try {
+                    const res = await axios.get(route('api.members.search'), {
+                        params: { query, type: 'member' },
+                    });
+                    setMemberSuggestions(res.data?.members || []);
+                } catch (e) {
+                    setMemberSuggestions([]);
+                }
+            }, 300),
+        []
+    );
+
+    useEffect(() => {
+        fetchMemberSuggestions(allFilters.member_search);
+        return () => fetchMemberSuggestions.cancel();
+    }, [allFilters.member_search, fetchMemberSuggestions]);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
@@ -196,17 +225,42 @@ const ReinstatingFeeReport = () => {
                     {/* Search Fields */}
                     <Grid container spacing={2} sx={{ mb: 3 }}>
                         <Grid item xs={12} md={2.4}>
-                            <TextField
+                            <Autocomplete
+                                freeSolo
                                 fullWidth
                                 size="small"
-                                placeholder="Search by Name"
+                                options={memberSuggestions}
                                 value={allFilters.member_search}
-                                onChange={(e) => handleFilterChange('member_search', e.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: '16px',
-                                    },
+                                getOptionLabel={(option) => {
+                                    if (typeof option === 'string') return option;
+                                    const name = option.full_name || '';
+                                    const no = option.membership_no ? ` (${option.membership_no})` : '';
+                                    return `${name}${no}`.trim();
                                 }}
+                                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('member_search', newInputValue);
+                                }}
+                                onChange={(event, newValue) => {
+                                    if (typeof newValue === 'string') {
+                                        handleFilterChange('member_search', newValue);
+                                    } else if (newValue && typeof newValue === 'object') {
+                                        handleFilterChange('member_search', newValue.full_name || '');
+                                    } else {
+                                        handleFilterChange('member_search', '');
+                                    }
+                                }}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        placeholder="Search by Name"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+                                            },
+                                        }}
+                                    />
+                                )}
                             />
                         </Grid>
                         <Grid item xs={12} md={2.4}>
@@ -314,48 +368,14 @@ const ReinstatingFeeReport = () => {
                             </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} md={2.4}>
-                            <Autocomplete
-                                size="small"
+                            <TextField
                                 fullWidth
-                                options={all_cities || []}
-                                value={allFilters.city || null}
-                                onChange={(event, newValue) => {
-                                    handleFilterChange('city', newValue || '');
-                                }}
-                                ListboxProps={{
-                                    sx: {
-                                        maxHeight: 300, // optional height
-                                        px: 1,
-
-                                        "& .MuiAutocomplete-option": {
-                                            borderRadius: "16px",
-                                            mx: 0.5,
-                                            my: 0.5,
-                                        },
-
-                                        "& .MuiAutocomplete-option:hover": {
-                                            backgroundColor: "#063455",
-                                            color: "#fff",
-                                        },
-
-                                        "& .MuiAutocomplete-option[aria-selected='true']": {
-                                            backgroundColor: "#063455",
-                                            color: "#fff",
-                                        },
-
-                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
-                                            backgroundColor: "#063455",
-                                            color: "#fff",
-                                        },
-                                    },
-                                }}
-                                isOptionEqualToValue={(option, value) => option === value}
-                                renderInput={(params) =>
-                                    <TextField {...params}
-                                        label="Search by City"
-                                        placeholder="All Cities"
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                                    />}
+                                size="small"
+                                label="Search by City"
+                                placeholder="All Cities"
+                                value={allFilters.city}
+                                onChange={(e) => handleFilterChange('city', e.target.value)}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                             />
                         </Grid>
                     </Grid>
@@ -590,26 +610,26 @@ const ReinstatingFeeReport = () => {
                                                 borderBottom: '1px solid #e5e7eb',
                                             }}
                                         >
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice_no}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.current_city || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.member?.full_name}</TableCell>
-                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total_price).replace('PKR', 'Rs.')}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.invoice_no || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.current_city || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total).replace('PKR', 'Rs.')}</TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={transaction.payment_method}
+                                                    label={transaction.invoice?.payment_method || 'N/A'}
                                                     size="small"
                                                     sx={{
-                                                        backgroundColor: `${getPaymentMethodColor(transaction.payment_method)}20`,
-                                                        color: getPaymentMethodColor(transaction.payment_method),
+                                                        backgroundColor: `${getPaymentMethodColor(transaction.invoice?.payment_method)}20`,
+                                                        color: getPaymentMethodColor(transaction.invoice?.payment_method),
                                                         fontWeight: 600,
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.member?.member_category?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.member?.member_category?.name || transaction.invoice?.member?.memberCategory?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>N/A</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.membership_no}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || transaction.invoice?.createdBy?.name || 'N/A'}</TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
