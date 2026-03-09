@@ -14,7 +14,7 @@ class EventMenuController extends Controller
         $this->middleware('super.admin:events.menu.view')->only('index');
         $this->middleware('super.admin:events.menu.create')->only('create', 'store');
         $this->middleware('super.admin:events.menu.edit')->only('edit', 'update');
-        $this->middleware('permission:events.menu.delete')->only('destroy');
+        $this->middleware('permission:events.menu.delete')->only('destroy', 'trashed', 'restore', 'forceDelete');
     }
 
     public function index(Request $request)

@@ -352,6 +352,11 @@ class CorporateMembershipController extends Controller
             $query->where('membership_no', 'like', '%' . $request->membership_no . '%');
         }
 
+        // Filter: Barcode
+        if ($request->filled('barcode')) {
+            $query->where('barcode_no', 'like', '%' . $request->barcode . '%');
+        }
+
         // Filter: Name
         if ($request->filled('name')) {
             $query->where('full_name', 'like', '%' . $request->name . '%');
@@ -368,6 +373,16 @@ class CorporateMembershipController extends Controller
             $query->where('mobile_number_a', 'like', '%' . $request->contact . '%');
         }
 
+        // Filter: City
+        if ($request->filled('city')) {
+            $city = trim((string) $request->city);
+            $query->where(function ($q) use ($city) {
+                $q
+                    ->where('current_city', 'like', "%{$city}%")
+                    ->orWhere('permanent_city', 'like', "%{$city}%");
+            });
+        }
+
         // Filter: Status
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
@@ -381,6 +396,20 @@ class CorporateMembershipController extends Controller
         // Filter: Member Category
         if ($request->filled('member_category') && $request->member_category !== 'all') {
             $query->where('member_category_id', $request->member_category);
+        }
+
+        // Filter: Duration
+        if ($request->filled('duration') && $request->duration !== 'all') {
+            $monthsExpr = "TIMESTAMPDIFF(MONTH, COALESCE(membership_date, created_at), CURDATE())";
+            if ($request->duration === 'lt1y') {
+                $query->whereRaw("{$monthsExpr} < 12");
+            } elseif ($request->duration === '1to3y') {
+                $query->whereRaw("{$monthsExpr} >= 12 AND {$monthsExpr} < 36");
+            } elseif ($request->duration === '3to5y') {
+                $query->whereRaw("{$monthsExpr} >= 36 AND {$monthsExpr} < 60");
+            } elseif ($request->duration === 'gt5y') {
+                $query->whereRaw("{$monthsExpr} >= 60");
+            }
         }
 
         // Sorting

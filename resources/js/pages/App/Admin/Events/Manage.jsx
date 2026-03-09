@@ -168,7 +168,7 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                             <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Create, edit, and monitor all event bookings</Typography>
 
                             {/* Filter Section */}
-                            <RoomBookingFilter routeName="events.manage" showRoomType={false} showVenues={true} venues={venues} showDates={{ booking: true, checkIn: true, checkOut: false }} dateLabels={{ booking: 'Booking Date', checkIn: 'Event Date' }} />
+                            <RoomBookingFilter routeName="events.manage" showRoomType={false} showVenues={true} venues={venues} showStatus={false} showDates={{ booking: true, checkIn: true, checkOut: false }} dateLabels={{ booking: 'Booking Date', checkIn: 'Event Date' }} />
 
                             {/* Bookings Table */}
                             <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
@@ -176,9 +176,13 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                                     <TableHead>
                                         <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking No</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership / Guest ID</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Guest Name</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Guest Type</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Event</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Venue</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Timing</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Menu</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking Date</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Event Date</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Total</TableCell>
@@ -192,11 +196,24 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                                     <TableBody>
                                         {filteredBookings.length > 0 ? (
                                             filteredBookings.map((booking) => {
-                                                const totalPaid = Number(booking.invoice?.paid_amount ?? 0) + Number(booking.invoice?.advance_payment ?? 0);
+                                                const invoicePaid = Number(booking.invoice?.paid_amount ?? 0) + Number(booking.invoice?.advance_payment ?? 0);
+                                                const totalReceived = invoicePaid + Number(booking.security_deposit ?? 0);
                                                 const totalPrice = Number(booking.total_price ?? 0);
+                                                const membershipOrGuestId = booking.member?.membership_no || booking.corporateMember?.membership_no || booking.corporate_member?.membership_no || booking.customer?.customer_no || '-';
+                                                const guestTypeName =
+                                                    booking.member
+                                                        ? 'Member'
+                                                        : booking.corporateMember || booking.corporate_member
+                                                          ? 'Corporate Member'
+                                                          : booking.customer
+                                                            ? booking.customer?.guest_type?.name || booking.customer?.guestType?.name || 'Guest'
+                                                            : '-';
+                                                const timing = booking.event_time_from && booking.event_time_to ? `${booking.event_time_from} - ${booking.event_time_to}` : booking.event_time_from || booking.event_time_to || 'N/A';
+                                                const menuName = booking.menu?.name || 'N/A';
                                                 return (
                                                 <TableRow key={booking.id}>
                                                     <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_no}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{membershipOrGuestId}</TableCell>
                                                     {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.name || booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || 'N/A'}</TableCell> */}
                                                     <TableCell
                                                         sx={{
@@ -213,6 +230,7 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                                                             <span>{booking.name || booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || 'N/A'}</span>
                                                         </Tooltip>
                                                     </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{guestTypeName}</TableCell>
                                                     <TableCell
                                                         sx={{
                                                             color: '#7F7F7F',
@@ -244,12 +262,18 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                                                             <span>{booking.event_venue?.name || 'N/A'}</span>
                                                         </Tooltip>
                                                     </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{timing}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
+                                                        <Tooltip title={menuName} arrow>
+                                                            <span>{menuName}</span>
+                                                        </Tooltip>
+                                                    </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.created_at ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.event_date ? dayjs(booking.event_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.total_price}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.advance_amount ?? 0}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{totalPaid}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{totalPrice - totalPaid}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{totalReceived}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{totalPrice - invoicePaid}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '16px', whiteSpace: 'nowrap' }}>{getStatusBadge(booking)}</TableCell>
                                                     <TableCell>
                                                         <Box
@@ -280,7 +304,7 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                                                                 View
                                                             </Button>
 
-                                                            {!['cancelled', 'refunded'].includes(booking.status) && (
+                                                            {!['completed', 'cancelled', 'refunded'].includes(booking.status) && (
                                                                 <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'cancel')} title="Cancel Booking" sx={{ minWidth: 'auto', p: '4px', color: '#d32f2f', borderColor: '#d32f2f' }}>
                                                                     <Cancel fontSize="small" />
                                                                 </Button>

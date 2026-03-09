@@ -84,7 +84,7 @@ const EventMenuAddons = ({ eventMenuAddOnsData, filters: initialFilters }) => {
                 </Box>
 
                 <div className="flex items-center gap-2">
-                    {/* <TextField
+                    <TextField
                         placeholder="Search..."
                         size="small"
                         value={search}
@@ -104,9 +104,9 @@ const EventMenuAddons = ({ eventMenuAddOnsData, filters: initialFilters }) => {
                             },
                         }}
                     />
-                    <Button variant="contained" startIcon={<Search />} onClick={handleSearch} sx={{ backgroundColor: '#063455', borderRadius: '16px' }}>
+                    <Button variant="contained" startIcon={<Search />} onClick={handleSearch} sx={{ backgroundColor: '#063455', borderRadius: '16px', textTransform: 'none' }}>
                         Search
-                    </Button> */}
+                    </Button>
                     <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px', textTransform: 'none' }} onClick={handleAdd}>
                         Add Addon
                     </Button>

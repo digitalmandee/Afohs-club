@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, CircularProgress } from '@mui/material';
-import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import { router } from '@inertiajs/react';
 
 const EventCompletionModal = ({ open, onClose, bookingId, onSuccess }) => {
     const [completedTime, setCompletedTime] = useState(new Date().toTimeString().slice(0, 5));
@@ -12,12 +12,7 @@ const EventCompletionModal = ({ open, onClose, bookingId, onSuccess }) => {
 
         setLoading(true);
         try {
-            await axios.put(route('events.booking.update.status', bookingId), {
-                status: 'completed',
-                completed_time: completedTime
-            });
-
-            enqueueSnackbar('Event booking completed successfully!', { variant: 'success' });
+            router.visit(route('events.booking.edit', { id: bookingId, mode: 'complete' }));
             onClose();
             if (onSuccess) onSuccess();
         } catch (error) {

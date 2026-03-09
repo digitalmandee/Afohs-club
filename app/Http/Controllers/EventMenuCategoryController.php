@@ -13,7 +13,7 @@ class EventMenuCategoryController extends Controller
         $this->middleware('super.admin:events.menuCategory.view')->only('index');
         $this->middleware('super.admin:events.menuCategory.create')->only('create', 'store');
         $this->middleware('super.admin:events.menuCategory.edit')->only('edit', 'update');
-        $this->middleware('permission:events.menuCategory.delete')->only('destroy');
+        $this->middleware('permission:events.menuCategory.delete')->only('destroy', 'trashed', 'restore', 'forceDelete');
     }
 
     public function index(Request $request)

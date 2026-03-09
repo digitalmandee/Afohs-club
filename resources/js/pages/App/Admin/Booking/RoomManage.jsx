@@ -184,12 +184,6 @@ const RoomScreen = ({ bookings }) => {
     const handleConfirmAction = (bookingId, reason, refundData) => {
         if (actionType === 'cancel') {
             const data = { cancellation_reason: reason };
-            // Append refund data if present
-            if (refundData && refundData.amount) {
-                data.refund_amount = refundData.amount;
-                data.refund_mode = refundData.mode;
-                data.refund_account = refundData.account;
-            }
 
             router.put(route('rooms.booking.cancel', bookingId), data, {
                 onSuccess: () => {
@@ -311,8 +305,8 @@ const RoomScreen = ({ bookings }) => {
                                                         <span>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</span>
                                                     </Tooltip>
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.member ? booking.member.membership_no : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).membership_no : '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.booked_by || '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.member ? booking.member.membership_no : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).membership_no : booking.customer ? booking.customer.customer_no : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{`${booking.guest_first_name || ''} ${booking.guest_last_name || ''}`.trim() || '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
@@ -389,9 +383,12 @@ const RoomScreen = ({ bookings }) => {
                                                                 <Cancel fontSize="small" />
                                                             </Button>
                                                         )}
-                                                        {booking.status === 'cancelled' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0) && (
-                                                            <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Process Refund" sx={{ textTransform: 'none' }}>
-                                                                Refund
+                                                        {booking.status === 'cancelled' &&
+                                                            Number(booking.invoice?.advance_payment || booking.invoice?.paid_amount || 0) > 0 &&
+                                                            (booking.booking_date || booking.created_at) &&
+                                                            dayjs().diff(dayjs(booking.booking_date || booking.created_at), 'day') <= 2 && (
+                                                            <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Return Advance" sx={{ textTransform: 'none' }}>
+                                                                Return Advance
                                                             </Button>
                                                         )}
                                                     </Box>

@@ -775,6 +775,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
                                         <MenuItem value="takeaway">Takeaway</MenuItem>
                                         <MenuItem value="pickUp">Pick Up</MenuItem>
                                         <MenuItem value="delivery">Delivery</MenuItem>
+                                        <MenuItem value="room_service">Rooms Orders</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>

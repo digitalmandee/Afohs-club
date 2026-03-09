@@ -23,9 +23,9 @@ const MonthlyMaintenanceFeeReport = () => {
         date_to: filters?.date_to || '',
         city: filters?.city || '',
         payment_method: filters?.payment_method || '',
-        categories: filters?.categories || [],
+        categories: (filters?.categories || []).map((v) => Number(v)),
         gender: filters?.gender || '',
-        cashier: filters?.cashier || '',
+        cashier: filters?.cashier ? Number(filters.cashier) : '',
     });
 
     const [nameSuggestions, setNameSuggestions] = useState([]);

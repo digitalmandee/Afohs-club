@@ -12,8 +12,8 @@ const EventBookingActionModal = ({ open, onClose, booking, action, onConfirm }) 
     const isCancel = action === 'cancel';
     const isRefund = action === 'refund';
     const isUndo = action === 'undo';
-    const title = isCancel ? 'Cancel Event Booking' : isRefund ? 'Process Refund' : 'Undo Cancellation';
-    const confirmText = isCancel ? 'Confirm Cancel' : isRefund ? 'Confirm Refund' : 'Confirm Undo';
+    const title = isCancel ? 'Cancel Event Booking' : isRefund ? 'Return Advance' : 'Undo Cancellation';
+    const confirmText = isCancel ? 'Confirm Cancel' : isRefund ? 'Confirm Return' : 'Confirm Undo';
     const confirmColor = isCancel || isRefund ? 'error' : 'primary';
 
     const handleConfirm = () => {
@@ -47,10 +47,10 @@ const EventBookingActionModal = ({ open, onClose, booking, action, onConfirm }) 
     // So Max Refundable = invoice.paid_amount + security_deposit.
 
     const paidAmount = parseFloat(booking.invoice?.paid_amount ?? booking.paid_amount ?? 0);
-    const securityDeposit = parseFloat(booking.security_deposit || 0);
-    const maxRefundable = paidAmount + securityDeposit;
+    const advanceAmount = parseFloat(booking.advance_amount ?? 0);
+    const maxRefundable = Math.min(paidAmount, advanceAmount);
 
-    const showRefundForm = (isCancel || isRefund) && maxRefundable > 0;
+    const showRefundForm = isRefund && maxRefundable > 0;
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
@@ -108,7 +108,7 @@ const EventBookingActionModal = ({ open, onClose, booking, action, onConfirm }) 
                 {showRefundForm && (
                     <Box sx={{ mb: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
                         <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="primary">
-                            Return Payment Details (Max Refundable: {maxRefundable})
+                            Return Advance Details (Max Returnable: {maxRefundable})
                         </Typography>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
@@ -147,18 +147,18 @@ const EventBookingActionModal = ({ open, onClose, booking, action, onConfirm }) 
                             )}
                         </Grid>
                         <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                            Note: This includes Invoice Paid Amount ({paidAmount}) + Security Deposit ({securityDeposit}).
+                            Note: This includes Advance only.
                         </Typography>
                     </Box>
                 )}
 
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                    {isCancel ? 'Are you sure you want to cancel this event booking? This action can be undone later.' : isRefund ? 'Process a refund for this booking.' : 'Are you sure you want to undo the cancellation and restore this booking?'}
+                    {isCancel ? 'Are you sure you want to cancel this event booking? This action can be undone later.' : isRefund ? 'Return advance for this booking.' : 'Are you sure you want to undo the cancellation and restore this booking?'}
                 </Typography>
 
                 {isCancel && <TextField fullWidth label="Cancellation Reason" multiline rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter reason for cancellation..." variant="outlined" sx={{ mt: 1 }} />}
 
-                {isRefund && <TextField fullWidth label="Refund Note" multiline rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter note for refund..." variant="outlined" sx={{ mt: 1 }} />}
+                {isRefund && <TextField fullWidth label="Return Note" multiline rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter note..." variant="outlined" sx={{ mt: 1 }} />}
             </DialogContent>
             <DialogActions sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
                 <Button onClick={onClose} variant="outlined" color="inherit" sx={{ borderRadius: '8px', textTransform: 'none' }}>

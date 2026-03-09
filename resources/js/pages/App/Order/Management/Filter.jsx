@@ -261,6 +261,19 @@ const OrderFilter = ({ onClose }) => {
                                         },
                                     }}
                                 />
+                                <Chip
+                                    label="Rooms Orders"
+                                    onClick={() => handleBookingStatusChange('room_service')}
+                                    sx={{
+                                        bgcolor: bookingStatus === 'room_service' ? '#0a3d62' : '#e3f2fd',
+                                        color: bookingStatus === 'room_service' ? 'white' : '#333',
+                                        borderRadius: 1,
+                                        fontWeight: bookingStatus === 'room_service' ? 500 : 400,
+                                        '&:hover': {
+                                            bgcolor: bookingStatus === 'room_service' ? '#0a3d62' : '#d0e8fd',
+                                        },
+                                    }}
+                                />
                             </Box>
                         </Collapse>
                     </Box>

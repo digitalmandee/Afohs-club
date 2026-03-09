@@ -75,9 +75,32 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
         notes: '',
         advanceAmount: '',
         securityDeposit: '',
+        paymentOption: 'advance',
+        completionPaymentAmount: '',
         paymentMode: 'Cash',
         paymentAccount: '',
     });
+
+    const [paymentAccounts, setPaymentAccounts] = useState([]);
+    const [paymentAccountsLoading, setPaymentAccountsLoading] = useState(false);
+
+    useEffect(() => {
+        const paymentMethodByMode = {
+            Cash: 'cash',
+            'Bank Transfer': 'bank_transfer',
+            'Credit Card': 'credit_card',
+            Online: 'online',
+        };
+
+        const payment_method = paymentMethodByMode[formData.paymentMode] || 'cash';
+
+        setPaymentAccountsLoading(true);
+        axios
+            .get(route('api.finance.payment-accounts'), { params: { payment_method } })
+            .then((res) => setPaymentAccounts(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setPaymentAccounts([]))
+            .finally(() => setPaymentAccountsLoading(false));
+    }, [formData.paymentMode]);
 
     // Auto-populate form from URL parameters (from calendar)
     useEffect(() => {
@@ -203,9 +226,10 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                 mini_bar_items: [{ item: '', amount: '', qty: '', total: '' }],
                 advanceAmount: bookingData.advance_amount || '',
                 securityDeposit: bookingData.security_deposit || '',
-                // If we want to show payment info in edit mode we would need it in bookingData
-                // paymentMode: bookingData.payment_mode || 'Cash',
-                // paymentAccount: bookingData.payment_account || '',
+                paymentOption: 'advance',
+                completionPaymentAmount: '',
+                paymentMode: 'Cash',
+                paymentAccount: '',
             });
         }
     }, [editMode, bookingData]);
@@ -318,6 +342,20 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
             newErrors.guest = 'Member is required';
         }
 
+        if (!isCompletionMode && (formData.paymentOption || 'advance') === 'advance' && Number(formData.advanceAmount || 0) <= 0) {
+            newErrors.advanceAmount = 'Advance amount is required';
+        }
+
+        if (isCompletionMode) {
+            const alreadyPaid = bookingData?.invoice
+                ? Number(bookingData.invoice.paid_amount ?? 0) + Number(bookingData.invoice.advance_payment ?? 0) + Number(bookingData.security_deposit ?? 0)
+                : Number(formData.advanceAmount ?? 0) + Number(formData.securityDeposit ?? 0);
+            const remainingDue = Math.max(0, Number(formData.grandTotal || 0) - alreadyPaid);
+            if (remainingDue > 0 && Number(formData.completionPaymentAmount || 0) < remainingDue) {
+                newErrors.completionPaymentAmount = 'Full payment is required to complete the event';
+            }
+        }
+
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
@@ -368,8 +406,12 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                     // Redirect back to events dashboard after edit
                     router.visit(route('events.dashboard'));
                 } else {
-                    // Redirect to payment for new bookings
-                    router.visit(route('booking.payment', { invoice_no: res.data.invoice_no }));
+                    if ((formData.paymentOption || 'advance') === 'full') {
+                        router.visit(route('events.dashboard'));
+                    } else {
+                        // Redirect to payment for new bookings
+                        router.visit(route('booking.payment', { invoice_no: res.data.invoice_no }));
+                    }
                 }
             })
             .catch((err) => {
@@ -400,7 +442,18 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
             case 0:
                 return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} editMode={editMode} isCompletionMode={isCompletionMode} onAddGuest={() => setShowGuestModal(true)} />;
             case 1:
-                return <ChargesInfo formData={formData} handleChange={handleChange} isCompletionMode={isCompletionMode} />;
+                return (
+                    <ChargesInfo
+                        formData={formData}
+                        handleChange={handleChange}
+                        errors={errors}
+                        isCompletionMode={isCompletionMode}
+                        editMode={editMode}
+                        bookingData={bookingData}
+                        paymentAccounts={paymentAccounts}
+                        paymentAccountsLoading={paymentAccountsLoading}
+                    />
+                );
             case 2:
                 return <UploadInfo formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} handleFileRemove={handleFileRemove} isCompletionMode={isCompletionMode} />;
             default:
@@ -588,8 +641,8 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest, 
                             setOptions([]);
                         }}
                     >
-                        <FormControlLabel value="0" control={<Radio disabled={editMode || isCompletionMode} />} label="Member" />
-                        <FormControlLabel value="2" control={<Radio disabled={editMode || isCompletionMode} />} label="Corporate Member" />
+                        <FormControlLabel value="0" control={<Radio disabled={isCompletionMode} />} label="Member" />
+                        <FormControlLabel value="2" control={<Radio disabled={isCompletionMode} />} label="Corporate Member" />
                         {guestTypes.map((type) => (
                             <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
                         ))}
@@ -607,7 +660,7 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest, 
                             options={options}
                             loading={loading}
                             value={formData.guest || null}
-                            disabled={editMode || isCompletionMode}
+                            disabled={isCompletionMode}
                             onInputChange={(event, newInputValue, reason) => {
                                 if (reason === 'input') {
                                     handleSearch(event, newInputValue);
@@ -764,7 +817,7 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest, 
     );
 };
 
-const ChargesInfo = ({ formData, handleChange, isCompletionMode }) => {
+const ChargesInfo = ({ formData, handleChange, errors, isCompletionMode, editMode, bookingData, paymentAccounts, paymentAccountsLoading }) => {
     const { props } = usePage();
 
     // Handle menu selection
@@ -880,6 +933,20 @@ const ChargesInfo = ({ formData, handleChange, isCompletionMode }) => {
     }, [formData.other_charges, formData.menu_addons, formData.discount, formData.discountType, formData.menuAmount, formData.numberOfGuests]);
 
     const { totalOther, totalMenuAddOns, menuAmount, perPersonMenuCharges, totalMenuCharges, numberOfGuests, grandTotal } = calculateTotals();
+
+    const alreadyPaidAmount =
+        editMode && bookingData?.invoice
+            ? Number(bookingData.invoice.paid_amount ?? 0) + Number(bookingData.invoice.advance_payment ?? 0) + Number(bookingData.security_deposit ?? 0)
+            : Number(formData.advanceAmount ?? 0) + Number(formData.securityDeposit ?? 0);
+    const remainingDue = Math.max(0, Math.round(grandTotal) - alreadyPaidAmount);
+
+    useEffect(() => {
+        if (!isCompletionMode) return;
+        const current = Number(formData.completionPaymentAmount ?? 0);
+        if (current !== remainingDue) {
+            handleChange({ target: { name: 'completionPaymentAmount', value: remainingDue } });
+        }
+    }, [isCompletionMode, remainingDue]);
 
     return (
         <Grid container spacing={2}>
@@ -1086,11 +1153,64 @@ const ChargesInfo = ({ formData, handleChange, isCompletionMode }) => {
                 <TextField label="Grand Total" value={Math.round(grandTotal)} fullWidth disabled />
             </Grid>
             <Grid item xs={3}>
-                <TextField label="Security Deposit" type="number" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth />
+                <TextField label="Security Deposit" type="number" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth disabled={isCompletionMode} />
             </Grid>
             <Grid item xs={3}>
-                <TextField label="Advance Amount" type="number" name="advanceAmount" value={formData.advanceAmount} onChange={handleChange} fullWidth />
+                <TextField
+                    label="Advance Amount"
+                    type="number"
+                    name="advanceAmount"
+                    value={formData.advanceAmount}
+                    onChange={handleChange}
+                    fullWidth
+                    disabled={isCompletionMode || formData.paymentOption === 'full'}
+                    error={!!errors?.advanceAmount}
+                    helperText={errors?.advanceAmount}
+                />
             </Grid>
+            {!isCompletionMode && (
+                <Grid item xs={3}>
+                    <FormControl fullWidth>
+                        <InputLabel>Payment Option</InputLabel>
+                        <Select
+                            name="paymentOption"
+                            value={formData.paymentOption || 'advance'}
+                            onChange={(e) => {
+                                handleChange(e);
+                                if (e.target.value === 'full') {
+                                    handleChange({ target: { name: 'advanceAmount', value: 0 } });
+                                }
+                            }}
+                            label="Payment Option"
+                        >
+                            <MenuItem value="advance">Advance</MenuItem>
+                            <MenuItem value="full">Full Payment</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Grid>
+            )}
+            {isCompletionMode && (
+                <>
+                    <Grid item xs={3}>
+                        <TextField label="Already Paid" value={alreadyPaidAmount} fullWidth disabled />
+                    </Grid>
+                    <Grid item xs={3}>
+                        <TextField label="Remaining Amount" value={remainingDue} fullWidth disabled />
+                    </Grid>
+                    <Grid item xs={3}>
+                        <TextField
+                            label="Payment Now"
+                            type="number"
+                            name="completionPaymentAmount"
+                            value={formData.completionPaymentAmount}
+                            onChange={handleChange}
+                            fullWidth
+                            error={!!errors?.completionPaymentAmount}
+                            helperText={errors?.completionPaymentAmount}
+                        />
+                    </Grid>
+                </>
+            )}
             <Grid item xs={3}>
                 <FormControl fullWidth>
                     <InputLabel>Payment Mode</InputLabel>
@@ -1102,11 +1222,27 @@ const ChargesInfo = ({ formData, handleChange, isCompletionMode }) => {
                     </Select>
                 </FormControl>
             </Grid>
-            {formData.paymentMode !== 'Cash' && (
-                <Grid item xs={3}>
-                    <TextField label="Payment Account / Reference" name="paymentAccount" value={formData.paymentAccount || ''} onChange={handleChange} fullWidth />
-                </Grid>
-            )}
+            <Grid item xs={3}>
+                <FormControl fullWidth>
+                    <InputLabel>Payment Account</InputLabel>
+                    <Select
+                        name="paymentAccount"
+                        value={formData.paymentAccount || ''}
+                        onChange={handleChange}
+                        label="Payment Account"
+                        disabled={paymentAccountsLoading}
+                    >
+                        <MenuItem value="">
+                            {paymentAccountsLoading ? 'Loading...' : paymentAccounts.length > 0 ? 'Select Payment Account' : 'No Accounts Found'}
+                        </MenuItem>
+                        {paymentAccounts.map((a) => (
+                            <MenuItem key={a.id} value={a.name}>
+                                {a.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            </Grid>
         </Grid>
     );
 };

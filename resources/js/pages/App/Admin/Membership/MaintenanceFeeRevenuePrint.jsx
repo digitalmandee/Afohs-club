@@ -247,7 +247,6 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                             <th style={{ width: '10%' }}>Paying Members</th>
                             <th style={{ width: '10%' }}>Payment Rate</th>
                             <th style={{ width: '15%' }}>Total Revenue</th>
-                            <th style={{ width: '10%' }}>Avg per Member</th>
                             <th style={{ width: '10%' }}>Amount In Words</th>
                         </tr>
                     </thead>
@@ -266,7 +265,6 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                                     <td className="text-center">{categoryFee.members_with_maintenance}</td>
                                     <td className="text-center">{paymentRate}%</td>
                                     <td className="text-right font-bold">{formatCurrency(categoryFee.total_maintenance_fee)}</td>
-                                    <td className="text-right">{formatCurrency(categoryFee.average_fee_per_member)}</td>
                                     <td style={{ fontSize: '8px', fontStyle: 'italic' }}>
                                         {categoryFee.total_maintenance_fee > 0 ? toWords(categoryFee.total_maintenance_fee) : 'Zero'}
                                     </td>
@@ -286,7 +284,6 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                                 }
                             </td>
                             <td className="text-right font-bold">{formatCurrency(statistics?.total_maintenance_revenue || 0)}</td>
-                            <td className="text-right font-bold">{formatCurrency(statistics?.average_revenue_per_member || 0)}</td>
                             <td style={{ fontSize: '8px', fontStyle: 'italic' }}>
                                 {statistics?.total_maintenance_revenue > 0 ? toWords(statistics.total_maintenance_revenue) : 'Zero'}
                             </td>

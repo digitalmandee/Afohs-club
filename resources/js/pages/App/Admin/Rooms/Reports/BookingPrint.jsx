@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip } from '@mui/material';
+import dayjs from 'dayjs';
 
 const BookingPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
     useEffect(() => {
@@ -59,17 +60,19 @@ const BookingPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                     </TableHead>
                     <TableBody>
                         {bookings.map((booking) => {
-                            const total = parseFloat(booking.invoice?.total_amount || booking.total_amount || 0);
-                            const paid = parseFloat(booking.invoice?.paid_amount || booking.paid_amount || 0);
-                            const due = total - paid;
+                            const total = parseFloat(booking.grand_total || booking.invoice?.total_price || 0);
+                            const paidCash = parseFloat(booking.invoice?.paid_amount || 0);
+                            const advance = parseFloat(booking.invoice?.advance_payment || 0);
+                            const paid = paidCash + advance;
+                            const due = ['cancelled', 'refunded'].includes(booking.status) ? 0 : Math.max(0, total - paid);
 
                             return (
                                 <TableRow key={booking.id}>
-                                    <TableCell>{booking.booking_number || booking.id}</TableCell>
-                                    <TableCell>{booking.room?.room_number}</TableCell>
-                                    <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporate_member ? booking.corporate_member.name : '-'}</TableCell>
-                                    <TableCell>{booking.check_in_date}</TableCell>
-                                    <TableCell>{booking.check_out_date}</TableCell>
+                                    <TableCell>{booking.booking_no || booking.booking_number || booking.id}</TableCell>
+                                    <TableCell>{booking.room?.name || booking.room?.room_number || '-'}</TableCell>
+                                    <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember ? booking.corporateMember.full_name : '-'}</TableCell>
+                                    <TableCell>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : '-'}</TableCell>
+                                    <TableCell>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : '-'}</TableCell>
                                     <TableCell>
                                         <Chip label={booking.status} size="small" color={getStatusColor(booking.status)} variant="outlined" />
                                     </TableCell>

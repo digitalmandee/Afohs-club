@@ -17,7 +17,16 @@ const RoundedTextField = styled(TextField)({
     },
 });
 
-const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, showRoomType = true, showVenues = false, venues = [], showDates = { booking: true, checkIn: true, checkOut: true }, dateLabels = { booking: 'Booking Date', checkIn: 'Check-In', checkOut: 'Check-Out' } }) => {
+const RoomBookingFilter = ({
+    routeName = 'rooms.manage',
+    showStatus = true,
+    showRoomType = true,
+    showVenues = false,
+    venues = [],
+    showDates = { booking: true, checkIn: true, checkOut: true },
+    dateLabels = { booking: 'Booking Date', checkIn: 'Check-In', checkOut: 'Check-Out' },
+    dateMode = { booking: 'range', checkIn: 'range', checkOut: 'range' },
+}) => {
     const { props } = usePage();
     const { filters, roomTypes = [], rooms = [] } = props; // Receive rooms prop
 
@@ -57,7 +66,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                 }
                 setLoadingSuggestions(true);
                 try {
-                    const response = await axios.get(route('api.bookings.search-customers'), {
+                    const response = await axios.get(route(routeName.includes('events') ? 'api.events.search-customers' : 'api.bookings.search-customers'), {
                         params: { query, type },
                     });
                     setSuggestions(response.data);
@@ -79,7 +88,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     return;
                 }
                 try {
-                    const response = await axios.get(route('api.bookings.search-customers'), {
+                    const response = await axios.get(route(routeName.includes('events') ? 'api.events.search-customers' : 'api.bookings.search-customers'), {
                         params: { query, type: 'all' }, // Search all types for membership/customer no
                     });
                     setMembershipSuggestions(response.data);
@@ -136,13 +145,16 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
         if (routeName.includes('events')) {
             if (checkInFrom) filterParams.event_date_from = checkInFrom;
             if (checkInTo) filterParams.event_date_to = checkInTo;
+            if (dateMode.checkIn === 'single' && checkInFrom && !checkInTo) filterParams.event_date_to = checkInFrom;
         } else {
             if (checkInFrom) filterParams.check_in_from = checkInFrom;
             if (checkInTo) filterParams.check_in_to = checkInTo;
+            if (dateMode.checkIn === 'single' && checkInFrom && !checkInTo) filterParams.check_in_to = checkInFrom;
         }
 
         if (checkOutFrom) filterParams.check_out_from = checkOutFrom;
         if (checkOutTo) filterParams.check_out_to = checkOutTo;
+        if (dateMode.checkOut === 'single' && checkOutFrom && !checkOutTo) filterParams.check_out_to = checkOutFrom;
 
         if (selectedRoomTypes.length > 0) filterParams.room_type = selectedRoomTypes.join(',');
         if (selectedRooms.length > 0) filterParams.room_ids = selectedRooms.join(',');
@@ -394,107 +406,168 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {/* Check In Date Range */}
                     {showDates.checkIn && (
                         <>
-                            <Grid item xs={12} md={3}>
-                                <DatePicker
-                                    label={`${dateLabels.checkIn} From`}
-                                    format="DD-MM-YYYY"
-                                    value={checkInFrom ? dayjs(checkInFrom) : null}
-                                    onChange={(newValue) => setCheckInFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    enableAccessibleFieldDOMStructure={false}
-                                    slots={{ textField: RoundedTextField }}
-                                    slotProps={{
-                                        textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                        popper: {
-                                            sx: {
-                                                mt: 1,
-                                                '& .MuiPaper-root': {
-                                                    borderRadius: '16px',
-                                                    boxShadow: 'none',
+                            {dateMode.checkIn === 'single' ? (
+                                <Grid item xs={12} md={3}>
+                                    <DatePicker
+                                        label={dateLabels.checkIn}
+                                        format="DD-MM-YYYY"
+                                        value={checkInFrom ? dayjs(checkInFrom) : null}
+                                        onChange={(newValue) => {
+                                            const v = newValue ? newValue.format('YYYY-MM-DD') : '';
+                                            setCheckInFrom(v);
+                                            setCheckInTo(v);
+                                        }}
+                                        enableAccessibleFieldDOMStructure={false}
+                                        slots={{ textField: RoundedTextField }}
+                                        slotProps={{
+                                            textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                            popper: {
+                                                sx: {
+                                                    mt: 1,
+                                                    '& .MuiPaper-root': {
+                                                        borderRadius: '16px',
+                                                        boxShadow: 'none',
+                                                    },
                                                 },
                                             },
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <DatePicker
-                                    label="Check-In To"
-                                    format="DD-MM-YYYY"
-                                    value={checkInTo ? dayjs(checkInTo) : null}
-                                    onChange={(newValue) => setCheckInTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    enableAccessibleFieldDOMStructure={false}
-                                    slots={{ textField: RoundedTextField }}
-                                    slotProps={{
-                                        textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                        popper: {
-                                            sx: {
-                                                mt: 2, // Top spacing
-                                                // mb: 2,
-                                                '& .MuiPaper-root': {
-                                                    borderRadius: '16px', // ✅ Rounded corners
-                                                    boxShadow: 'none',
+                                        }}
+                                    />
+                                </Grid>
+                            ) : (
+                                <>
+                                    <Grid item xs={12} md={3}>
+                                        <DatePicker
+                                            label={`${dateLabels.checkIn} From`}
+                                            format="DD-MM-YYYY"
+                                            value={checkInFrom ? dayjs(checkInFrom) : null}
+                                            onChange={(newValue) => setCheckInFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            enableAccessibleFieldDOMStructure={false}
+                                            slots={{ textField: RoundedTextField }}
+                                            slotProps={{
+                                                textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                                popper: {
+                                                    sx: {
+                                                        mt: 1,
+                                                        '& .MuiPaper-root': {
+                                                            borderRadius: '16px',
+                                                            boxShadow: 'none',
+                                                        },
+                                                    },
                                                 },
-                                            },
-                                        },
-                                    }}
-                                />
-                            </Grid>
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <DatePicker
+                                            label="Check-In To"
+                                            format="DD-MM-YYYY"
+                                            value={checkInTo ? dayjs(checkInTo) : null}
+                                            onChange={(newValue) => setCheckInTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            enableAccessibleFieldDOMStructure={false}
+                                            slots={{ textField: RoundedTextField }}
+                                            slotProps={{
+                                                textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                                popper: {
+                                                    sx: {
+                                                        mt: 2,
+                                                        '& .MuiPaper-root': {
+                                                            borderRadius: '16px',
+                                                            boxShadow: 'none',
+                                                        },
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                    </Grid>
+                                </>
+                            )}
                         </>
                     )}
 
                     {/* Check Out Date Range */}
                     {showDates.checkOut && (
                         <>
-                            <Grid item xs={12} md={3}>
-                                <DatePicker
-                                    label={`${dateLabels.checkOut} From`}
-                                    format="DD-MM-YYYY"
-                                    value={checkOutFrom ? dayjs(checkOutFrom) : null}
-                                    onChange={(newValue) => setCheckOutFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    enableAccessibleFieldDOMStructure={false}
-                                    slots={{ textField: RoundedTextField }}
-                                    slotProps={{
-                                        textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                        popper: {
-                                            sx: {
-                                                mt: 1, // Top spacing
-                                                // mb: 2,
-                                                '& .MuiPaper-root': {
-                                                    borderRadius: '16px', // ✅ Rounded corners
-                                                    boxShadow: 'none',
+                            {dateMode.checkOut === 'single' ? (
+                                <Grid item xs={12} md={3}>
+                                    <DatePicker
+                                        label={dateLabels.checkOut}
+                                        format="DD-MM-YYYY"
+                                        value={checkOutFrom ? dayjs(checkOutFrom) : null}
+                                        onChange={(newValue) => {
+                                            const v = newValue ? newValue.format('YYYY-MM-DD') : '';
+                                            setCheckOutFrom(v);
+                                            setCheckOutTo(v);
+                                        }}
+                                        enableAccessibleFieldDOMStructure={false}
+                                        slots={{ textField: RoundedTextField }}
+                                        slotProps={{
+                                            textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                            popper: {
+                                                sx: {
+                                                    mt: 1,
+                                                    '& .MuiPaper-root': {
+                                                        borderRadius: '16px',
+                                                        boxShadow: 'none',
+                                                    },
                                                 },
                                             },
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <DatePicker
-                                    label={`${dateLabels.checkOut} To`}
-                                    format="DD-MM-YYYY"
-                                    value={checkOutTo ? dayjs(checkOutTo) : null}
-                                    onChange={(newValue) => setCheckOutTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    enableAccessibleFieldDOMStructure={false}
-                                    slots={{ textField: RoundedTextField }}
-                                    slotProps={{
-                                        textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                        popper: {
-                                            sx: {
-                                                mt: 1, // Top spacing
-                                                // mb: 2,
-                                                '& .MuiPaper-root': {
-                                                    borderRadius: '16px', // ✅ Rounded corners
-                                                    boxShadow: 'none',
+                                        }}
+                                    />
+                                </Grid>
+                            ) : (
+                                <>
+                                    <Grid item xs={12} md={3}>
+                                        <DatePicker
+                                            label={`${dateLabels.checkOut} From`}
+                                            format="DD-MM-YYYY"
+                                            value={checkOutFrom ? dayjs(checkOutFrom) : null}
+                                            onChange={(newValue) => setCheckOutFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            enableAccessibleFieldDOMStructure={false}
+                                            slots={{ textField: RoundedTextField }}
+                                            slotProps={{
+                                                textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                                popper: {
+                                                    sx: {
+                                                        mt: 1,
+                                                        '& .MuiPaper-root': {
+                                                            borderRadius: '16px',
+                                                            boxShadow: 'none',
+                                                        },
+                                                    },
                                                 },
-                                            },
-                                        },
-                                    }}
-                                />
-                            </Grid>
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <DatePicker
+                                            label={`${dateLabels.checkOut} To`}
+                                            format="DD-MM-YYYY"
+                                            value={checkOutTo ? dayjs(checkOutTo) : null}
+                                            onChange={(newValue) => setCheckOutTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            enableAccessibleFieldDOMStructure={false}
+                                            slots={{ textField: RoundedTextField }}
+                                            slotProps={{
+                                                textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                                popper: {
+                                                    sx: {
+                                                        mt: 1,
+                                                        '& .MuiPaper-root': {
+                                                            borderRadius: '16px',
+                                                            boxShadow: 'none',
+                                                        },
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                    </Grid>
+                                </>
+                            )}
                         </>
                     )}
 

@@ -120,7 +120,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
 
                         {/* Filter Section */}
                         {/* Filter Section */}
-                        <RoomBookingFilter routeName="rooms.checkout" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} />
+                        <RoomBookingFilter routeName="rooms.checkout" showStatus={false} showRoomType={true} showDates={{ booking: false, checkIn: true, checkOut: true }} dateLabels={{ checkIn: 'Check-In Date', checkOut: 'Check-Out Date' }} dateMode={{ checkIn: 'single', checkOut: 'single' }} />
 
                         <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                             <Table>
@@ -181,7 +181,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                             return (
                                                 <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
                                                     <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM') : ''}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                     {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell> */}
 

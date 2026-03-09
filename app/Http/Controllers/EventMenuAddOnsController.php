@@ -13,7 +13,7 @@ class EventMenuAddOnsController extends Controller
         $this->middleware('super.admin:events.menuAddOn.view')->only('index');
         $this->middleware('super.admin:events.menuAddOn.create')->only('create', 'store');
         $this->middleware('super.admin:events.menuAddOn.edit')->only('edit', 'update');
-        $this->middleware('permission:events.menuAddOn.delete')->only('destroy');
+        $this->middleware('permission:events.menuAddOn.delete')->only('destroy', 'trashed', 'restore', 'forceDelete');
     }
 
     public function index(Request $request)

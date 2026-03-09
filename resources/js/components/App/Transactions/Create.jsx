@@ -1010,7 +1010,17 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                 // If coming from deep link (invoice prop), go back
                 if (props.invoice) {
-                    window.history.back();
+                    const referrer = document.referrer || '';
+                    if (referrer && referrer.includes('/admin/finance/manage')) {
+                        const url = new URL(referrer);
+                        const params = Object.fromEntries(url.searchParams.entries());
+                        router.visit(route('finance.transaction', params), {
+                            replace: true,
+                            preserveState: false,
+                        });
+                    } else {
+                        router.visit(route('finance.transaction'), { replace: true, preserveState: false });
+                    }
                     return;
                 }
 
@@ -1106,7 +1116,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 transaction_type_id: item.fee_type,
                 total: total,
                 amount: parseFloat(String(item.amount || 0).replace(/,/g, '')),
-                payment_amount: 0,
+                payment_amount: '',
                 balance: Math.max(0, total - paid),
                 paid_amount: paid,
                 valid_from: item.valid_from || item.start_date,

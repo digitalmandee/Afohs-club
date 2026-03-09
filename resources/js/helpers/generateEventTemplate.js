@@ -63,11 +63,6 @@ export const numberToWords = (num) => {
 export const generateEventInvoiceContent = (booking) => {
     if (!booking) return '';
 
-    // Debug: Log the booking data to console
-    console.log('Event Booking Data:', booking);
-    console.log('Menu Add-Ons:', booking.menuAddOns || booking.menu_add_ons);
-    console.log('Other Charges:', booking.otherCharges || booking.other_charges);
-
     const customerName = booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || booking.name || 'N/A';
     const customerEmail = booking.customer?.email || booking.member?.personal_email || booking.corporateMember?.personal_email || booking.corporate_member?.personal_email || booking.email || 'N/A';
     const customerPhone = booking.customer?.contact || booking.member?.mobile_number_a || booking.corporateMember?.mobile_number_a || booking.corporate_member?.mobile_number_a || booking.mobile || 'N/A';
@@ -76,6 +71,14 @@ export const generateEventInvoiceContent = (booking) => {
     // Parse menu add-ons and other charges - try both camelCase and snake_case
     const menuAddOns = booking.menuAddOns || booking.menu_add_ons || [];
     const otherCharges = booking.otherCharges || booking.other_charges || [];
+
+    const totalPrice = Number(booking.total_price || 0);
+    const invoicePaid = Number(booking.invoice?.paid_amount ?? booking.paid_amount ?? 0) + Number(booking.invoice?.advance_payment ?? 0);
+    const securityDeposit = Number(booking.security_deposit ?? 0);
+    const totalApplied = invoicePaid + securityDeposit;
+    const displayPaid = Math.min(totalPrice, totalApplied);
+    const balanceDue = Math.max(0, totalPrice - totalApplied);
+    const advanceAmount = Number(booking.advance_amount ?? 0);
 
     return `<!doctype html>
 <html>
@@ -248,7 +251,7 @@ export const generateEventInvoiceContent = (booking) => {
                 <div style="margin-bottom: 20px">
                     <div class="subtitle1">Event Booking Details</div>
                     <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_no || 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>#${booking.booking_no || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booked By: </span>${booking.booked_by || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${dayjs(booking.booking_date).format('MMMM D, YYYY')}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${getEventBookingTypeLabel(booking.booking_type)}</div>
@@ -298,7 +301,6 @@ export const generateEventInvoiceContent = (booking) => {
                                 <th>Details</th>
                                 <th>Per Person Rate</th>
                                 <th>No. of Guests</th>
-                                <th>Status</th>
                                 <th class="amount">Total Amount</th>
                             </tr>
                         </thead>
@@ -309,7 +311,6 @@ export const generateEventInvoiceContent = (booking) => {
                                     <td>${addon.details || 'No additional details'}</td>
                                     <td>${addon.is_complementary ? '<span class="complementary">Complimentary</span>' : 'Rs ' + (addon.amount || 0)}</td>
                                     <td>${booking.no_of_guests || 0}</td>
-                                    <td>${addon.is_complementary ? '<span class="complementary">✓ Complimentary</span>' : '✓ Paid Service'}</td>
                                     <td class="amount"><strong>${addon.is_complementary ? '<span class="complementary">FREE</span>' : 'Rs ' + ((addon.amount || 0) * (booking.no_of_guests || 0))}</strong></td>
                                 </tr>
                             `).join('')}
@@ -330,7 +331,6 @@ export const generateEventInvoiceContent = (booking) => {
                             <tr>
                                 <th>Charge Type</th>
                                 <th>Bill Details</th>
-                                <th>Status</th>
                                 <th class="amount">Amount</th>
                             </tr>
                         </thead>
@@ -339,7 +339,6 @@ export const generateEventInvoiceContent = (booking) => {
                                 <tr>
                                     <td><strong>${charge.type}</strong></td>
                                     <td>${charge.details || 'No additional details provided'}</td>
-                                    <td>${charge.is_complementary ? '<span class="complementary">✓ Complimentary Service</span>' : '✓ Paid Service'}</td>
                                     <td class="amount"><strong>${charge.is_complementary ? '<span class="complementary">FREE</span>' : 'Rs ' + (charge.amount || 0)}</strong></td>
                                 </tr>
                             `).join('')}
@@ -351,42 +350,24 @@ export const generateEventInvoiceContent = (booking) => {
                 </div>
                 ` : ''}
 
-                <!-- Charges Breakdown Section -->
-                <div style="margin-bottom: 20px">
-                    <div class="subtitle1">Charges Breakdown</div>
-                    <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Menu Charges: </span>Rs ${booking.menu_charges || '0'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Add-ons Charges: </span>Rs ${booking.addons_charges || '0'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Per Person Charges: </span>Rs ${booking.total_per_person_charges || '0'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Guest Charges: </span>Rs ${booking.guest_charges || '0'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Extra Guests: </span>${booking.extra_guests || '0'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Extra Guest Charges: </span>Rs ${booking.extra_guest_charges || '0'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Total Food Charges: </span>Rs ${booking.total_food_charges || '0'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Total Other Charges: </span>Rs ${booking.total_other_charges || '0'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Total Charges: </span>Rs ${booking.total_charges || '0'}</div>
-                        ${booking.surcharge_type ? `<div class="typography-body2"><span style="font-weight: bold">Surcharge Type: </span>${booking.surcharge_type}</div>` : ''}
-                        ${booking.surcharge_amount ? `<div class="typography-body2"><span style="font-weight: bold">Surcharge Amount: </span>Rs ${booking.surcharge_amount}</div>` : ''}
-                        ${booking.surcharge_note ? `<div class="typography-body2"><span style="font-weight: bold">Surcharge Note: </span>${booking.surcharge_note}</div>` : ''}
-                        ${booking.reduction_type ? `<div class="typography-body2"><span style="font-weight: bold">Discount Type: </span>${booking.reduction_type}</div>` : ''}
-                        ${booking.reduction_amount ? `<div class="typography-body2"><span style="font-weight: bold">Discount Amount: </span>Rs ${booking.reduction_amount}</div>` : ''}
-                        ${booking.reduction_note ? `<div class="typography-body2"><span style="font-weight: bold">Discount Note: </span>${booking.reduction_note}</div>` : ''}
-                    </div>
-                </div>
-
                 <!-- Summary Section -->
                 <div class="summary-container">
                     <div class="summary-box">
                         <div class="summary-row">
                             <span class="typography-body2-bold">Total Amount</span>
-                            <span class="typography-body2">Rs ${booking.total_price || '0'}</span>
+                            <span class="typography-body2">Rs ${totalPrice}</span>
                         </div>
                         <div class="summary-row">
                             <span class="typography-body2-bold">Balance Due</span>
-                            <span class="typography-body2">Rs ${(booking.total_price || 0) - (booking.paid_amount || 0)}</span>
+                            <span class="typography-body2">Rs ${balanceDue}</span>
                         </div>
                         <div class="summary-row">
                             <span class="typography-body2-bold">Amount Paid</span>
-                            <span class="typography-body2">Rs ${booking.paid_amount || '0'}</span>
+                            <span class="typography-body2">Rs ${displayPaid}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="typography-body2-bold">Advance</span>
+                            <span class="typography-body2">Rs ${advanceAmount}</span>
                         </div>
                         ${booking.security_deposit > 0 ? `
                         <div class="summary-row">
@@ -425,20 +406,9 @@ export const generateEventInvoiceContent = (booking) => {
                             <div class="typography-body2-bold" style="margin-bottom: 4px">Created By: </div>
                             <div class="typography-body3">Admin (ID: ${booking.created_by || 'N/A'})</div>
                         </div>
-                        ${booking.updated_by ? `
-                        <div style="margin-top: 8px">
-                            <div class="typography-body2-bold" style="margin-bottom: 4px">Last Updated By: </div>
-                            <div class="typography-body3">Admin (ID: ${booking.updated_by})</div>
-                        </div>
-                        ` : ''}
                     </div>
                     <div class="notes-item">
                         <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.total_price || 0)} RUPEES ONLY</div>
-                        <div style="margin-top: 16px">
-                            <div class="typography-body2-bold" style="margin-bottom: 4px">Booking Information:</div>
-                            <div class="typography-body3">Created: ${dayjs(booking.created_at).format('MMMM D, YYYY h:mm A')}</div>
-                            ${booking.updated_at && booking.updated_at !== booking.created_at ? `<div class="typography-body3">Updated: ${dayjs(booking.updated_at).format('MMMM D, YYYY h:mm A')}</div>` : ''}
-                        </div>
                     </div>
                 </div>
             </div>

@@ -65,12 +65,19 @@ const EventCalendar = () => {
                     bookingTypeInfo = 'General Booking';
                 }
 
-                // Handle overnight events (when end time is earlier than start time)
-                const startDateTime = `${booking.event_date}T${booking.event_time_from}`;
-                let endDateTime = `${booking.event_date}T${booking.event_time_to}`;
-                if (booking.event_time_to <= booking.event_time_from) {
-                    endDateTime = moment(startDateTime).add(15, 'minutes').format('YYYY-MM-DDTHH:mm');
+                const startMoment = moment(`${booking.event_date} ${booking.event_time_from}`, 'YYYY-MM-DD HH:mm');
+                let endMoment = moment(`${booking.event_date} ${booking.event_time_to}`, 'YYYY-MM-DD HH:mm');
+
+                if (!endMoment.isValid() || endMoment.isSameOrBefore(startMoment)) {
+                    endMoment = startMoment.clone().add(15, 'minutes');
                 }
+
+                if (!endMoment.isSame(startMoment, 'day')) {
+                    endMoment = startMoment.clone().endOf('day');
+                }
+
+                const startDateTime = startMoment.format('YYYY-MM-DDTHH:mm');
+                const endDateTime = endMoment.format('YYYY-MM-DDTHH:mm');
 
                 return {
                     id: booking.id,

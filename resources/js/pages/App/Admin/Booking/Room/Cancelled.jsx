@@ -166,12 +166,12 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember?.full_name || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.member ? booking.member.membership_no : booking.corporateMember ? booking.corporateMember.membership_no : '-'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booked_by || '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.member ? booking.member.membership_no : booking.corporateMember ? booking.corporateMember.membership_no : booking.customer ? booking.customer.customer_no : '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{`${booking.guest_first_name || ''} ${booking.guest_last_name || ''}`.trim() || '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.advance_payment : '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.advance_payment || booking.invoice.paid_amount : '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
@@ -186,9 +186,12 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                                 <Button size="small" variant="outlined" color="#063455" startIcon={<Restore />} onClick={() => handleOpenActionModal(booking, 'undo')} sx={{ textTransform: 'none' }}>
                                                     Undo
                                                 </Button>
-                                                {booking.status !== 'refunded' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0) && (
+                                                {booking.status === 'cancelled' &&
+                                                    Number(booking.invoice?.advance_payment || booking.invoice?.paid_amount || 0) > 0 &&
+                                                    (booking.booking_date || booking.created_at) &&
+                                                    dayjs().diff(dayjs(booking.booking_date || booking.created_at), 'day') <= 2 && (
                                                     <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} sx={{ textTransform: 'none', ml: 1, color: '#d32f2f' }}>
-                                                        Refund
+                                                        Return Advance
                                                     </Button>
                                                 )}
                                                 <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455', ml: 1 }}>

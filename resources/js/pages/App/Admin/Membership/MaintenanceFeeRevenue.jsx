@@ -1,16 +1,45 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { router, usePage } from '@inertiajs/react';
-import { Autocomplete, TextField, Chip, Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid } from '@mui/material';
+import { usePage } from '@inertiajs/react';
+import { Chip, Box, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, CircularProgress } from '@mui/material';
 import { toWords } from 'number-to-words';
 import MaintenanceFeeFilter from './MaintenanceFeeFilter';
 import { Print, ArrowBack } from '@mui/icons-material';
+import axios from 'axios';
 
 const MaintenanceFeeRevenue = () => {
     // Modal state
     // const [open, setOpen] = useState(true);
 
-    const { categories, statistics, filters } = usePage().props;
+    const { filters } = usePage().props;
+    const [loading, setLoading] = useState(true);
+    const [categories, setCategories] = useState([]);
+    const [statistics, setStatistics] = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        axios
+            .get(route('membership.maintanance-fee-revenue.data'), { params: filters })
+            .then((res) => {
+                if (cancelled) return;
+                setCategories(res.data?.categories || []);
+                setStatistics(res.data?.statistics || null);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setCategories([]);
+                setStatistics(null);
+            })
+            .finally(() => {
+                if (cancelled) return;
+                setLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [JSON.stringify(filters)]);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
@@ -81,6 +110,11 @@ const MaintenanceFeeRevenue = () => {
                         <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>
                             Maintenance Fee Revenue Details
                         </Typography>
+                        {loading && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                                <CircularProgress />
+                            </Box>
+                        )}
                         <TableContainer sx={{ borderRadius: '16px' }}>
                             <Table>
                                 <TableHead>
@@ -92,7 +126,6 @@ const MaintenanceFeeRevenue = () => {
                                         <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Paying Members</TableCell>
                                         <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Payment Rate</TableCell>
                                         <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Total Revenue</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap'}}> per Member</TableCell>
                                         <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Amount In Words</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -140,9 +173,6 @@ const MaintenanceFeeRevenue = () => {
                                                 <TableCell sx={{ color: '#dc2626', fontWeight: 400, fontSize: '14px' }}>
                                                     {formatCurrency(categoryFee.total_maintenance_fee).replace('PKR', 'Rs.')}
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7c3aed', fontWeight: 400, fontSize: '14px' }}>
-                                                    {formatCurrency(categoryFee.average_fee_per_member).replace('PKR', 'Rs.')}
-                                                </TableCell>
                                                 <TableCell sx={{ color: '#000', fontWeight: 400, fontSize: '12px' }}>
                                                     {categoryFee.total_maintenance_fee > 0 ? toWords(categoryFee.total_maintenance_fee) : 'Zero'}
                                                 </TableCell>
@@ -169,9 +199,6 @@ const MaintenanceFeeRevenue = () => {
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
                                             {formatCurrency(statistics?.total_maintenance_revenue || 0).replace('PKR', 'Rs.')}
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
-                                            {formatCurrency(statistics?.average_revenue_per_member || 0).replace('PKR', 'Rs.')}
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textTransform: 'capitalize', fontStyle: 'italic' }}>
                                             {statistics?.total_maintenance_revenue > 0 ? toWords(statistics.total_maintenance_revenue) : 'Zero'}

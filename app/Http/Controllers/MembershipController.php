@@ -239,6 +239,11 @@ class MembershipController extends Controller
             $query->where('membership_no', 'like', '%' . $request->membership_no . '%');
         }
 
+        // Filter: Barcode
+        if ($request->filled('barcode')) {
+            $query->where('barcode_no', 'like', '%' . $request->barcode . '%');
+        }
+
         // Filter: Name
         if ($request->filled('name')) {
             $query->where('full_name', 'like', '%' . $request->name . '%');
@@ -256,6 +261,16 @@ class MembershipController extends Controller
             $query->where('mobile_number_a', 'like', '%' . $request->contact . '%');
         }
 
+        // Filter: City
+        if ($request->filled('city')) {
+            $city = trim((string) $request->city);
+            $query->where(function ($q) use ($city) {
+                $q
+                    ->where('current_city', 'like', "%{$city}%")
+                    ->orWhere('permanent_city', 'like', "%{$city}%");
+            });
+        }
+
         // Filter: Status
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
@@ -265,11 +280,39 @@ class MembershipController extends Controller
             $query->where('card_status', $request->card_status);
         }
 
+        // Filter: Category
+        if ($request->filled('member_category') && $request->member_category !== 'all') {
+            $query->where('member_category_id', $request->member_category);
+        }
+
         // Filter: Member Type
         if ($request->filled('member_type') && $request->member_type !== 'all') {
             $query->whereHas('memberType', function ($q) use ($request) {
                 $q->where('name', $request->member_type);
             });
+        }
+
+        // Filter: Kinship
+        if ($request->filled('kinship_filter') && $request->kinship_filter !== 'include') {
+            if ($request->kinship_filter === 'exclude') {
+                $query->whereNull('kinship');
+            } elseif ($request->kinship_filter === 'only') {
+                $query->whereNotNull('kinship');
+            }
+        }
+
+        // Filter: Duration
+        if ($request->filled('duration') && $request->duration !== 'all') {
+            $monthsExpr = "TIMESTAMPDIFF(MONTH, COALESCE(membership_date, created_at), CURDATE())";
+            if ($request->duration === 'lt1y') {
+                $query->whereRaw("{$monthsExpr} < 12");
+            } elseif ($request->duration === '1to3y') {
+                $query->whereRaw("{$monthsExpr} >= 12 AND {$monthsExpr} < 36");
+            } elseif ($request->duration === '3to5y') {
+                $query->whereRaw("{$monthsExpr} >= 36 AND {$monthsExpr} < 60");
+            } elseif ($request->duration === 'gt5y') {
+                $query->whereRaw("{$monthsExpr} >= 60");
+            }
         }
 
         // Sorting (default to newest on top)
@@ -289,13 +332,20 @@ class MembershipController extends Controller
         return Inertia::render('App/Admin/Membership/Members', [
             'members' => $members,
             'memberTypes' => MemberType::all(['id', 'name']),
+            'memberCategories' => MemberCategory::select('id', 'name')->where('status', 'active')->get(),
             'filters' => $request->only([
                 'membership_no',
+                'barcode',
                 'name',
                 'cnic',
                 'contact',
+                'city',
                 'status',
+                'card_status',
+                'member_category',
                 'member_type',
+                'duration',
+                'kinship_filter',
                 'sort',
                 'sortBy'
             ]),

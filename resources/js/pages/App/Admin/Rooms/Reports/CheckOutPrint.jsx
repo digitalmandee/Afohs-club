@@ -41,7 +41,7 @@ const CheckOutPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                     Check-out Report
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                    {(filters.check_out_from || '') + (filters.check_out_to ? ` to ${filters.check_out_to}` : '')}
+                    {(filters.check_in_from || '') + (filters.check_in_to ? ` to ${filters.check_in_to}` : '') + (filters.check_out_from ? ` | ${filters.check_out_from}` : '') + (filters.check_out_to ? ` to ${filters.check_out_to}` : '')}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                     Generated: {generatedAt}
@@ -53,7 +53,8 @@ const CheckOutPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                     <TableHead>
                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                             <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Check-In Date</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Check-Out Date</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Member / Guest</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Membership No</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Member Type</TableCell>
@@ -85,7 +86,8 @@ const CheckOutPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                             return (
                                 <TableRow key={booking.id}>
                                     <TableCell>{booking.id}</TableCell>
-                                    <TableCell>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM') : ''}</TableCell>
+                                    <TableCell>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                    <TableCell>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
                                     <TableCell>{getGuestName(booking)}</TableCell>
                                     <TableCell>{getMembershipNo(booking)}</TableCell>
                                     <TableCell>{getMemberType(booking)}</TableCell>
@@ -105,7 +107,7 @@ const CheckOutPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                         })}
                         {bookings.length > 0 && (
                             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                <TableCell colSpan={7} sx={{ fontWeight: 700 }}>
+                                <TableCell colSpan={8} sx={{ fontWeight: 700 }}>
                                     Grand Total
                                 </TableCell>
                                 <TableCell sx={{ fontWeight: 700 }}>{Math.round(bookings.reduce((sum, b) => sum + (b.nights || 1), 0))}</TableCell>
