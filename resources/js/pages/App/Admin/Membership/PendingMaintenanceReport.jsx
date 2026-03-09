@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import debounce from 'lodash.debounce';
-import { TextField, Chip, IconButton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete } from '@mui/material';
+import { TextField, Chip, IconButton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete, CircularProgress } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -13,9 +13,15 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 
 dayjs.extend(customParseFormat);
 
-const PendingMaintenanceReport = () => {
-    // Get props first
-    const { members, statistics, filters, all_statuses, all_categories } = usePage().props;
+export const PendingMaintenanceReportView = ({
+    initialMembers,
+    initialStatistics,
+    initialFilters,
+    all_statuses,
+    all_categories,
+    embedded = false,
+    onClose,
+}) => {
 
     // Modal state
     // const [open, setOpen] = useState(true);
@@ -23,18 +29,37 @@ const PendingMaintenanceReport = () => {
     const [statusModalOpen, setStatusModalOpen] = useState(false);
     const [newStatus, setNewStatus] = useState('');
     const [statusReason, setStatusReason] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [membersData, setMembersData] = useState(initialMembers || null);
+    const [statisticsData, setStatisticsData] = useState(initialStatistics || null);
     const [allFilters, setAllFilters] = useState({
-        member_search: filters?.member_search || '',
-        member_id: filters?.member_id || '',
-        name_search: filters?.name_search || '',
-        membership_no_search: filters?.membership_no_search || '',
-        cnic_search: filters?.cnic_search || '',
-        contact_search: filters?.contact_search || '',
-        status: filters?.status || [],
-        categories: filters?.categories || [],
-        quarters_pending: filters?.quarters_pending || '1',
-        per_page: filters?.per_page || '15',
-        date: filters?.date || dayjs().format('DD-MM-YYYY'),
+        member_search: initialFilters?.member_search || '',
+        member_id: initialFilters?.member_id || '',
+        name_search: initialFilters?.name_search || '',
+        membership_no_search: initialFilters?.membership_no_search || '',
+        cnic_search: initialFilters?.cnic_search || '',
+        contact_search: initialFilters?.contact_search || '',
+        status: initialFilters?.status || [],
+        categories: initialFilters?.categories || [],
+        quarters_pending: initialFilters?.quarters_pending || '1',
+        per_page: initialFilters?.per_page || '15',
+        date: initialFilters?.date || dayjs().format('DD-MM-YYYY'),
+    });
+    const [queryFilters, setQueryFilters] = useState({
+        ...{
+            member_search: initialFilters?.member_search || '',
+            member_id: initialFilters?.member_id || '',
+            name_search: initialFilters?.name_search || '',
+            membership_no_search: initialFilters?.membership_no_search || '',
+            cnic_search: initialFilters?.cnic_search || '',
+            contact_search: initialFilters?.contact_search || '',
+            status: initialFilters?.status || [],
+            categories: initialFilters?.categories || [],
+            quarters_pending: initialFilters?.quarters_pending || '1',
+            per_page: initialFilters?.per_page || '15',
+            date: initialFilters?.date || dayjs().format('DD-MM-YYYY'),
+        },
+        page: initialFilters?.page || 1,
     });
 
     // Suggestions State
@@ -94,7 +119,54 @@ const PendingMaintenanceReport = () => {
         return new Date(date).toLocaleDateString('en-GB');
     };
 
+    useEffect(() => {
+        const nextFilters = {
+            member_search: initialFilters?.member_search || '',
+            member_id: initialFilters?.member_id || '',
+            name_search: initialFilters?.name_search || '',
+            membership_no_search: initialFilters?.membership_no_search || '',
+            cnic_search: initialFilters?.cnic_search || '',
+            contact_search: initialFilters?.contact_search || '',
+            status: initialFilters?.status || [],
+            categories: initialFilters?.categories || [],
+            quarters_pending: initialFilters?.quarters_pending || '1',
+            per_page: initialFilters?.per_page || '15',
+            date: initialFilters?.date || dayjs().format('DD-MM-YYYY'),
+        };
+        setAllFilters(nextFilters);
+        setQueryFilters({ ...nextFilters, page: initialFilters?.page || 1 });
+    }, [JSON.stringify(initialFilters)]);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        axios
+            .get(route('membership.pending-maintenance-report.data'), { params: queryFilters })
+            .then((res) => {
+                if (cancelled) return;
+                setMembersData(res.data?.members || null);
+                setStatisticsData(res.data?.statistics || null);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setMembersData(null);
+                setStatisticsData(null);
+            })
+            .finally(() => {
+                if (cancelled) return;
+                setLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [JSON.stringify(queryFilters)]);
+
     const handleSearch = () => {
+        if (embedded) {
+            setQueryFilters({ ...allFilters, page: 1 });
+            return;
+        }
         router.get(route('membership.pending-maintenance-report'), allFilters, {
             preserveState: true,
             preserveScroll: true,
@@ -102,6 +174,10 @@ const PendingMaintenanceReport = () => {
     };
 
     const handlePageChange = (event, page) => {
+        if (embedded) {
+            setQueryFilters({ ...allFilters, page });
+            return;
+        }
         router.get(
             route('membership.pending-maintenance-report'),
             {
@@ -123,7 +199,7 @@ const PendingMaintenanceReport = () => {
     };
 
     const handleReset = () => {
-        setAllFilters({
+        const resetFilters = {
             member_search: '',
             member_id: '',
             name_search: '',
@@ -135,7 +211,12 @@ const PendingMaintenanceReport = () => {
             quarters_pending: '1',
             per_page: '15',
             date: dayjs().format('DD-MM-YYYY'),
-        });
+        };
+        setAllFilters(resetFilters);
+        if (embedded) {
+            setQueryFilters({ ...resetFilters, page: 1 });
+            return;
+        }
         router.get(route('membership.pending-maintenance-report'));
     };
 
@@ -158,9 +239,17 @@ const PendingMaintenanceReport = () => {
         return '#059669'; // Green - Normal
     };
 
+    const handleBack = () => {
+        if (embedded && onClose) {
+            onClose();
+            return;
+        }
+        window.history.back();
+    };
+
     const handleSelectAll = (event) => {
         if (event.target.checked) {
-            setSelectedMembers(members?.data?.map((m) => m.id) || []);
+            setSelectedMembers(membersData?.data?.map((m) => m.id) || []);
         } else {
             setSelectedMembers([]);
         }
@@ -262,7 +351,7 @@ const PendingMaintenanceReport = () => {
                 {/* Top Bar */}
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <div className="d-flex align-items-center">
-                        <IconButton onClick={() => window.history.back()}>
+                        <IconButton onClick={handleBack}>
                             <ArrowBack sx={{ color: '#063455' }} />
                         </IconButton>
                         <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Pending Maintenance Report</Typography>
@@ -838,12 +927,17 @@ const PendingMaintenanceReport = () => {
                 {/* Pending Maintenance Table */}
                 <Box sx={{ mb: 3 }}>
                     <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>Pending Maintenance Details</Typography>
+                    {loading && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                            <CircularProgress />
+                        </Box>
+                    )}
                     <TableContainer sx={{ borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455' }}>
                                     <TableCell padding="checkbox">
-                                        <input type="checkbox" onChange={handleSelectAll} checked={members?.data?.length > 0 && selectedMembers.length === members?.data?.length} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                                        <input type="checkbox" onChange={handleSelectAll} checked={membersData?.data?.length > 0 && selectedMembers.length === membersData?.data?.length} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
                                     </TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>SR</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>ID</TableCell>
@@ -862,9 +956,9 @@ const PendingMaintenanceReport = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {members?.data &&
-                                    members.data.length > 0 &&
-                                    members.data.map((member, index) => (
+                                {membersData?.data &&
+                                    membersData.data.length > 0 &&
+                                    membersData.data.map((member, index) => (
                                         <TableRow
                                             key={member.id}
                                             sx={{
@@ -917,16 +1011,16 @@ const PendingMaintenanceReport = () => {
                                     ))}
 
                                 {/* Footer Row */}
-                                {members?.data && members.data.length > 0 && (
+                                {membersData?.data && membersData.data.length > 0 && (
                                     <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={7}>
-                                            TOTAL ({statistics?.total_members || 0} Members)
+                                            TOTAL ({statisticsData?.total_members || 0} Members)
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statistics?.total_discount || 0)}</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statistics?.total_debit || 0)}</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statistics?.total_credit || 0)}</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statistics?.total_balance || 0)}</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>{formatCurrency(statistics?.total_pending_amount || 0)}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statisticsData?.total_discount || 0)}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statisticsData?.total_debit || 0)}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statisticsData?.total_credit || 0)}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>{formatCurrency(statisticsData?.total_balance || 0)}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>{formatCurrency(statisticsData?.total_pending_amount || 0)}</TableCell>
                                         <TableCell colSpan={2} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }} />
                                     </TableRow>
                                 )}
@@ -935,11 +1029,11 @@ const PendingMaintenanceReport = () => {
                     </TableContainer>
 
                     {/* Pagination */}
-                    {allFilters.per_page !== 'all' && members?.data && members.data.length > 0 && (
+                    {allFilters.per_page !== 'all' && membersData?.data && membersData.data.length > 0 && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                             <Pagination
-                                count={members.last_page}
-                                page={members.current_page}
+                                count={membersData.last_page}
+                                page={membersData.current_page}
                                 onChange={handlePageChange}
                                 color="primary"
                                 size="large"
@@ -955,10 +1049,10 @@ const PendingMaintenanceReport = () => {
                     )}
 
                     {/* Pagination Info */}
-                    {members?.data && members.data.length > 0 && (
+                    {membersData?.data && membersData.data.length > 0 && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                             <Typography variant="body2" color="textSecondary">
-                                Showing {members.from} to {members.to} of {members.total} results
+                                Showing {membersData.from} to {membersData.to} of {membersData.total} results
                             </Typography>
                         </Box>
                     )}
@@ -966,6 +1060,20 @@ const PendingMaintenanceReport = () => {
             </div>
             {/* </div> */}
         </>
+    );
+};
+
+const PendingMaintenanceReport = () => {
+    const { members, statistics, filters, all_statuses, all_categories } = usePage().props;
+
+    return (
+        <PendingMaintenanceReportView
+            initialMembers={members}
+            initialStatistics={statistics}
+            initialFilters={filters}
+            all_statuses={all_statuses}
+            all_categories={all_categories}
+        />
     );
 };
 

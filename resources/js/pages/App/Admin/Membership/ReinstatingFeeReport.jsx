@@ -230,15 +230,12 @@ const ReinstatingFeeReport = () => {
                                 fullWidth
                                 size="small"
                                 options={memberSuggestions}
-                                value={allFilters.member_search}
-                                getOptionLabel={(option) => {
-                                    if (typeof option === 'string') return option;
-                                    const name = option.full_name || '';
-                                    const no = option.membership_no ? ` (${option.membership_no})` : '';
-                                    return `${name}${no}`.trim();
-                                }}
-                                isOptionEqualToValue={(option, value) => option.id === value?.id}
-                                onInputChange={(event, newInputValue) => {
+                                value={null}
+                                inputValue={allFilters.member_search}
+                                filterOptions={(x) => x}
+                                getOptionLabel={(option) => (typeof option === 'string' ? option : option?.full_name || '')}
+                                onInputChange={(event, newInputValue, reason) => {
+                                    if (reason === 'reset') return;
                                     handleFilterChange('member_search', newInputValue);
                                 }}
                                 onChange={(event, newValue) => {
@@ -250,6 +247,52 @@ const ReinstatingFeeReport = () => {
                                         handleFilterChange('member_search', '');
                                     }
                                 }}
+                                PaperComponent={(props) => (
+                                    <Paper
+                                        {...props}
+                                        sx={{
+                                            borderRadius: '16px',
+                                            mt: 1,
+                                            overflow: 'hidden',
+                                            ...(props?.sx || {}),
+                                        }}
+                                    />
+                                )}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300,
+                                        px: 1,
+                                        '& .MuiAutocomplete-option': {
+                                            borderRadius: '16px',
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+                                        '& .MuiAutocomplete-option:hover': {
+                                            backgroundColor: '#063455',
+                                            color: '#fff',
+                                        },
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: '#063455',
+                                            color: '#fff',
+                                        },
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: '#063455',
+                                            color: '#fff',
+                                        },
+                                    },
+                                }}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option?.id ?? props.id}>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                            <Typography sx={{ fontSize: '14px', fontWeight: 600 }}>
+                                                {option?.full_name || '-'}
+                                            </Typography>
+                                            <Typography sx={{ fontSize: '12px', opacity: 0.85 }}>
+                                                {option?.membership_no || ''}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}

@@ -197,11 +197,40 @@ class MemberFeeRevenueController extends Controller
 
     public function pendingMaintenanceReport(Request $request)
     {
+        $statusFilter = $request->input('status') ?? [];
+        $categoryFilter = $request->input('categories') ?? [];
+        $untilDate = $this->parseDateToYmd($request->input('date')) ?: now()->format('Y-m-d');
+        $quartersFilter = (string) ($request->input('quarters_pending') ?? '');
+        if ($quartersFilter === '') {
+            $quartersFilter = '1';
+        }
+
+        return Inertia::render('App/Admin/Membership/PendingMaintenanceReport', [
+            'members' => null,
+            'statistics' => null,
+            'filters' => [
+                'member_search' => $request->input('member_search') ?? '',
+                'member_id' => $request->input('member_id') ?? '',
+                'name_search' => $request->input('name_search') ?? '',
+                'membership_no_search' => $request->input('membership_no_search') ?? '',
+                'cnic_search' => $request->input('cnic_search') ?? '',
+                'contact_search' => $request->input('contact_search') ?? '',
+                'status' => $statusFilter,
+                'categories' => $categoryFilter,
+                'quarters_pending' => $quartersFilter,
+                'per_page' => $request->input('per_page', 15),
+                'date' => $untilDate,
+            ],
+            'all_statuses' => Member::distinct()->pluck('status')->filter()->values(),
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
+        ]);
+    }
+
+    public function pendingMaintenanceReportData(Request $request)
+    {
         $statusFilter = $request->input('status');
         $categoryFilter = $request->input('categories');
-
         $untilDate = $this->parseDateToYmd($request->input('date')) ?: now()->format('Y-m-d');
-
         $memberSearch = $request->input('member_search');
         $memberId = $request->input('member_id');
         $cnicSearch = $request->input('cnic_search');
@@ -212,7 +241,6 @@ class MemberFeeRevenueController extends Controller
         }
         $perPage = $request->input('per_page', 15);
 
-        // Subquery to get the latest valid_to date for maintenance fees per member using Items
         $latestMaintenance = \App\Models\FinancialInvoiceItem::select(
             'financial_invoices.member_id',
             \Illuminate\Support\Facades\DB::raw('MAX(financial_invoice_items.end_date) as last_valid_date'),
@@ -257,7 +285,6 @@ class MemberFeeRevenueController extends Controller
                 DB::raw('SUM(COALESCE(financial_invoice_items.discount_amount, 0)) as maintenance_discount')
             );
 
-        // Main Query
         $query = Member::with(['memberCategory:id,name,description,subscription_fee'])
             ->leftJoinSub($latestMaintenance, 'latest_maintenance', function ($join) {
                 $join->on('members.id', '=', 'latest_maintenance.member_id');
@@ -278,7 +305,6 @@ class MemberFeeRevenueController extends Controller
                 'maintenance_discounts.maintenance_discount'
             );
 
-        // Apply filters
         if ($categoryFilter) {
             $query->whereIn('member_category_id', (array) $categoryFilter);
         }
@@ -331,29 +357,27 @@ class MemberFeeRevenueController extends Controller
                 ->orWhereDate('latest_maintenance.last_valid_date', '<=', $untilDate);
         });
 
-        // Calculate Pending Months/Quarters in SQL for filtering and sorting
-        // Logic: CEIL(TIMESTAMPDIFF(MONTH, start_date, NOW()) / 3)
-        // start_date = COALESCE(last_valid_date, membership_date, created_at)
         $currentDate = \Carbon\Carbon::parse($untilDate)->format('Y-m-d');
         $query->selectRaw("
-            CEIL( GREATEST(0, TIMESTAMPDIFF(MONTH,
-                COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at),
-                '$currentDate'
-            )) / 3 ) as pending_quarters_calc
+            CASE
+                WHEN DATE(COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at)) >= '$currentDate' THEN 0
+                ELSE FLOOR(
+                    GREATEST(0, TIMESTAMPDIFF(MONTH,
+                        COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at),
+                        '$currentDate'
+                    )) / 3
+                ) + 1
+            END as pending_quarters_calc
         ");
 
-        // Filter for PENDING members (pending_quarters > 0)
-        // This replaces the complex PHP/Collection logic
         $query->having('pending_quarters_calc', '>', 0);
 
-        // Apply Quarters Filter
         if ($quartersFilter === '6+') {
             $query->having('pending_quarters_calc', '>=', 6);
         } else {
             $query->having('pending_quarters_calc', '=', (int) $quartersFilter);
         }
 
-        // Pagination
         if ($perPage === 'all') {
             $collection = $query->get();
             $mapped = $collection->map(function ($member) {
@@ -394,7 +418,7 @@ class MemberFeeRevenueController extends Controller
                 ];
             });
 
-            $paginatedMembers = new \Illuminate\Pagination\LengthAwarePaginator(
+            $members = new \Illuminate\Pagination\LengthAwarePaginator(
                 $mapped,
                 $mapped->count(),
                 max(1, $mapped->count()),
@@ -406,9 +430,8 @@ class MemberFeeRevenueController extends Controller
             );
         } else {
             $perPageInt = max(1, (int) $perPage);
-            $paginatedMembers = $query->paginate($perPageInt)->withQueryString();
-
-            $paginatedMembers->getCollection()->transform(function ($member) {
+            $members = $query->paginate($perPageInt)->withQueryString();
+            $members->getCollection()->transform(function ($member) {
                 $monthlyFee = (float) ($member->total_maintenance_fee ?? 0);
                 if ($monthlyFee <= 0) {
                     $monthlyFee = (float) ($member->maintenance_fee ?? 0);
@@ -447,9 +470,9 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
-        $rows = collect($paginatedMembers->items());
+        $rows = collect($members->items());
         $statistics = [
-            'total_members' => $paginatedMembers->total(),
+            'total_members' => $members->total(),
             'total_pending_amount' => $rows->sum('total_pending_amount'),
             'total_discount' => $rows->sum('discount'),
             'total_debit' => $rows->sum('debit'),
@@ -457,24 +480,9 @@ class MemberFeeRevenueController extends Controller
             'total_balance' => $rows->sum('balance'),
         ];
 
-        return Inertia::render('App/Admin/Membership/PendingMaintenanceReport', [
-            'members' => $paginatedMembers,
+        return response()->json([
+            'members' => $members,
             'statistics' => $statistics,
-            'filters' => [
-                'status' => $statusFilter,
-                'categories' => $categoryFilter,
-                'member_search' => $memberSearch,
-                'member_id' => $memberId,
-                'name_search' => $nameSearch,
-                'membership_no_search' => $noSearch,
-                'cnic_search' => $cnicSearch,
-                'contact_search' => $contactSearch,
-                'quarters_pending' => $quartersFilter,
-                'per_page' => $perPage,
-                'date' => $untilDate,
-            ],
-            'all_statuses' => Member::distinct()->pluck('status')->filter()->values(),
-            'all_categories' => MemberCategory::select('id', 'name')->get(),
         ]);
     }
 
@@ -618,10 +626,15 @@ class MemberFeeRevenueController extends Controller
 
         $currentDate = \Carbon\Carbon::parse($untilDate)->format('Y-m-d');
         $query->selectRaw("
-            CEIL( GREATEST(0, TIMESTAMPDIFF(MONTH,
-                COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at),
-                '$currentDate'
-            )) / 3 ) as pending_quarters_calc
+            CASE
+                WHEN DATE(COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at)) >= '$currentDate' THEN 0
+                ELSE FLOOR(
+                    GREATEST(0, TIMESTAMPDIFF(MONTH,
+                        COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at),
+                        '$currentDate'
+                    )) / 3
+                ) + 1
+            END as pending_quarters_calc
         ");
         $query->having('pending_quarters_calc', '>', 0);
         if ($quartersFilter === '6+') {
@@ -871,10 +884,15 @@ class MemberFeeRevenueController extends Controller
 
         $currentDate = \Carbon\Carbon::parse($untilDate)->format('Y-m-d');
         $query->selectRaw("
-            CEIL( GREATEST(0, TIMESTAMPDIFF(MONTH,
-                COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at),
-                '$currentDate'
-            )) / 3 ) as pending_quarters_calc
+            CASE
+                WHEN DATE(COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at)) >= '$currentDate' THEN 0
+                ELSE FLOOR(
+                    GREATEST(0, TIMESTAMPDIFF(MONTH,
+                        COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at),
+                        '$currentDate'
+                    )) / 3
+                ) + 1
+            END as pending_quarters_calc
         ");
         $query->having('pending_quarters_calc', '>', 0);
         if ($quartersFilter === '6+') {
@@ -3130,7 +3148,8 @@ class MemberFeeRevenueController extends Controller
             ];
         }
 
-        $currentDate = now();
+        $asOfDate = $this->parseDateToYmd($dateTo) ?: now()->format('Y-m-d');
+        $currentDate = \Carbon\Carbon::parse($asOfDate);
 
         foreach ($members as $member) {
             $categoryName = $member->memberCategory->name ?? 'Unknown';
@@ -3145,35 +3164,29 @@ class MemberFeeRevenueController extends Controller
             // If exists, start date = last_valid_date.
             // If not, start date = membership_date or created_at.
 
+            $coverageEnd = null;
             if ($member->last_valid_date) {
-                $startDate = \Carbon\Carbon::parse($member->last_valid_date);
+                $coverageEnd = \Carbon\Carbon::parse($member->last_valid_date);
             } else {
-                $startDate = $member->membership_date ? \Carbon\Carbon::parse($member->membership_date) : \Carbon\Carbon::parse($member->created_at);
+                $coverageEnd = $member->membership_date ? \Carbon\Carbon::parse($member->membership_date) : \Carbon\Carbon::parse($member->created_at);
             }
 
-            // If start date is in future, 0 pending
-            if ($startDate->gt($currentDate)) {
-                $pendingMonths = 0;
-            } else {
-                $pendingMonths = $startDate->diffInMonths($currentDate);
+            $pendingQuarters = 0;
+            if ($coverageEnd->lt($currentDate)) {
+                $pendingMonths = $coverageEnd->diffInMonths($currentDate);
+                $pendingQuarters = intdiv(max(0, $pendingMonths), 3) + 1;
             }
-
-            // Adjust: if startDate < currentDate, diffInMonths is positive.
-            // If last_valid_date exists, it means paid UNTIL that date. So pending starts AFTER that date.
-            // If membership_date, pending starts FROM that date.
-
-            // Refined Logic aligned with pendingMaintenanceReport:
-            // If last_valid_date is set, pending starts from last_valid_date.
-            // We need FULL months/quarters passed since then.
-
-            // Ensure no negative
-            $pendingMonths = max(0, $pendingMonths);
-            $pendingQuarters = ceil($pendingMonths / 3);
 
             if ($pendingQuarters > 0) {
                 // Calculate pending amount for this member
-                // User requested to use member's total_maintenance_fee directly
-                $quarterlyFee = $member->total_maintenance_fee ?? 0;
+                $monthlyFee = (float) ($member->total_maintenance_fee ?? 0);
+                if ($monthlyFee <= 0) {
+                    $monthlyFee = (float) ($member->maintenance_fee ?? 0);
+                }
+                if ($monthlyFee <= 0 && $member->memberCategory) {
+                    $monthlyFee = (float) ($member->memberCategory->subscription_fee ?? 0);
+                }
+                $quarterlyFee = $monthlyFee * 3;
                 $totalPendingAmount = $pendingQuarters * $quarterlyFee;
 
                 // Determine bucket key
@@ -3234,6 +3247,7 @@ class MemberFeeRevenueController extends Controller
                 'category' => $categoryFilter,
             ],
             'all_categories' => $allCategoriesForFilter,
+            'all_statuses' => Member::distinct()->pluck('status')->filter()->values(),
         ]);
     }
 
@@ -3265,15 +3279,15 @@ class MemberFeeRevenueController extends Controller
 
         $members = $membersQuery->get();
 
-        // Initialize summary structure with ALL categories
         $summary = [];
         $grandTotals = [
-            '1_quarter_pending' => 0,
-            '2_quarters_pending' => 0,
-            '3_quarters_pending' => 0,
-            '4_quarters_pending' => 0,
-            '5_quarters_pending' => 0,
-            'more_than_5_quarters_pending' => 0,
+            '1_quarter_pending' => ['count' => 0, 'amount' => 0],
+            '2_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '3_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '4_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '5_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '6_quarters_pending' => ['count' => 0, 'amount' => 0],
+            'more_than_6_quarters_pending' => ['count' => 0, 'amount' => 0],
             'maintenance_fee_quarterly' => 0,
             'total_values' => 0
         ];
@@ -3288,22 +3302,25 @@ class MemberFeeRevenueController extends Controller
 
         $allCategories = $allCategoriesQuery->get();
 
-        // Initialize all categories in summary
+        // Initialize all categories in summary with count+amount structure
         foreach ($allCategories as $category) {
             $summary[$category->name] = [
-                '1_quarter_pending' => 0,
-                '2_quarters_pending' => 0,
-                '3_quarters_pending' => 0,
-                '4_quarters_pending' => 0,
-                '5_quarters_pending' => 0,
-                'more_than_5_quarters_pending' => 0,
+                'category_id' => $category->id,
+                '1_quarter_pending' => ['count' => 0, 'amount' => 0],
+                '2_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '3_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '4_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '5_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '6_quarters_pending' => ['count' => 0, 'amount' => 0],
+                'more_than_6_quarters_pending' => ['count' => 0, 'amount' => 0],
                 'maintenance_fee_quarterly' => 0,  // Will be calculated dynamically
                 'total_values' => 0,
                 'total_quarters' => 0  // Track total quarters
             ];
         }
 
-        $currentDate = now();
+        $asOfDate = $this->parseDateToYmd($dateTo) ?: now()->format('Y-m-d');
+        $currentDate = \Carbon\Carbon::parse($asOfDate);
 
         foreach ($members as $member) {
             $categoryName = $member->memberCategory->name ?? 'Unknown';
@@ -3312,46 +3329,51 @@ class MemberFeeRevenueController extends Controller
                 continue;
             }
 
-            // Calculate pending quarters efficiently in memory
+            $coverageEnd = null;
             if ($member->last_valid_date) {
-                $startDate = \Carbon\Carbon::parse($member->last_valid_date);
+                $coverageEnd = \Carbon\Carbon::parse($member->last_valid_date);
             } else {
-                $startDate = $member->membership_date ? \Carbon\Carbon::parse($member->membership_date) : \Carbon\Carbon::parse($member->created_at);
+                $coverageEnd = $member->membership_date ? \Carbon\Carbon::parse($member->membership_date) : \Carbon\Carbon::parse($member->created_at);
             }
 
-            if ($startDate->gt($currentDate)) {
-                $pendingMonths = 0;
-            } else {
-                $pendingMonths = $startDate->diffInMonths($currentDate);
+            $pendingQuarters = 0;
+            if ($coverageEnd->lt($currentDate)) {
+                $pendingMonths = $coverageEnd->diffInMonths($currentDate);
+                $pendingQuarters = intdiv(max(0, $pendingMonths), 3) + 1;
             }
-
-            $pendingMonths = max(0, $pendingMonths);
-            $pendingQuarters = ceil($pendingMonths / 3);
 
             if ($pendingQuarters > 0) {
+                $bucketKey = '';
                 if ($pendingQuarters == 1) {
-                    $summary[$categoryName]['1_quarter_pending']++;
-                    $grandTotals['1_quarter_pending']++;
+                    $bucketKey = '1_quarter_pending';
                 } elseif ($pendingQuarters == 2) {
-                    $summary[$categoryName]['2_quarters_pending']++;
-                    $grandTotals['2_quarters_pending']++;
+                    $bucketKey = '2_quarters_pending';
                 } elseif ($pendingQuarters == 3) {
-                    $summary[$categoryName]['3_quarters_pending']++;
-                    $grandTotals['3_quarters_pending']++;
+                    $bucketKey = '3_quarters_pending';
                 } elseif ($pendingQuarters == 4) {
-                    $summary[$categoryName]['4_quarters_pending']++;
-                    $grandTotals['4_quarters_pending']++;
+                    $bucketKey = '4_quarters_pending';
                 } elseif ($pendingQuarters == 5) {
-                    $summary[$categoryName]['5_quarters_pending']++;
-                    $grandTotals['5_quarters_pending']++;
+                    $bucketKey = '5_quarters_pending';
+                } elseif ($pendingQuarters == 6) {
+                    $bucketKey = '6_quarters_pending';
                 } else {
-                    $summary[$categoryName]['more_than_5_quarters_pending']++;
-                    $grandTotals['more_than_5_quarters_pending']++;
+                    $bucketKey = 'more_than_6_quarters_pending';
                 }
 
-                // User requested to use member's total_maintenance_fee directly
-                $quarterlyFee = $member->total_maintenance_fee ?? 0;
+                $monthlyFee = (float) ($member->total_maintenance_fee ?? 0);
+                if ($monthlyFee <= 0) {
+                    $monthlyFee = (float) ($member->maintenance_fee ?? 0);
+                }
+                if ($monthlyFee <= 0 && $member->memberCategory) {
+                    $monthlyFee = (float) ($member->memberCategory->subscription_fee ?? 0);
+                }
+                $quarterlyFee = $monthlyFee * 3;
                 $totalPendingAmount = $pendingQuarters * $quarterlyFee;
+
+                $summary[$categoryName][$bucketKey]['count']++;
+                $summary[$categoryName][$bucketKey]['amount'] += $totalPendingAmount;
+                $grandTotals[$bucketKey]['count']++;
+                $grandTotals[$bucketKey]['amount'] += $totalPendingAmount;
                 $summary[$categoryName]['total_values'] += $totalPendingAmount;
                 $summary[$categoryName]['total_quarters'] += $pendingQuarters;
                 $grandTotals['total_values'] += $totalPendingAmount;

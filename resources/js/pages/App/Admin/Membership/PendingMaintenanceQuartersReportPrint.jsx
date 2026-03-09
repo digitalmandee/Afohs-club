@@ -212,28 +212,32 @@ export default function PendingMaintenanceQuartersReportPrint({ summary, grand_t
                     </Typography>
                     <div className="summary-grid">
                         <div className="summary-item">
-                            <div className="summary-value">{grand_totals?.['1_quarter_pending'] || 0}</div>
+                            <div className="summary-value">{grand_totals?.['1_quarter_pending']?.count || 0}</div>
                             <div className="summary-label">1 Quarter Pending</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{grand_totals?.['2_quarters_pending'] || 0}</div>
+                            <div className="summary-value">{grand_totals?.['2_quarters_pending']?.count || 0}</div>
                             <div className="summary-label">2 Quarters Pending</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{grand_totals?.['3_quarters_pending'] || 0}</div>
+                            <div className="summary-value">{grand_totals?.['3_quarters_pending']?.count || 0}</div>
                             <div className="summary-label">3 Quarters Pending</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{grand_totals?.['4_quarters_pending'] || 0}</div>
+                            <div className="summary-value">{grand_totals?.['4_quarters_pending']?.count || 0}</div>
                             <div className="summary-label">4 Quarters Pending</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{grand_totals?.['5_quarters_pending'] || 0}</div>
+                            <div className="summary-value">{grand_totals?.['5_quarters_pending']?.count || 0}</div>
                             <div className="summary-label">5 Quarters Pending</div>
                         </div>
                         <div className="summary-item">
-                            <div className="summary-value">{grand_totals?.['more_than_5_quarters_pending'] || 0}</div>
-                            <div className="summary-label">5+ Quarters Pending</div>
+                            <div className="summary-value">{grand_totals?.['6_quarters_pending']?.count || 0}</div>
+                            <div className="summary-label">6 Quarters Pending</div>
+                        </div>
+                        <div className="summary-item">
+                            <div className="summary-value">{grand_totals?.['more_than_6_quarters_pending']?.count || 0}</div>
+                            <div className="summary-label">6+ Quarters Pending</div>
                         </div>
                     </div>
                     <div className="total-amount">
@@ -253,7 +257,8 @@ export default function PendingMaintenanceQuartersReportPrint({ summary, grand_t
                             <th style={{ width: '10%' }}>3 QTRS</th>
                             <th style={{ width: '10%' }}>4 QTRS</th>
                             <th style={{ width: '10%' }}>5 QTRS</th>
-                            <th style={{ width: '10%' }}>5+ QTRS</th>
+                            <th style={{ width: '10%' }}>6 QTRS</th>
+                            <th style={{ width: '10%' }}>6+ QTRS</th>
                             <th style={{ width: '10%' }}>FEE (QTR)</th>
                             <th style={{ width: '10%' }}>TOTAL</th>
                         </tr>
@@ -264,19 +269,20 @@ export default function PendingMaintenanceQuartersReportPrint({ summary, grand_t
                                 <tr key={categoryName}>
                                     <td className="text-center font-bold">{index + 1}</td>
                                     <td className="font-bold">{categoryName}</td>
-                                    <td className="text-center">{data['1_quarter_pending'] || 0}</td>
-                                    <td className="text-center">{data['2_quarters_pending'] || 0}</td>
-                                    <td className="text-center">{data['3_quarters_pending'] || 0}</td>
-                                    <td className="text-center">{data['4_quarters_pending'] || 0}</td>
-                                    <td className="text-center">{data['5_quarters_pending'] || 0}</td>
-                                    <td className="text-center">{data['more_than_5_quarters_pending'] || 0}</td>
+                                    <td className="text-center">{data['1_quarter_pending']?.count || 0}</td>
+                                    <td className="text-center">{data['2_quarters_pending']?.count || 0}</td>
+                                    <td className="text-center">{data['3_quarters_pending']?.count || 0}</td>
+                                    <td className="text-center">{data['4_quarters_pending']?.count || 0}</td>
+                                    <td className="text-center">{data['5_quarters_pending']?.count || 0}</td>
+                                    <td className="text-center">{data['6_quarters_pending']?.count || 0}</td>
+                                    <td className="text-center">{data['more_than_6_quarters_pending']?.count || 0}</td>
                                     <td className="text-center">{formatCurrency(data['maintenance_fee_quarterly'] || 0)}</td>
                                     <td className="text-center font-bold">{formatCurrency(data['total_values'] || 0)}</td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="10" className="text-center">No pending maintenance records found</td>
+                                <td colSpan="11" className="text-center">No pending maintenance records found</td>
                             </tr>
                         )}
                         
@@ -285,12 +291,13 @@ export default function PendingMaintenanceQuartersReportPrint({ summary, grand_t
                             <tr className="total-row">
                                 <td className="text-center"></td>
                                 <td className="font-bold">GRAND TOTAL</td>
-                                <td className="text-center font-bold">{grand_totals?.['1_quarter_pending'] || 0}</td>
-                                <td className="text-center font-bold">{grand_totals?.['2_quarters_pending'] || 0}</td>
-                                <td className="text-center font-bold">{grand_totals?.['3_quarters_pending'] || 0}</td>
-                                <td className="text-center font-bold">{grand_totals?.['4_quarters_pending'] || 0}</td>
-                                <td className="text-center font-bold">{grand_totals?.['5_quarters_pending'] || 0}</td>
-                                <td className="text-center font-bold">{grand_totals?.['more_than_5_quarters_pending'] || 0}</td>
+                                <td className="text-center font-bold">{grand_totals?.['1_quarter_pending']?.count || 0}</td>
+                                <td className="text-center font-bold">{grand_totals?.['2_quarters_pending']?.count || 0}</td>
+                                <td className="text-center font-bold">{grand_totals?.['3_quarters_pending']?.count || 0}</td>
+                                <td className="text-center font-bold">{grand_totals?.['4_quarters_pending']?.count || 0}</td>
+                                <td className="text-center font-bold">{grand_totals?.['5_quarters_pending']?.count || 0}</td>
+                                <td className="text-center font-bold">{grand_totals?.['6_quarters_pending']?.count || 0}</td>
+                                <td className="text-center font-bold">{grand_totals?.['more_than_6_quarters_pending']?.count || 0}</td>
                                 <td className="text-center font-bold">{formatCurrency(grand_totals?.maintenance_fee_quarterly || 0)}</td>
                                 <td className="text-center font-bold">{formatCurrency(grand_totals?.total_values || 0)}</td>
                             </tr>

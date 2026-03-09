@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { router, usePage, Link } from '@inertiajs/react';
-import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { Search, Print, ArrowBack, InfoOutlined } from '@mui/icons-material';
+import { router, usePage } from '@inertiajs/react';
+import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem, Autocomplete, Dialog, DialogTitle, DialogContent } from '@mui/material';
+import { Search, Print, ArrowBack, InfoOutlined, OpenInNew, Close } from '@mui/icons-material';
 import dayjs from "dayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { PendingMaintenanceReportView } from './PendingMaintenanceReport';
 
 const PendingMaintenanceQuartersReport = () => {
     // Get props first
-    const { summary, grand_totals, filters, all_categories } = usePage().props;
+    const { summary, grand_totals, filters, all_categories, all_statuses } = usePage().props;
 
     // Filter state
     const [allFilters, setAllFilters] = useState({
@@ -55,12 +56,35 @@ const PendingMaintenanceQuartersReport = () => {
     const getDetailReportUrl = () => {
         const params = new URLSearchParams();
         if (detailModal.categoryId) {
-            params.append('category', detailModal.categoryId);
+            params.append('categories[]', detailModal.categoryId);
         }
         if (detailModal.quartersValue) {
-            params.append('quarters_pending', detailModal.quartersValue);
+            if (detailModal.quartersValue >= 7) {
+                params.append('quarters_pending', '6+');
+            } else {
+                params.append('quarters_pending', String(detailModal.quartersValue));
+            }
         }
         return route('membership.pending-maintenance-report') + (params.toString() ? '?' + params.toString() : '');
+    };
+
+    const getEmbeddedFilters = () => {
+        const date = allFilters.date_to || dayjs().format('DD-MM-YYYY');
+        const quarters = detailModal.quartersValue >= 7 ? '6+' : String(detailModal.quartersValue || '1');
+
+        return {
+            member_search: '',
+            member_id: '',
+            name_search: '',
+            membership_no_search: '',
+            cnic_search: '',
+            contact_search: '',
+            status: [],
+            categories: detailModal.categoryId ? [detailModal.categoryId] : [],
+            quarters_pending: quarters,
+            per_page: '15',
+            date,
+        };
     };
 
     const handleSearch = () => {
@@ -374,11 +398,9 @@ const PendingMaintenanceQuartersReport = () => {
                                             <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                                     {data['1_quarter_pending']?.count || 0}
-                                                    {(data['1_quarter_pending']?.count || 0) > 0 && (
-                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 1, '1 Qts')} sx={{ p: 0 }}>
-                                                            <InfoOutlined sx={{ fontSize: 14, color: '#059669' }} />
-                                                        </IconButton>
-                                                    )}
+                                                    <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 1, '1 Qts')} sx={{ p: 0 }}>
+                                                        <InfoOutlined sx={{ fontSize: 14, color: '#059669' }} />
+                                                    </IconButton>
                                                 </Box>
                                                 <Typography variant="caption" sx={{ display: 'block', color: '#059669' }}>
                                                     ({formatCurrency(data['1_quarter_pending']?.amount || 0).replace('PKR', '')})
@@ -387,11 +409,9 @@ const PendingMaintenanceQuartersReport = () => {
                                             <TableCell sx={{ color: '#0ea5e9', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                                     {data['2_quarters_pending']?.count || 0}
-                                                    {(data['2_quarters_pending']?.count || 0) > 0 && (
-                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 2, '2 Qts')} sx={{ p: 0 }}>
-                                                            <InfoOutlined sx={{ fontSize: 14, color: '#0ea5e9' }} />
-                                                        </IconButton>
-                                                    )}
+                                                    <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 2, '2 Qts')} sx={{ p: 0 }}>
+                                                        <InfoOutlined sx={{ fontSize: 14, color: '#0ea5e9' }} />
+                                                    </IconButton>
                                                 </Box>
                                                 <Typography variant="caption" sx={{ display: 'block', color: '#0ea5e9' }}>
                                                     ({formatCurrency(data['2_quarters_pending']?.amount || 0).replace('PKR', '')})
@@ -400,11 +420,9 @@ const PendingMaintenanceQuartersReport = () => {
                                             <TableCell sx={{ color: '#8b5cf6', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                                     {data['3_quarters_pending']?.count || 0}
-                                                    {(data['3_quarters_pending']?.count || 0) > 0 && (
-                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 3, '3 Qts')} sx={{ p: 0 }}>
-                                                            <InfoOutlined sx={{ fontSize: 14, color: '#8b5cf6' }} />
-                                                        </IconButton>
-                                                    )}
+                                                    <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 3, '3 Qts')} sx={{ p: 0 }}>
+                                                        <InfoOutlined sx={{ fontSize: 14, color: '#8b5cf6' }} />
+                                                    </IconButton>
                                                 </Box>
                                                 <Typography variant="caption" sx={{ display: 'block', color: '#8b5cf6' }}>
                                                     ({formatCurrency(data['3_quarters_pending']?.amount || 0).replace('PKR', '')})
@@ -413,11 +431,9 @@ const PendingMaintenanceQuartersReport = () => {
                                             <TableCell sx={{ color: '#f59e0b', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                                     {data['4_quarters_pending']?.count || 0}
-                                                    {(data['4_quarters_pending']?.count || 0) > 0 && (
-                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 4, '4 Qts')} sx={{ p: 0 }}>
-                                                            <InfoOutlined sx={{ fontSize: 14, color: '#f59e0b' }} />
-                                                        </IconButton>
-                                                    )}
+                                                    <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 4, '4 Qts')} sx={{ p: 0 }}>
+                                                        <InfoOutlined sx={{ fontSize: 14, color: '#f59e0b' }} />
+                                                    </IconButton>
                                                 </Box>
                                                 <Typography variant="caption" sx={{ display: 'block', color: '#f59e0b' }}>
                                                     ({formatCurrency(data['4_quarters_pending']?.amount || 0).replace('PKR', '')})
@@ -426,11 +442,9 @@ const PendingMaintenanceQuartersReport = () => {
                                             <TableCell sx={{ color: '#ef4444', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                                     {data['5_quarters_pending']?.count || 0}
-                                                    {(data['5_quarters_pending']?.count || 0) > 0 && (
-                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 5, '5 Qts')} sx={{ p: 0 }}>
-                                                            <InfoOutlined sx={{ fontSize: 14, color: '#ef4444' }} />
-                                                        </IconButton>
-                                                    )}
+                                                    <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 5, '5 Qts')} sx={{ p: 0 }}>
+                                                        <InfoOutlined sx={{ fontSize: 14, color: '#ef4444' }} />
+                                                    </IconButton>
                                                 </Box>
                                                 <Typography variant="caption" sx={{ display: 'block', color: '#ef4444' }}>
                                                     ({formatCurrency(data['5_quarters_pending']?.amount || 0).replace('PKR', '')})
@@ -439,11 +453,9 @@ const PendingMaintenanceQuartersReport = () => {
                                             <TableCell sx={{ color: '#b91c1c', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                                     {data['6_quarters_pending']?.count || 0}
-                                                    {(data['6_quarters_pending']?.count || 0) > 0 && (
-                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 6, '6 Qts')} sx={{ p: 0 }}>
-                                                            <InfoOutlined sx={{ fontSize: 14, color: '#b91c1c' }} />
-                                                        </IconButton>
-                                                    )}
+                                                    <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 6, '6 Qts')} sx={{ p: 0 }}>
+                                                        <InfoOutlined sx={{ fontSize: 14, color: '#b91c1c' }} />
+                                                    </IconButton>
                                                 </Box>
                                                 <Typography variant="caption" sx={{ display: 'block', color: '#b91c1c' }}>
                                                     ({formatCurrency(data['6_quarters_pending']?.amount || 0).replace('PKR', '')})
@@ -452,11 +464,9 @@ const PendingMaintenanceQuartersReport = () => {
                                             <TableCell sx={{ color: '#dc2626', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                                     {data['more_than_6_quarters_pending']?.count || 0}
-                                                    {(data['more_than_6_quarters_pending']?.count || 0) > 0 && (
-                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 7, '6+ Qts')} sx={{ p: 0 }}>
-                                                            <InfoOutlined sx={{ fontSize: 14, color: '#dc2626' }} />
-                                                        </IconButton>
-                                                    )}
+                                                    <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 7, '6+ Qts')} sx={{ p: 0 }}>
+                                                        <InfoOutlined sx={{ fontSize: 14, color: '#dc2626' }} />
+                                                    </IconButton>
                                                 </Box>
                                                 <Typography variant="caption" sx={{ display: 'block', color: '#dc2626' }}>
                                                     ({formatCurrency(data['more_than_6_quarters_pending']?.amount || 0).replace('PKR', '')})
@@ -619,38 +629,36 @@ const PendingMaintenanceQuartersReport = () => {
                     </Box>
                 )}
             </div>
-            {/* Detail Modal */}
-            <Dialog open={detailModal.open} onClose={handleCloseDetail} maxWidth="sm" fullWidth>
-                <DialogTitle sx={{ backgroundColor: '#063455', color: 'white', fontWeight: 600 }}>View Detailed Report</DialogTitle>
-                <DialogContent sx={{ pt: 3 }}>
-                    <Box sx={{ textAlign: 'center', py: 2 }}>
-                        <Typography variant="h6" sx={{ color: '#374151', mb: 1 }}>
-                            {detailModal.categoryName}
-                        </Typography>
-                        <Typography variant="body1" sx={{ color: '#6b7280', mb: 2 }}>
-                            {detailModal.quartersLabel} Pending
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: '#9ca3af' }}>
-                            Click below to view the detailed Pending Maintenance Report filtered by this category and quarter.
-                        </Typography>
+            <Dialog open={detailModal.open} onClose={handleCloseDetail} fullScreen>
+                <DialogTitle sx={{ backgroundColor: '#063455', color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                        <Typography sx={{ fontWeight: 700, fontSize: '16px' }}>{detailModal.categoryName}</Typography>
+                        <Typography sx={{ fontSize: '13px', opacity: 0.9 }}>{detailModal.quartersLabel} Pending</Typography>
                     </Box>
-                </DialogContent>
-                <DialogActions sx={{ p: 2, gap: 1 }}>
-                    <Button onClick={handleCloseDetail} variant="outlined" sx={{ color: '#6b7280', borderColor: '#d1d5db' }}>
-                        Cancel
-                    </Button>
-                    <Link href={getDetailReportUrl()} style={{ textDecoration: 'none' }}>
-                        <Button
-                            variant="contained"
-                            sx={{
-                                backgroundColor: '#063455',
-                                '&:hover': { backgroundColor: '#052d47' },
-                            }}
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        <IconButton
+                            onClick={() => window.open(getDetailReportUrl(), '_blank')}
+                            sx={{ color: 'white' }}
+                            size="small"
                         >
-                            View Report
-                        </Button>
-                    </Link>
-                </DialogActions>
+                            <OpenInNew />
+                        </IconButton>
+                        <IconButton onClick={handleCloseDetail} sx={{ color: 'white' }} size="small">
+                            <Close />
+                        </IconButton>
+                    </Box>
+                </DialogTitle>
+                <DialogContent sx={{ p: 0 }}>
+                    <PendingMaintenanceReportView
+                        initialMembers={null}
+                        initialStatistics={null}
+                        initialFilters={getEmbeddedFilters()}
+                        all_statuses={all_statuses || []}
+                        all_categories={all_categories || []}
+                        embedded
+                        onClose={handleCloseDetail}
+                    />
+                </DialogContent>
             </Dialog>
         </>
     );
