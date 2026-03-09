@@ -13,6 +13,7 @@ import Divider from '@mui/material/Divider';
 import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
+import { MdOutlinePointOfSale } from "react-icons/md";
 import ListItem from '@mui/material/ListItem';
 import { TiBusinessCard } from 'react-icons/ti';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -520,7 +521,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'POS',
-            icon: <HomeIcon />,
+            icon: <MdOutlinePointOfSale style={{width:25, height:20}}/>,
             path: '/pos',
             permission: 'pos.view',
         },
