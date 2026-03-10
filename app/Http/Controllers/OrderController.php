@@ -1638,7 +1638,7 @@ class OrderController extends Controller
                 $isPaidInvoice = strtolower((string) ($financialInvoice->status ?? '')) === 'paid';
                 if ($isPaidOrder || $isPaidInvoice) {
                     DB::rollBack();
-                    return $respondUpdateError('Client cannot be changed after payment is done.', 'CLIENT_EDIT_AFTER_PAYMENT_FORBIDDEN', 422);
+                    return $respondUpdateError('Customer cannot be changed after payment is done.', 'CLIENT_EDIT_AFTER_PAYMENT_FORBIDDEN', 422);
                 }
             }
 
@@ -1813,7 +1813,7 @@ class OrderController extends Controller
                     ($clientType === 'employee' && !Employee::where('id', $clientId)->exists())
                 ) {
                     DB::rollBack();
-                    return $respondUpdateError('Selected client is invalid.', 'INVALID_CLIENT', 422);
+                    return $respondUpdateError('Selected customer is invalid.', 'INVALID_CLIENT', 422);
                 }
 
                 $updateData['member_id'] = $clientType === 'member' ? $clientId : null;

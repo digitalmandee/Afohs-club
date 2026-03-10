@@ -454,7 +454,7 @@ const Dashboard = ({ orders, filters, totals }) => {
                         />
                         <TextField
                             size="small"
-                            label="Client Name"
+                            label="Customer Name"
                             value={searchName}
                             onChange={(e) => {
                                 setSearchName(e.target.value);
@@ -671,7 +671,7 @@ const Dashboard = ({ orders, filters, totals }) => {
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid At</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Client</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Customer</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>

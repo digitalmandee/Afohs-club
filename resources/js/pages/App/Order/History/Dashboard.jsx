@@ -953,7 +953,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Membership</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Name</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Client Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Customer Type</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Order Type</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Gross</TableCell>

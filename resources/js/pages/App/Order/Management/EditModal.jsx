@@ -618,7 +618,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                         >
                             <Box p={2}>
                                 <Typography variant="body2" sx={{ mb: 0.75 }}>
-                                    Client Type
+                                    Customer Type
                                 </Typography>
                                 <RadioGroup
                                     row
@@ -638,7 +638,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                     memberType={selectedClientType === 'member' ? '0' : selectedClientType === 'guest' ? '1' : '3'}
                                     value={selectedClient && selectedClient.id ? selectedClient : null}
                                     onChange={(newValue) => setSelectedClient(newValue || null)}
-                                    label="Client Name"
+                                    label="Customer Name"
                                     placeholder="Search by name, ID, or CNIC..."
                                 />
                             </Box>
