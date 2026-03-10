@@ -13,6 +13,7 @@ import axios from 'axios';
 import { routeNameForContext } from '@/lib/utils';
 import EditOrderModal from '../Management/EditModal';
 import { enqueueSnackbar } from 'notistack';
+import PaymentNow from '@/components/App/Invoice/PaymentNow';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -21,11 +22,37 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     const { auth } = usePage().props;
     const user = auth.user;
 
+    const toDMY = (value) => {
+        if (!value) return '';
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return String(value);
+        return d.toLocaleDateString('en-GB');
+    };
+
+    const toYMD = (value) => {
+        if (!value) return '';
+        const parts = String(value).trim().split('/');
+        if (parts.length !== 3) return '';
+        const [dd, mm, yyyy] = parts.map((p) => p.trim());
+        if (!dd || !mm || !yyyy) return '';
+        const d = Number(dd);
+        const m = Number(mm);
+        const y = Number(yyyy);
+        if (!Number.isFinite(d) || !Number.isFinite(m) || !Number.isFinite(y)) return '';
+        if (y < 1900 || y > 2100) return '';
+        if (m < 1 || m > 12) return '';
+        if (d < 1 || d > 31) return '';
+        const iso = `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const parsed = new Date(iso);
+        if (isNaN(parsed.getTime())) return '';
+        return iso;
+    };
+
     // const [open, setOpen] = useState(true);
     const [searchId, setSearchId] = useState(filters?.search_id || '');
     const [searchName, setSearchName] = useState(filters?.search_name || '');
-    const [startDate, setStartDate] = useState(filters?.start_date || '');
-    const [endDate, setEndDate] = useState(filters?.end_date || '');
+    const [startDate, setStartDate] = useState(toDMY(filters?.start_date || ''));
+    const [endDate, setEndDate] = useState(toDMY(filters?.end_date || ''));
     const [orderType, setOrderType] = useState(filters?.type || 'all');
     const [paymentStatus, setPaymentStatus] = useState(filters?.payment_status || 'all');
     const [paymentMethod, setPaymentMethod] = useState(filters?.payment_method || 'all');
@@ -47,6 +74,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
 
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [editOrderItems, setEditOrderItems] = useState([]);
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
 
     // Fetch Suggestions
     const fetchSuggestions = useMemo(
@@ -81,13 +110,15 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
 
     const handleApply = () => {
         setIsLoading(true);
+        const startDateYmd = toYMD(startDate);
+        const endDateYmd = toYMD(endDate);
         router.get(
             route(routeNameForContext('order.history')),
             {
                 search_id: searchId || undefined,
                 search_name: searchName || undefined,
-                start_date: startDate || undefined,
-                end_date: endDate || undefined,
+                start_date: startDateYmd || undefined,
+                end_date: endDateYmd || undefined,
                 type: orderType !== 'all' ? orderType : undefined,
                 payment_status: paymentStatus !== 'all' ? paymentStatus : undefined,
                 payment_method: paymentMethod !== 'all' ? paymentMethod : undefined,
@@ -102,6 +133,21 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                 onFinish: () => setIsLoading(false),
             },
         );
+    };
+
+    const handlePayNow = async (order) => {
+        if (!order?.invoice_id) {
+            enqueueSnackbar("Invoice isn't generated for this order.", { variant: 'warning' });
+            return;
+        }
+        try {
+            const res = await axios.get(route(routeNameForContext('transaction.invoice'), { invoiceId: order.id }));
+            setSelectedInvoice(res.data);
+            setPaymentModalOpen(true);
+        } catch (e) {
+            const msg = e?.response?.data?.message || 'Failed to load payment details';
+            enqueueSnackbar(msg, { variant: 'error' });
+        }
     };
 
     const handleReset = () => {
@@ -316,6 +362,11 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     // Transform order data for Receipt component
     const getReceiptData = (order) => {
         if (!order) return null;
+        const computedGross = Math.round(
+            (order.order_items || [])
+                .filter((item) => item?.status !== 'cancelled')
+                .reduce((sum, item) => sum + Number(item?.order_item?.total_price || 0), 0),
+        );
         const bankChargesEnabled = Number(order.bank_charges) > 0;
         const advancePayment = Number(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
         const paidAmount = Number(order.receipt_paid_amount ?? order.invoice_paid_amount ?? order.paid_amount ?? 0);
@@ -325,8 +376,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             order_no: order.id,
             start_date: order.start_date,
             date: order.start_date,
-            amount: order.amount || order.total_price,
-            discount: order.discount || 0,
+            amount: order.invoice_sub_total || order.amount || computedGross || order.total_price,
+            discount: order.invoice_discount_amount || order.discount || 0,
             tax: order.tax || 0,
             total_price: order.total_price,
             service_charges: order.service_charges || 0,
@@ -365,6 +416,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                         name: item.order_item?.name || 'Item',
                         quantity: item.order_item?.quantity || 1,
                         price: item.order_item?.price || 0,
+                        discount_amount: item.order_item?.discount_amount || 0,
+                        is_taxable: item.order_item?.is_taxable,
                         total_price: item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0),
                     })) || [],
         };
@@ -373,6 +426,26 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     const executePrint = (data) => {
         if (!data) return;
         const round0 = (n) => Math.round(Number(n) || 0);
+        const computeFromItems = (items) => {
+            const rows = Array.isArray(items) ? items : [];
+            let gross = 0;
+            let discount = 0;
+            let taxableNet = 0;
+            for (const row of rows) {
+                if (row?.status === 'cancelled') continue;
+                const oi = row?.order_item ?? row;
+                const qty = Number(oi?.quantity || 1);
+                const price = Number(oi?.price || 0);
+                const lineTotal = Number(oi?.total_price ?? qty * price);
+                const lineDiscount = Number(oi?.discount_amount || 0);
+                const net = lineTotal - lineDiscount;
+                gross += lineTotal;
+                discount += lineDiscount;
+                const isTaxable = oi?.is_taxable === true || oi?.is_taxable === 'true' || oi?.is_taxable === 1;
+                if (isTaxable) taxableNet += net;
+            }
+            return { gross: round0(gross), discount: round0(discount), taxableNet: round0(taxableNet) };
+        };
         const printWindow = window.open('', '_blank');
         const printTotalAmount = round0(data.total_price);
         const printAdvancePaid = round0(data.advance_payment || data.data?.advance_deducted || 0);
@@ -384,6 +457,12 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         const printRemainingDue = Math.max(0, printNetPayable - printPaidCash);
         const explicitPrintChange = round0(data.receipt_customer_changes ?? data.customer_changes ?? 0);
         const printCustomerChange = explicitPrintChange > 0 ? explicitPrintChange : Math.max(0, printPaidCash - printNetPayable);
+        const computed = computeFromItems(data.order_items);
+        const printGross = computed.gross || round0(data.amount);
+        const printDiscount = computed.discount || round0(data.discount);
+        const taxRate = Number(data.tax) || 0;
+        const printTaxableNet = computed.taxableNet > 0 ? computed.taxableNet : Math.max(0, printGross - printDiscount);
+        const printTax = round0(printTaxableNet * taxRate);
 
         const content = `
         <html>
@@ -490,17 +569,17 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
 
             <div class="row">
               <div>Subtotal</div>
-              <div>Rs ${round0(data.amount)}</div>
+              <div>Rs ${printGross}</div>
             </div>
 
             <div class="row">
               <div>Discount</div>
-              <div>Rs ${round0(data.discount)}</div>
+              <div>Rs ${printDiscount}</div>
             </div>
 
             <div class="row">
               <div>Tax (${(Number(data.tax || 0) * 100).toFixed(0)}%)</div>
-              <div>Rs ${round0(data.amount * (Number(data.tax || 0)))}</div>
+              <div>Rs ${printTax}</div>
             </div>
 
             ${
@@ -628,8 +707,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             const paid = round0(order.paid_amount || 0) + advance;
             const entAmount = round0(order.invoice_ent_amount || 0);
             const ctsAmount = round0(order.invoice_cts_amount || 0);
-            const bankCharges = round0(order.invoice_bank_charges_amount || 0);
-            const balance = round0(total + bankCharges - paid - entAmount - ctsAmount);
+            const balance = round0(total - paid - entAmount - ctsAmount);
             acc.amount += total;
             acc.paid += paid;
             acc.balance += balance;
@@ -729,12 +807,32 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
 
                         {/* Start Date */}
                         <Grid item xs={12} md={2}>
-                            <TextField fullWidth size="small" type="date" label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                            <TextField
+                                fullWidth
+                                size="small"
+                                type="text"
+                                label="Start Date"
+                                placeholder="dd/mm/yyyy"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                            />
                         </Grid>
 
                         {/* End Date */}
                         <Grid item xs={12} md={2}>
-                            <TextField fullWidth size="small" type="date" label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                            <TextField
+                                fullWidth
+                                size="small"
+                                type="text"
+                                label="End Date"
+                                placeholder="dd/mm/yyyy"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                            />
                         </Grid>
 
                         {/* Status */}
@@ -866,7 +964,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Order Status</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Status</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ENT</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CTS</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
@@ -879,17 +977,16 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                 <>
                                     {orders.data.map((order) => {
                                     const round0 = (n) => Math.round(Number(n) || 0);
-                                    const gross = round0(order.amount || 0);
-                                    const discount = round0(order.discount || 0);
+                                    const gross = round0(order.invoice_sub_total ?? order.amount ?? 0);
+                                    const discount = round0(order.invoice_discount_amount ?? order.discount ?? 0);
                                     const taxRate = Number(order.tax || 0);
-                                    const taxAmount = round0((gross - discount) * taxRate);
+                                    const taxAmount = round0(order.invoice_tax_amount ?? (gross - discount) * taxRate);
                                     const total = round0(order.total_price || 0);
                                     const advance = round0(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
                                     const paid = round0(order.paid_amount || 0) + advance;
                                     const entAmount = round0(order.invoice_ent_amount || 0);
                                     const ctsAmount = round0(order.invoice_cts_amount || 0);
-                                    const bankCharges = round0(order.invoice_bank_charges_amount || 0);
-                                    const balance = round0(total + bankCharges - paid - entAmount - ctsAmount);
+                                    const balance = round0(total - paid - entAmount - ctsAmount);
 
                                     // Determine Client Type
                                     let clientType = 'Guest';
@@ -909,7 +1006,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                     return (
                                         <TableRow key={order.id} hover>
                                             <TableCell>#{order.id}</TableCell>
-                                            <TableCell>{new Date(order.start_date).toLocaleDateString()}</TableCell>
+                                            <TableCell>{toDMY(order.start_date)}</TableCell>
                                             <TableCell>{clientId}</TableCell>
                                             <TableCell>{getClientName(order)}</TableCell>
                                             <TableCell>{clientType}</TableCell>
@@ -926,7 +1023,20 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                                 <Chip label={formatOrderStatus(order.status)} size="small" color={getOrderStatusColor(order.status)} />
                                             </TableCell>
                                             <TableCell>
-                                                <Chip label={order.payment_status || 'unpaid'} size="small" color={getStatusColor(order.payment_status)} />
+                                                {(() => {
+                                                    const isPaid = String(order.payment_status || '').toLowerCase() === 'paid';
+                                                    const canPay = !isPaid && Boolean(order.invoice_id);
+                                                    return (
+                                                        <Chip
+                                                            label={isPaid ? 'Paid' : 'Unpaid'}
+                                                            size="small"
+                                                            color={isPaid ? 'success' : 'warning'}
+                                                            clickable={canPay}
+                                                            onClick={canPay ? () => handlePayNow(order) : undefined}
+                                                            sx={canPay ? { cursor: 'pointer' } : undefined}
+                                                        />
+                                                    );
+                                                })()}
                                             </TableCell>
                                             <TableCell>
                                                 {order.invoice_ent_amount > 0 ? (
@@ -1057,7 +1167,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                         <Typography variant="caption" color="text.secondary">
                                             Date
                                         </Typography>
-                                        <Typography variant="body1">{new Date(selectedOrder.start_date).toLocaleString()}</Typography>
+                                        <Typography variant="body1">{toDMY(selectedOrder.start_date)}</Typography>
                                     </Box>
                                     <Box>
                                         <Typography variant="caption" color="text.secondary">
@@ -1303,6 +1413,21 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                 </DialogContent>
             </Dialog>
             <EditOrderModal open={editModalOpen} allrestaurants={allrestaurants} onClose={handleCloseEdit} order={selectedOrder} orderItems={editOrderItems} setOrderItems={setEditOrderItems} onSave={(status, clientMeta) => handleSaveEdit(status, clientMeta)} onSaveAndPrint={null} allowUpdateAndPrint={false} />
+            {paymentModalOpen && selectedInvoice && (
+                <PaymentNow
+                    invoiceData={selectedInvoice}
+                    openSuccessPayment={false}
+                    openPaymentModal={paymentModalOpen}
+                    handleClosePayment={() => {
+                        setPaymentModalOpen(false);
+                        setSelectedInvoice(null);
+                        handleApply();
+                    }}
+                    setSelectedOrder={() => {}}
+                    isLoading={false}
+                    mode="payment"
+                />
+            )}
             {/* </Box > */}
         </>
     );

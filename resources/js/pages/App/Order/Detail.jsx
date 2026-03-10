@@ -166,7 +166,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
         const newPayload = {
             ...orderDetails,
             ...extra, // include waiter + time if passed
-            price: total,
+            price: subtotal,
             tax: taxRate,
             service_charges: serviceCharges,
             service_charges_percentage: serviceChargePct,

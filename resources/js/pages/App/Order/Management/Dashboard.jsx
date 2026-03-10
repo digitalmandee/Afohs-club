@@ -559,6 +559,13 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return String(dateStr);
+        return d.toLocaleDateString('en-GB');
+    };
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
@@ -872,7 +879,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders, canEditAfterBill })
                                                 >
                                                     <AccessTime fontSize="small" sx={{ fontSize: 16, color: '#fff', mr: 0.5 }} />
                                                     <Typography variant="caption" sx={{ color: '#fff' }}>
-                                                        {formatTime(card.start_time)}
+                                                        {formatDate(card.start_date)} {formatTime(card.start_time)}
                                                     </Typography>
                                                 </Box>
                                                 <Box sx={{ position: 'absolute', top: 16, right: 16 }}>

@@ -773,7 +773,9 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                     return sum;
                                 }, 0);
                                 const taxAmount = Math.round(taxableAmount * taxRate);
-                                const total = Math.round(discountedSubtotal + taxAmount);
+                                const serviceCharges = Math.round(Number(order?.service_charges || 0));
+                                const bankCharges = Math.round(Number(order?.bank_charges || 0));
+                                const total = Math.round(discountedSubtotal + taxAmount + serviceCharges + bankCharges);
 
                                 return (
                                     <Box sx={{ px: 2, py: 1.5, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
@@ -795,6 +797,22 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                             </Typography>
                                             <Typography variant="body2">{taxAmount.toLocaleString()}</Typography>
                                         </Box>
+                                        {serviceCharges > 0 && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    Service Charges
+                                                </Typography>
+                                                <Typography variant="body2">{serviceCharges.toLocaleString()}</Typography>
+                                            </Box>
+                                        )}
+                                        {bankCharges > 0 && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    Bank Charges
+                                                </Typography>
+                                                <Typography variant="body2">{bankCharges.toLocaleString()}</Typography>
+                                            </Box>
+                                        )}
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <Typography variant="body2" fontWeight="bold">
                                                 Total

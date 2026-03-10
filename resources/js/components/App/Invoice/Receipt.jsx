@@ -144,6 +144,38 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
     }
 
     const round0 = (n) => Math.round(Number(n) || 0);
+    const computeFromItems = (items) => {
+        const rows = Array.isArray(items) ? items : [];
+        let gross = 0;
+        let discount = 0;
+        let taxableNet = 0;
+        for (const row of rows) {
+            if (row?.status === 'cancelled') continue;
+            const oi = row?.order_item ?? row;
+            const qty = Number(oi?.quantity || 1);
+            const price = Number(oi?.price || 0);
+            const lineTotal = Number(oi?.total_price ?? qty * price);
+            const lineDiscount = Number(oi?.discount_amount || 0);
+            const net = lineTotal - lineDiscount;
+            gross += lineTotal;
+            discount += lineDiscount;
+            const isTaxable = oi?.is_taxable === true || oi?.is_taxable === 'true' || oi?.is_taxable === 1;
+            if (isTaxable) taxableNet += net;
+        }
+        return {
+            gross: round0(gross),
+            discount: round0(discount),
+            taxableNet: round0(taxableNet),
+        };
+    };
+
+    const computedItems = computeFromItems(paymentData.order_items);
+    const computedGross = computedItems.gross || round0(paymentData.amount);
+    const computedDiscount = computedItems.discount || round0(paymentData.discount);
+    const taxRate = Number(paymentData.tax) || 0;
+    const computedTaxableNet = computedItems.taxableNet > 0 ? computedItems.taxableNet : Math.max(0, computedGross - computedDiscount);
+    const computedTax = round0(computedTaxableNet * taxRate);
+
     const totalAmount = round0(paymentData.total_price);
     const advancePaid = round0(paymentData.advance_payment || paymentData.data?.advance_deducted || 0);
     const entAmount = includePaymentBreakdown ? round0(paymentData.ent_amount || paymentData.invoice_ent_amount || paymentData.data?.ent_amount || 0) : 0;
@@ -157,6 +189,13 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
         if (!data) return;
 
         const printWindow = window.open('', '_blank');
+
+        const printComputed = computeFromItems(data.order_items);
+        const printGross = printComputed.gross || round0(data.amount);
+        const printDiscount = printComputed.discount || round0(data.discount);
+        const printTaxRate = Number(data.tax) || 0;
+        const printTaxableNet = printComputed.taxableNet > 0 ? printComputed.taxableNet : Math.max(0, printGross - printDiscount);
+        const printTax = round0(printTaxableNet * printTaxRate);
 
         const printTotalAmount = round0(data.total_price);
         const printAdvancePaid = round0(data.advance_payment || data.data?.advance_deducted || 0);
@@ -273,17 +312,17 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
             <div class="row">
               <div>Subtotal</div>
-              <div>Rs ${round0(data.amount)}</div>
+              <div>Rs ${printGross}</div>
             </div>
 
             <div class="row">
               <div>Discount</div>
-              <div>Rs ${round0(data.discount)}</div>
+              <div>Rs ${printDiscount}</div>
             </div>
 
             <div class="row">
               <div>Tax (${(Number(data.tax || 0) * 100).toFixed(0)}%)</div>
-              <div>Rs ${round0(data.amount * (Number(data.tax || 0)) )}</div>
+              <div>Rs ${printTax}</div>
             </div>
 
             ${
@@ -363,17 +402,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
         }, 250);
     };
 
-    const taxAmount = () => {
-        const subtotal = paymentData.amount;
-
-        const discount = Number(paymentData.discount) || 0;
-        const discountedSubtotal = subtotal - discount;
-
-        // Now apply tax on the discounted amount
-        const taxRate = Number(paymentData.tax) || 0;
-        const taxAmount = Math.round(discountedSubtotal * taxRate);
-        return taxAmount;
-    };
+    const taxAmount = () => computedTax;
 
     return (
         <Box sx={{ ...styles.receiptContainer, ...(containerSx || {}) }}>
@@ -486,14 +515,14 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 <Typography variant="caption" color="text.secondary">
                     Subtotal
                 </Typography>
-                <Typography variant="caption">Rs {paymentData.amount}</Typography>
+                <Typography variant="caption">Rs {computedGross}</Typography>
             </Box>
 
             <Box sx={styles.receiptRow}>
                 <Typography variant="caption" color="text.secondary">
                     Discount
                 </Typography>
-                <Typography variant="caption">Rs {paymentData.discount}</Typography>
+                <Typography variant="caption">Rs {computedDiscount}</Typography>
             </Box>
 
             <Box sx={styles.receiptRow}>

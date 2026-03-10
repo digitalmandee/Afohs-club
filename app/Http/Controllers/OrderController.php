@@ -733,7 +733,8 @@ class OrderController extends Controller
 
                 // If is_taxable is in JSON
                 if (isset($itemData['is_taxable'])) {
-                    $isTaxable = $itemData['is_taxable'];
+                    $rawTaxable = $itemData['is_taxable'];
+                    $isTaxable = $rawTaxable === true || $rawTaxable === 1 || $rawTaxable === 'true' || $rawTaxable === '1';
                 } else {
                     // Fallback: Check product (this causes N+1 if not careful, but for one order it's fine)
                     if (isset($itemData['product_id'])) {
@@ -744,9 +745,11 @@ class OrderController extends Controller
                 }
 
                 if ($isTaxable) {
-                    $itemTotal = ($itemData['quantity'] ?? 1) * ($itemData['price'] ?? 0);
-                    $itemDisc = $itemData['discount_amount'] ?? 0;
-                    $calculatedTaxAmount += ($itemTotal - $itemDisc) * $taxRate;
+                    $qty = (float) ($itemData['quantity'] ?? 1);
+                    $unit = (float) ($itemData['price'] ?? 0);
+                    $itemTotal = isset($itemData['total_price']) ? (float) $itemData['total_price'] : ($qty * $unit);
+                    $itemDisc = (float) ($itemData['discount_amount'] ?? 0);
+                    $calculatedTaxAmount += max(0, $itemTotal - $itemDisc) * $taxRate;
                 }
             }
 
@@ -760,7 +763,7 @@ class OrderController extends Controller
                 'discount_type' => 'fixed',
                 'discount_value' => $order->discount ?? 0,
                 'discount_amount' => $order->discount ?? 0,
-                'tax_amount' => $calculatedTaxAmount,
+                'tax_amount' => round($calculatedTaxAmount),
                 'total' => $totalPrice,  // Note: verify if total_price in DB matches this calc
             ]);
 
@@ -2008,14 +2011,17 @@ class OrderController extends Controller
                         $item = is_array($orderItem->order_item) ? $orderItem->order_item : [];
                         $item = $normalizeOrderItem($item);
                         $qty = (int) ($item['quantity'] ?? 1);
-                        $subTotal = $unitPrice($item) * ($qty > 0 ? $qty : 1);
+                        $subTotal = isset($item['total_price']) ? (float) $item['total_price'] : ($unitPrice($item) * ($qty > 0 ? $qty : 1));
 
-                        $itemDiscountAmount = $item['discount_amount'] ?? 0;
+                        $itemDiscountAmount = (float) ($item['discount_amount'] ?? 0);
                         $netAmount = $subTotal - $itemDiscountAmount;
 
                         // Check if product is taxable
                         $isTaxable = false;
-                        if (isset($item['product_id']) && isset($products[$item['product_id']])) {
+                        if (isset($item['is_taxable'])) {
+                            $rawTaxable = $item['is_taxable'];
+                            $isTaxable = $rawTaxable === true || $rawTaxable === 1 || $rawTaxable === 'true' || $rawTaxable === '1';
+                        } elseif (isset($item['product_id']) && isset($products[$item['product_id']])) {
                             $isTaxable = $products[$item['product_id']]->is_taxable;
                         }
 
@@ -2031,6 +2037,7 @@ class OrderController extends Controller
                     }
 
                     $totalNet = $totalGross - $totalDiscount + $totalTax;
+                    $invoiceTotal = (float) ($order->total_price ?? $totalNet);
 
                     $description = 'Food Order Items (' . $orderItems->count() . ') - ' . implode(', ', $itemNames) . ($orderItems->count() > 3 ? '...' : '');
 
@@ -2044,13 +2051,13 @@ class OrderController extends Controller
                         'discount_type' => 'fixed',
                         'discount_value' => $totalDiscount,
                         'discount_amount' => $totalDiscount,
-                        'tax_amount' => $totalTax,
-                        'total' => $totalNet,
+                        'tax_amount' => round($totalTax),
+                        'total' => $invoiceTotal,
                     ]);
 
                     Transaction::create([
                         'type' => 'debit',
-                        'amount' => $totalNet,
+                        'amount' => $invoiceTotal,
                         'date' => now(),
                         'description' => 'Invoice #' . $invoiceData['invoice_no'] . ' - Food Order',
                         'payable_type' => $payerType,
@@ -2441,6 +2448,32 @@ class OrderController extends Controller
                 ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                 ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
                 ->orderByDesc('id')
+                ->limit(1),
+            'invoice_tax_amount' => FinancialInvoiceItem::selectRaw('COALESCE(SUM(tax_amount), 0)')
+                ->where('invoice_id', FinancialInvoice::select('id')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1)
+                ),
+            'invoice_sub_total' => FinancialInvoiceItem::select('sub_total')
+                ->where('invoice_id', FinancialInvoice::select('id')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1)
+                )
+                ->limit(1),
+            'invoice_discount_amount' => FinancialInvoiceItem::select('discount_amount')
+                ->where('invoice_id', FinancialInvoice::select('id')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1)
+                )
                 ->limit(1),
         ])
         ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])

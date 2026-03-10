@@ -35,7 +35,7 @@ const OrderMenu = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [searchMode, setSearchMode] = useState('product'); // 'product' or 'booking'
-    const [quickQty, setQuickQty] = useState(1);
+    const [quickQty, setQuickQty] = useState('');
     const qtyInputRef = useRef(null);
     const searchInputRef = useRef(null);
 
@@ -101,7 +101,7 @@ const OrderMenu = () => {
         setSearchTerm('');
         setShowSearchResults(false);
         setSearchResults([]);
-        setQuickQty(1);
+        setQuickQty('');
         qtyInputRef.current?.focus?.();
     };
 
@@ -582,6 +582,7 @@ const OrderMenu = () => {
                                                     setQuickQty(n < 1 ? 1 : n);
                                                 }}
                                                 onBlur={() => {
+                                                    if (quickQty === '') return;
                                                     const n = Number(quickQty);
                                                     if (!Number.isFinite(n) || n < 1) setQuickQty(1);
                                                 }}
