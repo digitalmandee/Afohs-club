@@ -33,14 +33,18 @@ export default function SleepingMembersReportPrint({ categories, primary_members
 
     const getFilterText = () => {
         let filterText = [];
-        
+
+        if (filters.member_search) {
+            filterText.push(`Member: ${filters.member_search}`);
+        }
+
         if (filters.status && filters.status.length > 0) {
-            const statusLabels = filters.status.map(status => 
+            const statusLabels = filters.status.map(status =>
                 status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
             );
             filterText.push(`Status: ${statusLabels.join(', ')}`);
         }
-        
+
         if (filters.categories && filters.categories.length > 0) {
             const categoryNames = filters.categories.map(catId => {
                 const category = all_categories?.find(cat => cat.id == catId);
@@ -48,123 +52,123 @@ export default function SleepingMembersReportPrint({ categories, primary_members
             });
             filterText.push(`Categories: ${categoryNames.join(', ')}`);
         }
-        
+
         return filterText.length > 0 ? filterText.join(' | ') : 'All Records';
     };
 
     return (
         <>
             <Head title="Sleeping Members Report - Print" />
-            
+
             <style jsx global>{`
                 @media print {
-                    body { 
-                        margin: 0; 
+                    body {
+                        margin: 0;
                         padding: 15px;
                         font-family: Arial, sans-serif;
                         font-size: 11px;
                         line-height: 1.2;
                     }
                     .no-print { display: none !important; }
-                    
+
                     .report-header {
                         text-align: center;
                         margin-bottom: 20px;
                         border-bottom: 2px solid #000;
                         padding-bottom: 10px;
                     }
-                    
+
                     .report-title {
                         font-size: 18px;
                         font-weight: bold;
                         margin: 5px 0;
                         color: #000;
                     }
-                    
+
                     .report-subtitle {
                         font-size: 14px;
                         font-weight: bold;
                         margin: 3px 0;
                         color: #333;
                     }
-                    
+
                     .report-info {
                         font-size: 10px;
                         margin: 2px 0;
                         color: #666;
                     }
-                    
+
                     .summary-section {
                         margin: 20px 0;
                         padding: 10px;
                         border: 1px solid #000;
                         background-color: #f9f9f9;
                     }
-                    
+
                     .summary-grid {
                         display: grid;
                         grid-template-columns: repeat(5, 1fr);
                         gap: 10px;
                         margin: 10px 0;
                     }
-                    
+
                     .summary-item {
                         text-align: center;
                         padding: 8px;
                         border: 1px solid #ccc;
                         background-color: #fff;
                     }
-                    
+
                     .summary-value {
                         font-size: 14px;
                         font-weight: bold;
                         margin-bottom: 3px;
                     }
-                    
+
                     .summary-label {
                         font-size: 9px;
                         color: #666;
                     }
-                    
+
                     table {
                         width: 100%;
                         border-collapse: collapse;
                         margin: 20px 0;
                     }
-                    
+
                     th, td {
                         border: 1px solid #000;
                         padding: 6px 4px;
                         text-align: left;
                         font-size: 9px;
                     }
-                    
+
                     th {
                         background-color: #000;
                         color: #fff;
                         font-weight: bold;
                         text-align: center;
                     }
-                    
+
                     .total-row {
                         background-color: #000;
                         color: #fff;
                         font-weight: bold;
                     }
-                    
+
                     .total-row td {
                         font-size: 10px;
                     }
-                    
+
                     .text-center { text-align: center; }
                     .text-right { text-align: right; }
                     .font-bold { font-weight: bold; }
-                    
+
                     .page-break {
                         page-break-after: always;
                     }
                 }
-                
+
                 @media screen {
                     body {
                         background-color: #f5f5f5;
@@ -182,7 +186,7 @@ export default function SleepingMembersReportPrint({ categories, primary_members
                     <div className="report-info">Filters: {getFilterText()}</div>
                     {primary_members?.current_page && (
                         <div className="report-info">
-                            Page {primary_members.current_page} of {primary_members.last_page} 
+                            Page {primary_members.current_page} of {primary_members.last_page}
                             (Showing {primary_members.from} to {primary_members.to} of {primary_members.total} records)
                         </div>
                     )}
@@ -229,7 +233,7 @@ export default function SleepingMembersReportPrint({ categories, primary_members
                             <th style={{ width: '12%' }}>Membership Date</th>
                             <th style={{ width: '10%' }}>Member Type</th>
                             <th style={{ width: '10%' }}>Status</th>
-                            <th style={{ width: '8%' }}>Last Updated</th>
+                            <th style={{ width: '8%' }}>Last Activity Date</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -241,12 +245,12 @@ export default function SleepingMembersReportPrint({ categories, primary_members
                                     <td className="text-center">{member.membership_no}</td>
                                     <td className="font-bold">{member.full_name}</td>
                                     <td>{member.member_category?.name || 'N/A'}</td>
-                                    <td className="text-center">{formatDate(member.created_at)}</td>
+                                    <td className="text-center">{formatDate(member.membership_date_display || member.membership_date || member.created_at)}</td>
                                     <td className="text-center">Provisional</td>
                                     <td className="text-center font-bold">
                                         {member.status?.replace('_', ' ').toUpperCase()}
                                     </td>
-                                    <td className="text-center">{formatDate(member.updated_at)}</td>
+                                    <td className="text-center">{formatDate(member.last_activity_date)}</td>
                                 </tr>
                             ))
                         ) : (
@@ -254,7 +258,7 @@ export default function SleepingMembersReportPrint({ categories, primary_members
                                 <td colSpan="9" className="text-center">No sleeping members found</td>
                             </tr>
                         )}
-                        
+
                         {/* Total Row */}
                         {primary_members?.data && primary_members.data.length > 0 && (
                             <tr className="total-row">
@@ -289,7 +293,7 @@ export default function SleepingMembersReportPrint({ categories, primary_members
                                 Category-wise Breakdown
                             </Typography>
                         </div>
-                        
+
                         <table>
                             <thead>
                                 <tr>
@@ -320,7 +324,7 @@ export default function SleepingMembersReportPrint({ categories, primary_members
                                         </td>
                                     </tr>
                                 ))}
-                                
+
                                 {/* Category Total Row */}
                                 <tr className="total-row">
                                     <td colSpan="3" className="text-center font-bold">TOTAL</td>
@@ -348,7 +352,7 @@ export default function SleepingMembersReportPrint({ categories, primary_members
                         </Grid>
                         <Grid item xs={6} sx={{ textAlign: 'right' }}>
                             <Typography variant="caption">
-                                {primary_members?.current_page 
+                                {primary_members?.current_page
                                     ? `Page ${primary_members.current_page} of ${primary_members.last_page} | Records: ${primary_members.from}-${primary_members.to} of ${primary_members.total}`
                                     : `Total Records: ${primary_members?.data?.length || 0}`
                                 }

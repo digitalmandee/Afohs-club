@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
 import { TextField, Chip, Box, IconButton, Paper, Table, Autocomplete, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
+import axios from 'axios';
+import debounce from 'lodash.debounce';
 
 const SleepingMembersReport = () => {
     // Get props first
@@ -11,9 +13,31 @@ const SleepingMembersReport = () => {
     // Modal state
     // const [open, setOpen] = useState(true);
     const [allFilters, setAllFilters] = useState({
+        member_search: filters?.member_search || '',
         categories: filters?.categories || [],
         status: filters?.status || []
     });
+
+    const [memberSuggestions, setMemberSuggestions] = useState([]);
+
+    const fetchMemberSuggestions = useMemo(
+        () =>
+            debounce(async (query) => {
+                if (!query) {
+                    setMemberSuggestions([]);
+                    return;
+                }
+                try {
+                    const response = await axios.get(route('api.bookings.search-customers'), {
+                        params: { query, type: 'member' },
+                    });
+                    setMemberSuggestions(response.data || []);
+                } catch {
+                    setMemberSuggestions([]);
+                }
+            }, 300),
+        [],
+    );
 
     const handleSearch = () => {
         router.get(route('membership.sleeping-members-report'), allFilters, {
@@ -41,6 +65,7 @@ const SleepingMembersReport = () => {
 
     const handleReset = () => {
         setAllFilters({
+            member_search: '',
             categories: [],
             status: []
         });
@@ -75,9 +100,42 @@ const SleepingMembersReport = () => {
         return new Date(date).toLocaleDateString('en-GB');
     };
 
+    const renderMemberOption = (props, option) => (
+        <li {...props} key={option.id || option.label}>
+            <Box sx={{ width: '100%' }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body2" fontWeight="bold">
+                        {option.membership_no || option.customer_no}
+                    </Typography>
+                    {option.status && (
+                        <Chip
+                            label={option.status}
+                            size="small"
+                            sx={{
+                                height: '20px',
+                                fontSize: '10px',
+                                backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                textTransform: 'capitalize',
+                                ml: 1,
+                            }}
+                        />
+                    )}
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                    {option.name || option.full_name || option.label}
+                </Typography>
+            </Box>
+        </li>
+    );
+
     const handlePrint = () => {
         // Build query string with current filters and page
         const params = new URLSearchParams();
+
+        if (allFilters.member_search) {
+            params.append('member_search', allFilters.member_search);
+        }
 
         if (allFilters.categories && allFilters.categories.length > 0) {
             allFilters.categories.forEach(cat => params.append('categories[]', cat));
@@ -145,6 +203,62 @@ const SleepingMembersReport = () => {
 
                     {/* Filter Fields */}
                     <Grid container spacing={3} alignItems="center">
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={memberSuggestions}
+                                getOptionLabel={(option) => {
+                                    if (typeof option === 'string') return option;
+                                    return option.membership_no || option.customer_no || option.value || option.label || '';
+                                }}
+                                inputValue={allFilters.member_search}
+                                onChange={(event, newValue) => {
+                                    if (!newValue) {
+                                        handleFilterChange('member_search', '');
+                                        return;
+                                    }
+                                    if (typeof newValue === 'string') {
+                                        handleFilterChange('member_search', newValue);
+                                        return;
+                                    }
+                                    handleFilterChange('member_search', newValue.membership_no || newValue.name || newValue.full_name || '');
+                                }}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('member_search', newInputValue);
+                                    fetchMemberSuggestions(newInputValue);
+                                }}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        fullWidth
+                                        size="small"
+                                        label="Member"
+                                        placeholder="Membership # / Name"
+                                        InputProps={{
+                                            ...params.InputProps,
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Search />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                                    />
+                                )}
+                                renderOption={renderMemberOption}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300,
+                                        px: 1,
+                                        '& .MuiAutocomplete-option': { borderRadius: '16px', mx: 0.5, my: 0.5 },
+                                        '& .MuiAutocomplete-option:hover': { backgroundColor: '#063455', color: '#fff' },
+                                        "& .MuiAutocomplete-option[aria-selected='true']": { backgroundColor: '#063455', color: '#fff' },
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": { backgroundColor: '#063455', color: '#fff' },
+                                    },
+                                }}
+                            />
+                        </Grid>
                         <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
                                     <InputLabel>Member Category</InputLabel>
@@ -322,7 +436,7 @@ const SleepingMembersReport = () => {
                                 )}
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={3}>
                             <Box sx={{ display: 'flex', gap: 2 }}>
                                 <Button
                                     variant="contained"
@@ -377,7 +491,7 @@ const SleepingMembersReport = () => {
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Membership Date</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Member Type</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Status</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Last Updated</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Last Activity Date</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -407,7 +521,7 @@ const SleepingMembersReport = () => {
                                                 {member.member_category?.name || 'N/A'}
                                             </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
-                                                {formatDate(member.created_at)}
+                                                {formatDate(member.membership_date_display || member.membership_date || member.created_at)}
                                             </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
                                                 Provisional
@@ -425,7 +539,7 @@ const SleepingMembersReport = () => {
                                                 />
                                             </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
-                                                {formatDate(member.updated_at)}
+                                                {formatDate(member.last_activity_date)}
                                             </TableCell>
                                         </TableRow>
                                     ))

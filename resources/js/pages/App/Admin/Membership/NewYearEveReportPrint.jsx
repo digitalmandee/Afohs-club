@@ -260,19 +260,19 @@ export default function NewYearEveReportPrint({ transactions, statistics, filter
                             transactions.data.map((transaction, index) => (
                                 <tr key={transaction.id}>
                                     <td className="text-center font-bold">{transaction.invoice?.invoice_no || '-'}</td>
-                                    <td className="text-center">{transaction.invoice?.member?.current_city || 'N/A'}</td>
-                                    <td className="font-bold">{transaction.invoice?.member?.full_name || 'N/A'}</td>
+                                    <td className="text-center">{transaction.invoice?.member?.current_city || transaction.invoice?.customer?.city || 'N/A'}</td>
+                                    <td className="font-bold">{transaction.invoice?.member?.full_name || transaction.invoice?.customer?.name || transaction.invoice?.data?.member_name || 'Guest'}</td>
                                     <td className="text-right font-bold">{formatCurrency(transaction.total)}</td>
                                     <td className="text-center">{transaction.invoice?.payment_method || '-'}</td>
-                                    <td>{transaction.invoice?.member?.member_category?.name || transaction.invoice?.member?.memberCategory?.name || 'N/A'}</td>
-                                    <td className="text-center">{formatDate(transaction.created_at)}</td>
+                                    <td>{transaction.invoice?.member?.member_category?.name || transaction.invoice?.member?.memberCategory?.name || transaction.invoice?.customer?.guest_type?.name || transaction.invoice?.customer?.guestType?.name || 'N/A'}</td>
+                                    <td className="text-center">{formatDate(transaction.invoice?.issue_date || transaction.invoice?.created_at || transaction.created_at)}</td>
                                     <td className="text-center">
                                         {transaction.start_date && transaction.end_date
                                             ? `${formatDate(transaction.start_date)} - ${formatDate(transaction.end_date)}`
                                             : 'N/A'
                                         }
                                     </td>
-                                    <td className="text-center">{transaction.invoice?.member?.membership_no || '-'}</td>
+                                    <td className="text-center">{transaction.invoice?.member?.membership_no || transaction.invoice?.customer?.customer_no || transaction.invoice?.customer?.id || transaction.invoice?.customer_id || '-'}</td>
                                     <td className="text-center">{transaction.invoice?.created_by?.name || transaction.invoice?.createdBy?.name || '-'}</td>
                                 </tr>
                             ))

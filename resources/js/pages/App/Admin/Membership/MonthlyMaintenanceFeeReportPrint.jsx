@@ -265,7 +265,7 @@ export default function MonthlyMaintenanceFeeReportPrint({ transactions, statist
                                     <td className="text-right font-bold">{formatCurrency(transaction.total)}</td>
                                     <td className="text-center">{transaction.invoice?.payment_method || 'N/A'}</td>
                                     <td>{transaction.invoice?.member?.member_category?.name || 'N/A'}</td>
-                                    <td className="text-center">{formatDate(transaction.created_at)}</td>
+                                    <td className="text-center">{formatDate(transaction.invoice?.issue_date || transaction.invoice?.created_at || transaction.created_at)}</td>
                                     <td className="text-center">{transaction.start_date && transaction.end_date ? `${formatDate(transaction.start_date)} - ${formatDate(transaction.end_date)}` : 'N/A'}</td>
                                 </tr>
                             ))

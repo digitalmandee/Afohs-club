@@ -267,7 +267,7 @@ export default function ReinstatingFeeReportPrint({ transactions, statistics, fi
                                     <td className="text-right font-bold">{formatCurrency(transaction.total)}</td>
                                     <td className="text-center">{transaction.invoice?.payment_method || '-'}</td>
                                     <td>{transaction.invoice?.member?.member_category?.name || transaction.invoice?.member?.memberCategory?.name || 'N/A'}</td>
-                                    <td className="text-center">{formatDate(transaction.created_at)}</td>
+                                    <td className="text-center">{formatDate(transaction.invoice?.issue_date || transaction.invoice?.created_at || transaction.created_at)}</td>
                                     <td className="text-center">{transaction.invoice?.member?.membership_no || '-'}</td>
                                     <td className="text-center">{transaction.invoice?.created_by?.name || transaction.invoice?.createdBy?.name || '-'}</td>
                                 </tr>

@@ -697,7 +697,9 @@ const ReinstatingFeeReport = () => {
                                                 />
                                             </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.member?.member_category?.name || transaction.invoice?.member?.memberCategory?.name || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
+                                                {formatDate(transaction.invoice?.issue_date || transaction.invoice?.created_at || transaction.created_at)}
+                                            </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>N/A</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || transaction.invoice?.createdBy?.name || 'N/A'}</TableCell>

@@ -838,7 +838,9 @@ const MonthlyMaintenanceFeeReport = () => {
                                                 />
                                             </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.member?.member_category?.name || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
+                                                {formatDate(transaction.invoice?.issue_date || transaction.invoice?.created_at || transaction.created_at)}
+                                            </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.start_date && transaction.end_date ? `${formatDate(transaction.start_date)} - ${formatDate(transaction.end_date)}` : 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || 'System'}</TableCell>
                                         </TableRow>

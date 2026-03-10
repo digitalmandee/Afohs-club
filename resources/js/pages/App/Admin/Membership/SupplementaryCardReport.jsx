@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { TextField, IconButton, Autocomplete, Chip, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
+import axios from 'axios';
 
 
 const SupplementaryCardReport = () => {
@@ -12,22 +13,55 @@ const SupplementaryCardReport = () => {
     // Modal state
     // const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [tableLoading, setTableLoading] = useState(false);
+    const [categoriesData, setCategoriesData] = useState(Array.isArray(categories) ? categories : []);
+    const [statisticsData, setStatisticsData] = useState(statistics || {});
     const [allFilters, setAllFilters] = useState({
         categories: filters?.categories || [],
         card_status: filters?.card_status || []
     });
+    const [queryFilters, setQueryFilters] = useState({
+        categories: filters?.categories || [],
+        card_status: filters?.card_status || [],
+    });
 
     // Ensure categories is always an array
-    const safeCategories = Array.isArray(categories) ? categories : [];
+    const safeCategories = Array.isArray(categoriesData) ? categoriesData : [];
     const safeAllCategories = Array.isArray(all_categories) ? all_categories : [];
     const safeAllCardStatuses = Array.isArray(all_card_statuses) ? all_card_statuses : [];
 
-    const handleSearch = () => {
+    useEffect(() => {
+        let cancelled = false;
         setLoading(true);
-        router.get(route('membership.supplementary-card-report'), allFilters, {
-            preserveState: true,
-            preserveScroll: true,
-            onFinish: () => setLoading(false),
+        setTableLoading(true);
+
+        axios
+            .get(route('membership.supplementary-card-report.data'), { params: queryFilters })
+            .then((res) => {
+                if (cancelled) return;
+                setCategoriesData(Array.isArray(res.data?.categories) ? res.data.categories : []);
+                setStatisticsData(res.data?.statistics || {});
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setCategoriesData([]);
+                setStatisticsData({});
+            })
+            .finally(() => {
+                if (cancelled) return;
+                setLoading(false);
+                setTableLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [JSON.stringify(queryFilters)]);
+
+    const handleSearch = () => {
+        setQueryFilters({
+            categories: allFilters.categories || [],
+            card_status: allFilters.card_status || [],
         });
     };
 
@@ -39,13 +73,13 @@ const SupplementaryCardReport = () => {
     };
 
     const handleReset = () => {
-        setLoading(true);
         setAllFilters({
             categories: [],
             card_status: []
         });
-        router.get(route('membership.supplementary-card-report'), {}, {
-            onFinish: () => setLoading(false),
+        setQueryFilters({
+            categories: [],
+            card_status: [],
         });
     };
 
@@ -395,7 +429,7 @@ const SupplementaryCardReport = () => {
                                     <TableRow>
                                         <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                                             <Typography color="textSecondary">
-                                                {loading ? (
+                                                {tableLoading ? (
                                                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                                                         <CircularProgress size={20} />
                                                         Loading data...
@@ -415,16 +449,16 @@ const SupplementaryCardReport = () => {
                                             GRAND TOTAL
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {statistics?.total_cards_applied || 0}
+                                            {statisticsData?.total_cards_applied || 0}
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {statistics?.issued_supplementary_members || 0}
+                                            {statisticsData?.issued_supplementary_members || 0}
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {statistics?.printed_supplementary_members || 0}
+                                            {statisticsData?.printed_supplementary_members || 0}
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {statistics?.re_printed_supplementary_members || 0}
+                                            {statisticsData?.re_printed_supplementary_members || 0}
                                         </TableCell>
                                     </TableRow>
                                 )}

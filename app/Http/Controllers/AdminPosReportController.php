@@ -296,8 +296,8 @@ class AdminPosReportController extends Controller
 
         // Get financial invoices with food_order type within date range
         $invoices = FinancialInvoice::where('invoice_type', 'food_order')
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
+            ->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '>=', $startDate)
+            ->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '<=', $endDate)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -360,7 +360,7 @@ class AdminPosReportController extends Controller
 
                     $salesData[] = [
                         'invoice_no' => $invoice->invoice_no,
-                        'date' => $invoice->created_at->format('d/M/Y'),
+                        'date' => $invoice->issue_date ? Carbon::parse($invoice->issue_date)->format('d/M/Y') : $invoice->created_at->format('d/M/Y'),
                         'customer' => $order->member ? $order->member->full_name : 'N/A',
                         'order_via' => $order->order_type ?? 'N/A',
                         'waiter' => $order->waiter ? $order->waiter->name : 'N/A',
@@ -403,8 +403,8 @@ class AdminPosReportController extends Controller
 
         // Get financial invoices with food_order type within date range
         $invoices = FinancialInvoice::where('invoice_type', 'food_order')
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
+            ->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '>=', $startDate)
+            ->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '<=', $endDate)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -467,7 +467,7 @@ class AdminPosReportController extends Controller
 
                     $salesData[] = [
                         'invoice_no' => $invoice->invoice_no,
-                        'date' => $invoice->created_at->format('d/M/Y'),
+                        'date' => $invoice->issue_date ? Carbon::parse($invoice->issue_date)->format('d/M/Y') : $invoice->created_at->format('d/M/Y'),
                         'customer' => $order->member ? $order->member->full_name : 'N/A',
                         'order_via' => $order->order_type ?? 'N/A',
                         'waiter' => $order->waiter ? $order->waiter->name : 'N/A',
@@ -514,8 +514,8 @@ class AdminPosReportController extends Controller
         Log::info('allCashiers: ' . $allCashiers);
         // Get financial invoices with food_order type within date range
         $invoicesQuery = FinancialInvoice::where('invoice_type', 'food_order')
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate);
+            ->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '>=', $startDate)
+            ->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '<=', $endDate);
 
         // Apply cashier filter if provided
         // Apply cashier filter if provided
@@ -675,8 +675,8 @@ class AdminPosReportController extends Controller
 
         // Get financial invoices with food_order type within date range
         $invoices = FinancialInvoice::where('invoice_type', 'food_order')
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
+            ->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '>=', $startDate)
+            ->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '<=', $endDate)
             ->get();
 
         // Process cashier-wise data

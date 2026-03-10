@@ -1134,6 +1134,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
 
         // Supplementary Card Report
         Route::get('supplementary-card-report', [MemberFeeRevenueController::class, 'supplementaryCardReport'])->name('membership.supplementary-card-report')->middleware('super.admin:reports.supplementary-card');
+        Route::get('supplementary-card-report/data', [MemberFeeRevenueController::class, 'supplementaryCardReportData'])->name('membership.supplementary-card-report.data')->middleware('super.admin:reports.supplementary-card');
         Route::get('supplementary-card-report/print', [MemberFeeRevenueController::class, 'supplementaryCardReportPrint'])->name('membership.supplementary-card-report.print')->middleware('super.admin:reports.supplementary-card');
 
         // Sleeping Members Report
@@ -1142,6 +1143,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
 
         // Member Card Detail Report
         Route::get('member-card-detail-report', [MemberFeeRevenueController::class, 'memberCardDetailReport'])->name('membership.member-card-detail-report')->middleware('super.admin:reports.member-card-detail');
+        Route::get('member-card-detail-report/data', [MemberFeeRevenueController::class, 'memberCardDetailReportData'])->name('membership.member-card-detail-report.data')->middleware('super.admin:reports.member-card-detail');
         Route::get('member-card-detail-report/print', [MemberFeeRevenueController::class, 'memberCardDetailReportPrint'])->name('membership.member-card-detail-report.print')->middleware('super.admin:reports.member-card-detail');
 
         // Monthly Maintenance Fee Report

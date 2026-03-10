@@ -1273,84 +1273,47 @@ class MemberFeeRevenueController extends Controller
 
     public function supplementaryCardReport(Request $request)
     {
+        return Inertia::render('App/Admin/Membership/SupplementaryCardReport', [
+            'categories' => [],
+            'statistics' => new \stdClass(),
+            'filters' => [
+                'categories' => $request->input('categories') ?? [],
+                'card_status' => $request->input('card_status') ?? [],
+            ],
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
+            'all_card_statuses' => [
+                'In-Process',
+                'Printed',
+                'Received',
+                'Issued',
+                'Applied',
+                'Re-Printed',
+                'Not Applied',
+                'Expired',
+                'Not Applicable',
+                'E-Card Issued',
+            ],
+        ]);
+    }
+
+    public function supplementaryCardReportData(Request $request)
+    {
+        $data = $this->getSupplementaryCardReportData($request);
+        unset($data['all_categories'], $data['all_card_statuses']);
+        return response()->json($data);
+    }
+
+    public function supplementaryCardReportPrint(Request $request)
+    {
+        $data = $this->getSupplementaryCardReportData($request);
+        return Inertia::render('App/Admin/Membership/SupplementaryCardReportPrint', $data);
+    }
+
+    private function getSupplementaryCardReportData(Request $request): array
+    {
         $categoryFilter = $request->input('categories');
         $cardStatusFilter = $request->input('card_status');
 
-        // Get all family members (supplementary members with parent_id)
-        // AND who have a valid Subscription record (where they are the family_member_id)
-        $supplementaryQuery = Member::whereNotNull('parent_id')
-            ->whereHas('subscriptions', function ($q) {
-                $q->whereColumn('family_member_id', 'members.id');
-            });
-
-        // Apply card status filter
-        if ($cardStatusFilter) {
-            $supplementaryQuery->whereIn('card_status', (array) $cardStatusFilter);
-        }
-
-        $supplementaryMembers = $supplementaryQuery->get();
-
-        // Now get parent categories for filtering
-        $parentIds = $supplementaryMembers->pluck('parent_id')->unique();
-        $parentCategories = Member::whereIn('id', $parentIds)
-            ->select('member_category_id')
-            ->get()
-            ->keyBy('id');
-
-        // Add parent category to each supplementary member
-        $supplementaryMembers = $supplementaryMembers->map(function ($member) use ($parentCategories) {
-            $parent = $parentCategories->get($member->parent_id);
-            $member->parent_category_id = $parent ? $parent->member_category_id : null;
-            return $member;
-        });
-
-        // Apply category filter if provided
-        if ($categoryFilter) {
-            $supplementaryMembers = $supplementaryMembers->filter(function ($member) use ($categoryFilter) {
-                return in_array($member->parent_category_id, (array) $categoryFilter);
-            });
-        }
-
-        // Calculate statistics by category
-        // Apply category filter if provided, otherwise show all categories
-        $categoryQuery = MemberCategory::select('id', 'name', 'description');
-
-        if ($categoryFilter) {
-            $categoryQuery->whereIn('id', (array) $categoryFilter);
-        }
-
-        $categoryStats = $categoryQuery
-            ->get()
-            ->map(function ($category) use ($supplementaryMembers) {
-                $categoryMembers = $supplementaryMembers->where('parent_category_id', $category->id);
-
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'code' => $category->description,
-                    'total_cards_applied' => $categoryMembers->count(),
-                    'issued_supplementary_members' => $categoryMembers->where('card_status', 'Issued')->count(),
-                    'printed_supplementary_members' => $categoryMembers->where('card_status', 'Printed')->count(),
-                    're_printed_supplementary_members' => $categoryMembers->where('card_status', 'Re-Printed')->count(),
-                    'in_process' => $categoryMembers->where('card_status', 'In-Process')->count(),
-                    'received' => $categoryMembers->where('card_status', 'Received')->count(),
-                    'applied' => $categoryMembers->where('card_status', 'Applied')->count(),
-                    'not_applied' => $categoryMembers->where('card_status', 'Not Applied')->count(),
-                    'expired' => $categoryMembers->where('card_status', 'Expired')->count(),
-                    'not_applicable' => $categoryMembers->where('card_status', 'Not Applicable')->count(),
-                    'e_card_issued' => $categoryMembers->where('card_status', 'E-Card Issued')->count(),
-                ];
-            });
-
-        // Calculate overall statistics
-        $totalStats = [
-            'total_cards_applied' => $supplementaryMembers->count(),
-            'issued_supplementary_members' => $supplementaryMembers->where('card_status', 'Issued')->count(),
-            'printed_supplementary_members' => $supplementaryMembers->where('card_status', 'Printed')->count(),
-            're_printed_supplementary_members' => $supplementaryMembers->where('card_status', 'Re-Printed')->count(),
-        ];
-
-        // Get all possible card statuses
         $allCardStatuses = [
             'In-Process',
             'Printed',
@@ -1361,11 +1324,107 @@ class MemberFeeRevenueController extends Controller
             'Not Applied',
             'Expired',
             'Not Applicable',
-            'E-Card Issued'
+            'E-Card Issued',
         ];
 
-        return Inertia::render('App/Admin/Membership/SupplementaryCardReport', [
-            'categories' => $categoryStats,
+        $statusKeyMap = [
+            'Issued' => 'issued_supplementary_members',
+            'Printed' => 'printed_supplementary_members',
+            'Re-Printed' => 're_printed_supplementary_members',
+            'In-Process' => 'in_process',
+            'Received' => 'received',
+            'Applied' => 'applied',
+            'Not Applied' => 'not_applied',
+            'Expired' => 'expired',
+            'Not Applicable' => 'not_applicable',
+            'E-Card Issued' => 'e_card_issued',
+        ];
+
+        $categoryQuery = MemberCategory::select('id', 'name', 'description');
+        if ($categoryFilter) {
+            $categoryQuery->whereIn('id', (array) $categoryFilter);
+        }
+
+        $categoryStats = $categoryQuery->get()->map(function ($category) use ($allCardStatuses, $statusKeyMap) {
+            $row = [
+                'id' => $category->id,
+                'name' => $category->name,
+                'code' => $category->description,
+                'total_cards_applied' => 0,
+            ];
+            foreach ($allCardStatuses as $status) {
+                $key = $statusKeyMap[$status] ?? null;
+                if ($key) {
+                    $row[$key] = 0;
+                }
+            }
+            return $row;
+        })->keyBy('id');
+
+        if (!$categoryFilter) {
+            $row = [
+                'id' => 0,
+                'name' => 'Uncategorized',
+                'code' => 'N/A',
+                'total_cards_applied' => 0,
+            ];
+            foreach ($allCardStatuses as $status) {
+                $key = $statusKeyMap[$status] ?? null;
+                if ($key) {
+                    $row[$key] = 0;
+                }
+            }
+            $categoryStats->put(0, $row);
+        }
+
+        $statsQuery = DB::table('members as child')
+            ->join('members as parent', 'child.parent_id', '=', 'parent.id')
+            ->leftJoin('member_categories as cat', 'parent.member_category_id', '=', 'cat.id')
+            ->whereNotNull('child.parent_id')
+            ->whereNull('child.deleted_at')
+            ->whereNull('parent.deleted_at');
+
+        if ($categoryFilter) {
+            $statsQuery->whereIn('parent.member_category_id', (array) $categoryFilter);
+        }
+
+        if ($cardStatusFilter) {
+            $statsQuery->whereIn('child.card_status', (array) $cardStatusFilter);
+        }
+
+        $counts = $statsQuery
+            ->selectRaw('COALESCE(cat.id, 0) as category_id, child.card_status as card_status, COUNT(*) as total_count')
+            ->groupByRaw('COALESCE(cat.id, 0), child.card_status')
+            ->get();
+
+        foreach ($counts as $row) {
+            $categoryId = (int) $row->category_id;
+            if (!$categoryStats->has($categoryId)) {
+                continue;
+            }
+            $status = (string) ($row->card_status ?? '');
+            $count = (int) $row->total_count;
+
+            $current = $categoryStats->get($categoryId);
+            $current['total_cards_applied'] += $count;
+            $key = $statusKeyMap[$status] ?? null;
+            if ($key) {
+                $current[$key] = ($current[$key] ?? 0) + $count;
+            }
+            $categoryStats->put($categoryId, $current);
+        }
+
+        $categories = $categoryStats->values();
+
+        $totalStats = [
+            'total_cards_applied' => (int) $categories->sum('total_cards_applied'),
+            'issued_supplementary_members' => (int) $categories->sum('issued_supplementary_members'),
+            'printed_supplementary_members' => (int) $categories->sum('printed_supplementary_members'),
+            're_printed_supplementary_members' => (int) $categories->sum('re_printed_supplementary_members'),
+        ];
+
+        return [
+            'categories' => $categories,
             'statistics' => $totalStats,
             'filters' => [
                 'categories' => $categoryFilter ?? [],
@@ -1373,116 +1432,18 @@ class MemberFeeRevenueController extends Controller
             ],
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_card_statuses' => $allCardStatuses,
-        ]);
-    }
-
-    public function supplementaryCardReportPrint(Request $request)
-    {
-        $categoryFilter = $request->input('categories');
-        $cardStatusFilter = $request->input('card_status');
-
-        // Get all family members (supplementary members with parent_id)
-        // AND who have a valid Subscription record
-        $supplementaryQuery = Member::whereNotNull('parent_id')
-            ->whereHas('subscriptions', function ($q) {
-                $q->whereColumn('family_member_id', 'members.id');
-            });
-
-        // Apply card status filter
-        if ($cardStatusFilter) {
-            $supplementaryQuery->whereIn('card_status', (array) $cardStatusFilter);
-        }
-
-        $supplementaryMembers = $supplementaryQuery->get();
-
-        // Now get parent categories for filtering
-        $parentIds = $supplementaryMembers->pluck('parent_id')->unique();
-        $parentCategories = Member::whereIn('id', $parentIds)
-            ->select('member_category_id')
-            ->get()
-            ->keyBy('id');
-
-        // Add parent category to each supplementary member
-        $supplementaryMembers = $supplementaryMembers->map(function ($member) use ($parentCategories) {
-            $parent = $parentCategories->get($member->parent_id);
-            $member->parent_category_id = $parent ? $parent->member_category_id : null;
-            return $member;
-        });
-
-        // Apply category filter if provided
-        if ($categoryFilter) {
-            $supplementaryMembers = $supplementaryMembers->filter(function ($member) use ($categoryFilter) {
-                return in_array($member->parent_category_id, (array) $categoryFilter);
-            });
-        }
-
-        // Calculate statistics by category
-        $categoryQuery = MemberCategory::select('id', 'name', 'description');
-
-        if ($categoryFilter) {
-            $categoryQuery->whereIn('id', (array) $categoryFilter);
-        }
-
-        $categoryStats = $categoryQuery
-            ->get()
-            ->map(function ($category) use ($supplementaryMembers) {
-                $categoryMembers = $supplementaryMembers->where('parent_category_id', $category->id);
-
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'code' => $category->description,
-                    'total_cards_applied' => $categoryMembers->count(),
-                    'issued_supplementary_members' => $categoryMembers->where('card_status', 'Issued')->count(),
-                    'printed_supplementary_members' => $categoryMembers->where('card_status', 'Printed')->count(),
-                    're_printed_supplementary_members' => $categoryMembers->where('card_status', 'Re-Printed')->count(),
-                ];
-            });
-
-        // Calculate overall statistics
-        $totalStats = [
-            'total_cards_applied' => $supplementaryMembers->count(),
-            'issued_supplementary_members' => $supplementaryMembers->where('card_status', 'Issued')->count(),
-            'printed_supplementary_members' => $supplementaryMembers->where('card_status', 'Printed')->count(),
-            're_printed_supplementary_members' => $supplementaryMembers->where('card_status', 'Re-Printed')->count(),
         ];
-
-        return Inertia::render('App/Admin/Membership/SupplementaryCardReportPrint', [
-            'categories' => $categoryStats,
-            'statistics' => $totalStats,
-            'filters' => [
-                'categories' => $categoryFilter ?? [],
-                'card_status' => $cardStatusFilter ?? [],
-            ],
-            'all_categories' => MemberCategory::select('id', 'name')->get(),
-        ]);
     }
 
     public function sleepingMembersReport(Request $request)
     {
+        $memberSearch = $request->input('member_search');
         $categoryFilter = $request->input('categories');
         $statusFilter = $request->input('status');
 
-        // Get all primary members (members with parent_id = null)
-        $query = Member::with(['memberCategory:id,name,description'])
-            ->whereNull('parent_id')
-            ->select('members.*');
-
-        // Apply member category filter
-        if ($categoryFilter) {
-            $query->whereIn('member_category_id', (array) $categoryFilter);
-        }
-
-        // Apply status filter
-        if ($statusFilter) {
-            $query->whereIn('status', (array) $statusFilter);
-        }
-
-        // Get paginated results
-        $primaryMembers = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
-
-        // Get all members for statistics (without pagination)
-        $allPrimaryMembers = $query->orderBy('created_at', 'desc')->get();
+        $query = $this->buildSleepingMembersQuery($memberSearch, $categoryFilter, $statusFilter);
+        $primaryMembers = (clone $query)->paginate(15)->withQueryString();
+        $allPrimaryMembers = (clone $query)->get();
 
         // Calculate statistics by category and status using all members (not paginated)
         $categoryStats = MemberCategory::select('id', 'name', 'description')
@@ -1536,6 +1497,7 @@ class MemberFeeRevenueController extends Controller
             'primary_members' => $primaryMembers,
             'statistics' => $totalStats,
             'filters' => [
+                'member_search' => $memberSearch ?? '',
                 'categories' => $categoryFilter ?? [],
                 'status' => $statusFilter ?? [],
             ],
@@ -1546,42 +1508,14 @@ class MemberFeeRevenueController extends Controller
 
     public function sleepingMembersReportPrint(Request $request)
     {
+        $memberSearch = $request->input('member_search');
         $categoryFilter = $request->input('categories');
         $statusFilter = $request->input('status');
         $page = $request->input('page', 1);
 
-        // Get primary members with pagination (same as main report)
-        $query = Member::with(['memberCategory:id,name,description'])
-            ->whereNull('parent_id')
-            ->select('members.*');
-
-        // Apply member category filter
-        if ($categoryFilter) {
-            $query->whereIn('member_category_id', (array) $categoryFilter);
-        }
-
-        // Apply status filter
-        if ($statusFilter) {
-            $query->whereIn('status', (array) $statusFilter);
-        }
-
-        // Get paginated results (same 15 per page as main report)
-        $primaryMembers = $query->orderBy('created_at', 'desc')->paginate(15, ['*'], 'page', $page);
-
-        // Get all members for statistics calculation (without pagination)
-        $allMembersQuery = Member::with(['memberCategory:id,name,description'])
-            ->whereNull('parent_id')
-            ->select('members.*');
-
-        if ($categoryFilter) {
-            $allMembersQuery->whereIn('member_category_id', (array) $categoryFilter);
-        }
-
-        if ($statusFilter) {
-            $allMembersQuery->whereIn('status', (array) $statusFilter);
-        }
-
-        $allPrimaryMembers = $allMembersQuery->orderBy('created_at', 'desc')->get();
+        $query = $this->buildSleepingMembersQuery($memberSearch, $categoryFilter, $statusFilter);
+        $primaryMembers = (clone $query)->paginate(15, ['*'], 'page', $page);
+        $allPrimaryMembers = (clone $query)->get();
 
         // Calculate statistics by category and status using all members
         $categoryStats = MemberCategory::select('id', 'name', 'description')
@@ -1623,6 +1557,7 @@ class MemberFeeRevenueController extends Controller
             'primary_members' => $primaryMembers,
             'statistics' => $totalStats,
             'filters' => [
+                'member_search' => $memberSearch ?? '',
                 'categories' => $categoryFilter ?? [],
                 'status' => $statusFilter ?? [],
             ],
@@ -1630,72 +1565,116 @@ class MemberFeeRevenueController extends Controller
         ]);
     }
 
-    public function memberCardDetailReport(Request $request)
+    private function buildSleepingMembersQuery($memberSearch, $categoryFilter, $statusFilter)
     {
-        $categoryFilter = $request->input('categories');
-        $cardStatusFilter = $request->input('card_status');
+        $inactiveDays = 90;
+        $cutoffDate = now()->subDays($inactiveDays)->toDateString();
 
-        // Get all primary members (members with parent_id = null)
+        $invoiceActivity = "(SELECT MAX(DATE(COALESCE(fi.payment_date, fi.created_at)))
+            FROM financial_invoices fi
+            JOIN financial_invoice_items fii ON fii.invoice_id = fi.id
+            WHERE fi.member_id = members.id
+              AND fi.status = 'paid'
+              AND fii.fee_type IN ('4','5')
+        )";
+
+        $roomActivity = "(SELECT MAX(DATE(COALESCE(rb.check_in_date, rb.booking_date, rb.created_at)))
+            FROM room_bookings rb
+            WHERE rb.member_id = members.id
+              AND rb.status NOT IN ('cancelled','refunded','no_show')
+        )";
+
+        $eventActivity = "(SELECT MAX(DATE(COALESCE(eb.event_date, eb.booking_date, eb.created_at)))
+            FROM event_bookings eb
+            WHERE eb.member_id = members.id
+              AND eb.status NOT IN ('cancelled','refunded','no_show')
+        )";
+
+        $orderActivity = "(SELECT MAX(DATE(COALESCE(o.start_date, o.created_at)))
+            FROM orders o
+            WHERE o.member_id = members.id
+              AND o.payment_status = 'paid'
+        )";
+
+        $lastActivityRaw = "NULLIF(GREATEST(
+            COALESCE($invoiceActivity, '1900-01-01'),
+            COALESCE($roomActivity, '1900-01-01'),
+            COALESCE($eventActivity, '1900-01-01'),
+            COALESCE($orderActivity, '1900-01-01')
+        ), '1900-01-01')";
+
         $query = Member::with(['memberCategory:id,name,description'])
             ->whereNull('parent_id')
-            ->select('members.*');
+            ->select('members.*')
+            ->selectRaw("DATE(COALESCE(members.membership_date, members.created_at)) as membership_date_display")
+            ->selectRaw("$lastActivityRaw as last_activity_date");
 
-        // Apply member category filter
         if ($categoryFilter) {
             $query->whereIn('member_category_id', (array) $categoryFilter);
         }
 
-        // Apply card status filter
-        if ($cardStatusFilter) {
-            $query->whereIn('card_status', (array) $cardStatusFilter);
-        }
-
-        // Get all members for statistics (no pagination needed for category-based report)
-        $allPrimaryMembers = $query->orderBy('created_at', 'desc')->get();
-
-        // Calculate statistics by category and card status
-        // Apply category filter if provided, otherwise show all categories
-        $categoryQuery = MemberCategory::select('id', 'name', 'description');
-
-        if ($categoryFilter) {
-            $categoryQuery->whereIn('id', (array) $categoryFilter);
-        }
-
-        $categoryStats = $categoryQuery
-            ->get()
-            ->map(function ($category) use ($allPrimaryMembers) {
-                $categoryMembers = $allPrimaryMembers->where('member_category_id', $category->id);
-
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'code' => $category->description,
-                    'total_cards_applied' => $categoryMembers->count(),
-                    'issued_primary_members' => $categoryMembers->where('card_status', 'Issued')->count(),
-                    'printed_primary_members' => $categoryMembers->where('card_status', 'Printed')->count(),
-                    're_printed_primary_members' => $categoryMembers->where('card_status', 'Re-Printed')->count(),
-                    'e_card_issued_primary_members' => $categoryMembers->where('card_status', 'E-Card Issued')->count(),
-                    'pending_cards' => $categoryMembers->whereIn('card_status', ['In-Process', 'Applied', 'Not Applied'])->count(),
-                    'in_process' => $categoryMembers->where('card_status', 'In-Process')->count(),
-                    'received' => $categoryMembers->where('card_status', 'Received')->count(),
-                    'applied' => $categoryMembers->where('card_status', 'Applied')->count(),
-                    'not_applied' => $categoryMembers->where('card_status', 'Not Applied')->count(),
-                    'expired' => $categoryMembers->where('card_status', 'Expired')->count(),
-                    'not_applicable' => $categoryMembers->where('card_status', 'Not Applicable')->count(),
-                ];
+        if (!empty($memberSearch)) {
+            $search = trim((string) $memberSearch);
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('membership_no', 'like', "%{$search}%")
+                    ->orWhere('full_name', 'like', "%{$search}%");
             });
+        }
 
-        // Calculate overall statistics
-        $totalStats = [
-            'total_cards_applied' => $allPrimaryMembers->count(),
-            'issued_primary_members' => $allPrimaryMembers->where('card_status', 'Issued')->count(),
-            'printed_primary_members' => $allPrimaryMembers->where('card_status', 'Printed')->count(),
-            're_printed_primary_members' => $allPrimaryMembers->where('card_status', 'Re-Printed')->count(),
-            'e_card_issued_primary_members' => $allPrimaryMembers->where('card_status', 'E-Card Issued')->count(),
-            'pending_cards' => $allPrimaryMembers->whereIn('card_status', ['In-Process', 'Applied', 'Not Applied'])->count(),
-        ];
+        if ($statusFilter) {
+            $query->whereIn('status', (array) $statusFilter);
+        }
 
-        // Get all possible card statuses
+        $query->havingRaw("((last_activity_date IS NULL AND membership_date_display <= ?) OR last_activity_date <= ?)", [$cutoffDate, $cutoffDate]);
+
+        return $query->orderByRaw("COALESCE(last_activity_date, membership_date_display) asc");
+    }
+
+    public function memberCardDetailReport(Request $request)
+    {
+        return Inertia::render('App/Admin/Membership/MemberCardDetailReport', [
+            'categories' => [],
+            'statistics' => new \stdClass(),
+            'filters' => [
+                'categories' => $request->input('categories') ?? [],
+                'card_status' => $request->input('card_status') ?? [],
+            ],
+            'all_categories' => MemberCategory::select('id', 'name')->get(),
+            'all_card_statuses' => [
+                'In-Process',
+                'Printed',
+                'Received',
+                'Issued',
+                'Applied',
+                'Re-Printed',
+                'Not Applied',
+                'Expired',
+                'Not Applicable',
+                'E-Card Issued',
+            ],
+        ]);
+    }
+
+    public function memberCardDetailReportData(Request $request)
+    {
+        $data = $this->getMemberCardDetailReportData($request);
+        unset($data['all_categories'], $data['all_card_statuses']);
+        return response()->json($data);
+    }
+
+    public function memberCardDetailReportPrint(Request $request)
+    {
+        $data = $this->getMemberCardDetailReportData($request);
+        unset($data['all_card_statuses']);
+        return Inertia::render('App/Admin/Membership/MemberCardDetailReportPrint', $data);
+    }
+
+    private function getMemberCardDetailReportData(Request $request): array
+    {
+        $categoryFilter = $request->input('categories');
+        $cardStatusFilter = $request->input('card_status');
+
         $allCardStatuses = [
             'In-Process',
             'Printed',
@@ -1706,11 +1685,114 @@ class MemberFeeRevenueController extends Controller
             'Not Applied',
             'Expired',
             'Not Applicable',
-            'E-Card Issued'
+            'E-Card Issued',
         ];
 
-        return Inertia::render('App/Admin/Membership/MemberCardDetailReport', [
-            'categories' => $categoryStats,
+        $statusKeyMap = [
+            'Issued' => 'issued_primary_members',
+            'Printed' => 'printed_primary_members',
+            'Re-Printed' => 're_printed_primary_members',
+            'E-Card Issued' => 'e_card_issued_primary_members',
+            'In-Process' => 'in_process',
+            'Received' => 'received',
+            'Applied' => 'applied',
+            'Not Applied' => 'not_applied',
+            'Expired' => 'expired',
+            'Not Applicable' => 'not_applicable',
+        ];
+
+        $pendingStatuses = ['In-Process', 'Applied', 'Not Applied'];
+
+        $categoryQuery = MemberCategory::select('id', 'name', 'description');
+        if ($categoryFilter) {
+            $categoryQuery->whereIn('id', (array) $categoryFilter);
+        }
+
+        $categoryStats = $categoryQuery->get()->map(function ($category) use ($allCardStatuses, $statusKeyMap) {
+            $row = [
+                'id' => $category->id,
+                'name' => $category->name,
+                'code' => $category->description,
+                'total_cards_applied' => 0,
+                'pending_cards' => 0,
+            ];
+            foreach ($allCardStatuses as $status) {
+                $key = $statusKeyMap[$status] ?? null;
+                if ($key) {
+                    $row[$key] = 0;
+                }
+            }
+            return $row;
+        })->keyBy('id');
+
+        if (!$categoryFilter) {
+            $row = [
+                'id' => 0,
+                'name' => 'Uncategorized',
+                'code' => 'N/A',
+                'total_cards_applied' => 0,
+                'pending_cards' => 0,
+            ];
+            foreach ($allCardStatuses as $status) {
+                $key = $statusKeyMap[$status] ?? null;
+                if ($key) {
+                    $row[$key] = 0;
+                }
+            }
+            $categoryStats->put(0, $row);
+        }
+
+        $statsQuery = DB::table('members as m')
+            ->leftJoin('member_categories as cat', 'm.member_category_id', '=', 'cat.id')
+            ->whereNull('m.parent_id')
+            ->whereNull('m.deleted_at');
+
+        if ($categoryFilter) {
+            $statsQuery->whereIn('m.member_category_id', (array) $categoryFilter);
+        }
+
+        if ($cardStatusFilter) {
+            $statsQuery->whereIn('m.card_status', (array) $cardStatusFilter);
+        }
+
+        $counts = $statsQuery
+            ->selectRaw('COALESCE(cat.id, 0) as category_id, m.card_status as card_status, COUNT(*) as total_count')
+            ->groupByRaw('COALESCE(cat.id, 0), m.card_status')
+            ->get();
+
+        foreach ($counts as $row) {
+            $categoryId = (int) $row->category_id;
+            if (!$categoryStats->has($categoryId)) {
+                continue;
+            }
+            $status = (string) ($row->card_status ?? '');
+            $count = (int) $row->total_count;
+
+            $current = $categoryStats->get($categoryId);
+            $current['total_cards_applied'] += $count;
+            if (in_array($status, $pendingStatuses, true)) {
+                $current['pending_cards'] += $count;
+            }
+            $key = $statusKeyMap[$status] ?? null;
+            if ($key) {
+                $current[$key] = ($current[$key] ?? 0) + $count;
+            }
+            $categoryStats->put($categoryId, $current);
+        }
+
+        $categories = $categoryStats->values();
+
+        $totalStats = [
+            'total_cards_applied' => (int) $categories->sum('total_cards_applied'),
+            'issued_primary_members' => (int) $categories->sum('issued_primary_members'),
+            'printed_primary_members' => (int) $categories->sum('printed_primary_members'),
+            're_printed_primary_members' => (int) $categories->sum('re_printed_primary_members'),
+            'e_card_issued_primary_members' => (int) $categories->sum('e_card_issued_primary_members'),
+            'pending_cards' => (int) $categories->sum('pending_cards'),
+        ];
+
+        return [
+            'categories' => $categories,
             'statistics' => $totalStats,
             'filters' => [
                 'categories' => $categoryFilter ?? [],
@@ -1718,76 +1800,7 @@ class MemberFeeRevenueController extends Controller
             ],
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_card_statuses' => $allCardStatuses,
-        ]);
-    }
-
-    public function memberCardDetailReportPrint(Request $request)
-    {
-        $categoryFilter = $request->input('categories');
-        $cardStatusFilter = $request->input('card_status');
-
-        // Get all primary members (members with parent_id = null)
-        $query = Member::with(['memberCategory:id,name,description'])
-            ->whereNull('parent_id')
-            ->select('members.*');
-
-        // Apply member category filter
-        if ($categoryFilter) {
-            $query->whereIn('member_category_id', (array) $categoryFilter);
-        }
-
-        // Apply card status filter
-        if ($cardStatusFilter) {
-            $query->whereIn('card_status', (array) $cardStatusFilter);
-        }
-
-        // Get all members for statistics
-        $allPrimaryMembers = $query->orderBy('created_at', 'desc')->get();
-
-        // Calculate statistics by category
-        $categoryQuery = MemberCategory::select('id', 'name', 'description');
-
-        if ($categoryFilter) {
-            $categoryQuery->whereIn('id', (array) $categoryFilter);
-        }
-
-        $categoryStats = $categoryQuery
-            ->get()
-            ->map(function ($category) use ($allPrimaryMembers) {
-                $categoryMembers = $allPrimaryMembers->where('member_category_id', $category->id);
-
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'code' => $category->description,
-                    'total_cards_applied' => $categoryMembers->count(),
-                    'issued_primary_members' => $categoryMembers->where('card_status', 'Issued')->count(),
-                    'printed_primary_members' => $categoryMembers->where('card_status', 'Printed')->count(),
-                    're_printed_primary_members' => $categoryMembers->where('card_status', 'Re-Printed')->count(),
-                    'e_card_issued_primary_members' => $categoryMembers->where('card_status', 'E-Card Issued')->count(),
-                    'pending_cards' => $categoryMembers->whereIn('card_status', ['In-Process', 'Applied', 'Not Applied'])->count(),
-                ];
-            });
-
-        // Calculate overall statistics
-        $totalStats = [
-            'total_cards_applied' => $allPrimaryMembers->count(),
-            'issued_primary_members' => $allPrimaryMembers->where('card_status', 'Issued')->count(),
-            'printed_primary_members' => $allPrimaryMembers->where('card_status', 'Printed')->count(),
-            're_printed_primary_members' => $allPrimaryMembers->where('card_status', 'Re-Printed')->count(),
-            'e_card_issued_primary_members' => $allPrimaryMembers->where('card_status', 'E-Card Issued')->count(),
-            'pending_cards' => $allPrimaryMembers->whereIn('card_status', ['In-Process', 'Applied', 'Not Applied'])->count(),
         ];
-
-        return Inertia::render('App/Admin/Membership/MemberCardDetailReportPrint', [
-            'categories' => $categoryStats,
-            'statistics' => $totalStats,
-            'filters' => [
-                'categories' => $categoryFilter ?? [],
-                'card_status' => $cardStatusFilter ?? [],
-            ],
-            'all_categories' => MemberCategory::select('id', 'name')->get(),
-        ]);
     }
 
     public function monthlyMaintenanceFeeReport(Request $request)
@@ -2118,16 +2131,26 @@ class MemberFeeRevenueController extends Controller
         $dateToParsed = $this->parseDateToYmd($dateTo);
 
         $query = \App\Models\FinancialInvoiceItem::query()
-            ->with(['invoice.member.memberCategory', 'invoice.createdBy'])
+            ->with(['invoice.member.memberCategory', 'invoice.customer.guestType', 'invoice.createdBy'])
             ->where('fee_type', '6')
             ->whereIn('financial_charge_type_id', [3, 4])
             ->select('financial_invoice_items.*');
 
         if ($memberSearch) {
-            $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
-                $q
-                    ->where('full_name', 'like', "%{$memberSearch}%")
-                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+            $query->whereHas('invoice', function ($q) use ($memberSearch) {
+                $q->where(function ($inner) use ($memberSearch) {
+                    $inner
+                        ->whereHas('member', function ($m) use ($memberSearch) {
+                            $m
+                                ->where('full_name', 'like', "%{$memberSearch}%")
+                                ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+                        })
+                        ->orWhereHas('customer', function ($c) use ($memberSearch) {
+                            $c
+                                ->where('name', 'like', "%{$memberSearch}%")
+                                ->orWhere('customer_no', 'like', "%{$memberSearch}%");
+                        });
+                });
             });
         }
 
@@ -2138,10 +2161,14 @@ class MemberFeeRevenueController extends Controller
         }
 
         if ($dateFromParsed) {
-            $query->whereDate('created_at', '>=', $dateFromParsed);
+            $query->whereHas('invoice', function ($q) use ($dateFromParsed) {
+                $q->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '>=', $dateFromParsed);
+            });
         }
         if ($dateToParsed) {
-            $query->whereDate('created_at', '<=', $dateToParsed);
+            $query->whereHas('invoice', function ($q) use ($dateToParsed) {
+                $q->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '<=', $dateToParsed);
+            });
         }
 
         if ($cityFilter) {
@@ -2209,17 +2236,27 @@ class MemberFeeRevenueController extends Controller
 
         // Get all fee transactions with pagination
         // Query FinancialInvoiceItem with fee_type = 6 (Charges) and financial_charge_type_id IN (3, 4) for New Year Eve
-        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.createdBy'])
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.customer.guestType', 'invoice.createdBy'])
             ->where('fee_type', '6')  // 6 = Charges
             ->whereIn('financial_charge_type_id', [3, 4])  // 3 = New Year Eve (Member), 4 = New Year Eve (Guest)
             ->select('financial_invoice_items.*');
 
         // Apply member search filter
         if ($memberSearch) {
-            $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
-                $q
-                    ->where('full_name', 'like', "%{$memberSearch}%")
-                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+            $query->whereHas('invoice', function ($q) use ($memberSearch) {
+                $q->where(function ($inner) use ($memberSearch) {
+                    $inner
+                        ->whereHas('member', function ($m) use ($memberSearch) {
+                            $m
+                                ->where('full_name', 'like', "%{$memberSearch}%")
+                                ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+                        })
+                        ->orWhereHas('customer', function ($c) use ($memberSearch) {
+                            $c
+                                ->where('name', 'like', "%{$memberSearch}%")
+                                ->orWhere('customer_no', 'like', "%{$memberSearch}%");
+                        });
+                });
             });
         }
 
@@ -2232,10 +2269,14 @@ class MemberFeeRevenueController extends Controller
 
         // Apply date range filter
         if ($dateFromParsed) {
-            $query->whereDate('created_at', '>=', $dateFromParsed);
+            $query->whereHas('invoice', function ($q) use ($dateFromParsed) {
+                $q->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '>=', $dateFromParsed);
+            });
         }
         if ($dateToParsed) {
-            $query->whereDate('created_at', '<=', $dateToParsed);
+            $query->whereHas('invoice', function ($q) use ($dateToParsed) {
+                $q->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '<=', $dateToParsed);
+            });
         }
 
         // Apply city filter
@@ -2348,10 +2389,14 @@ class MemberFeeRevenueController extends Controller
 
         // Apply date range filter
         if ($dateFromParsed) {
-            $query->whereDate('created_at', '>=', $dateFromParsed);
+            $query->whereHas('invoice', function ($q) use ($dateFromParsed) {
+                $q->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '>=', $dateFromParsed);
+            });
         }
         if ($dateToParsed) {
-            $query->whereDate('created_at', '<=', $dateToParsed);
+            $query->whereHas('invoice', function ($q) use ($dateToParsed) {
+                $q->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '<=', $dateToParsed);
+            });
         }
 
         // Apply city filter
@@ -2469,10 +2514,14 @@ class MemberFeeRevenueController extends Controller
 
         // Apply date range filter
         if ($dateFromParsed) {
-            $query->whereDate('created_at', '>=', $dateFromParsed);
+            $query->whereHas('invoice', function ($q) use ($dateFromParsed) {
+                $q->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '>=', $dateFromParsed);
+            });
         }
         if ($dateToParsed) {
-            $query->whereDate('created_at', '<=', $dateToParsed);
+            $query->whereHas('invoice', function ($q) use ($dateToParsed) {
+                $q->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '<=', $dateToParsed);
+            });
         }
 
         // Apply city filter
@@ -3147,37 +3196,49 @@ class MemberFeeRevenueController extends Controller
     {
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $dateFromParsed = $this->parseDateToYmd($dateFrom);
+        $dateToParsed = $this->parseDateToYmd($dateTo);
         $categoryFilter = $request->input('category');
 
         // Aggregated query for subscription and maintenance fees - using Items for Mixed support
         // We need to join invoice to get payment_method and status
         $query = \App\Models\FinancialInvoiceItem::join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
-            ->join('members', 'financial_invoices.member_id', '=', 'members.id')
-            ->join('member_categories', 'members.member_category_id', '=', 'member_categories.id')
+            ->leftJoin('members', 'financial_invoices.member_id', '=', 'members.id')
+            ->leftJoin('corporate_members', 'financial_invoices.corporate_member_id', '=', 'corporate_members.id')
+            ->leftJoin('member_categories as member_categories_member', 'members.member_category_id', '=', 'member_categories_member.id')
+            ->leftJoin('member_categories as member_categories_corporate', 'corporate_members.member_category_id', '=', 'member_categories_corporate.id')
             ->whereIn('financial_invoice_items.fee_type', ['5', '4'])  // 5 = Subscription, 4 = Maintenance
             ->where('financial_invoices.status', 'paid')
             ->selectRaw('
-                member_categories.name as category_name,
+                COALESCE(member_categories_member.name, member_categories_corporate.name, "Guest") as category_name,
                 financial_invoices.payment_method as payment_method,
                 sum(financial_invoice_items.total) as total_amount
             ')
-            ->groupBy('member_categories.name', 'financial_invoices.payment_method');
+            ->groupByRaw('COALESCE(member_categories_member.name, member_categories_corporate.name, "Guest"), financial_invoices.payment_method');
 
         // Apply date range filter
-        if ($dateFrom) {
-            $query->whereDate('financial_invoices.created_at', '>=', $dateFrom);
+        if ($dateFromParsed) {
+            $query->whereDate(DB::raw('COALESCE(financial_invoices.payment_date, financial_invoices.created_at)'), '>=', $dateFromParsed);
         }
-        if ($dateTo) {
-            $query->whereDate('financial_invoices.created_at', '<=', $dateTo);
+        if ($dateToParsed) {
+            $query->whereDate(DB::raw('COALESCE(financial_invoices.payment_date, financial_invoices.created_at)'), '<=', $dateToParsed);
         }
 
         // Apply category filter
         if ($categoryFilter) {
             // Support array or single value for category filter
             if (is_array($categoryFilter)) {
-                $query->whereIn('members.member_category_id', $categoryFilter);
+                $query->where(function ($q) use ($categoryFilter) {
+                    $q
+                        ->whereIn('members.member_category_id', $categoryFilter)
+                        ->orWhereIn('corporate_members.member_category_id', $categoryFilter);
+                });
             } else {
-                $query->where('members.member_category_id', $categoryFilter);
+                $query->where(function ($q) use ($categoryFilter) {
+                    $q
+                        ->where('members.member_category_id', $categoryFilter)
+                        ->orWhere('corporate_members.member_category_id', $categoryFilter);
+                });
             }
         }
 
@@ -3216,6 +3277,15 @@ class MemberFeeRevenueController extends Controller
             ];
         }
 
+        if (!$categoryFilter) {
+            $summary['Guest'] = [
+                'cash' => 0,
+                'credit_card' => 0,
+                'bank_online' => 0,
+                'total' => 0,
+            ];
+        }
+
         foreach ($aggregatedResults as $result) {
             $categoryName = $result->category_name;
             // Handle null payment method safely
@@ -3228,7 +3298,6 @@ class MemberFeeRevenueController extends Controller
             }
 
             // Map payment methods - normalizing inputs
-            // Known types: cash, credit_card, debit_card, cheque, online
             if ($paymentMethod === 'cash') {
                 $summary[$categoryName]['cash'] += $amount;
                 $grandTotals['cash'] += $amount;
@@ -3236,6 +3305,12 @@ class MemberFeeRevenueController extends Controller
                 // Group Credit and Debit cards together
                 $summary[$categoryName]['credit_card'] += $amount;
                 $grandTotals['credit_card'] += $amount;
+            } elseif (in_array($paymentMethod, ['bank_transfer', 'bank transfer', 'bank', 'online', 'bank_online', 'bank / online'])) {
+                $summary[$categoryName]['bank_online'] += $amount;
+                $grandTotals['bank_online'] += $amount;
+            } elseif (in_array($paymentMethod, ['cheque', 'check'])) {
+                $summary[$categoryName]['bank_online'] += $amount;
+                $grandTotals['bank_online'] += $amount;
             } else {
                 // Bank Transfer, Online, Cheque, etc.
                 // Includes: 'online', 'cheque', 'bank transfer'
@@ -3601,10 +3676,10 @@ class MemberFeeRevenueController extends Controller
 
         // Apply date filters if provided
         if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
+            $query->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '>=', $dateFrom);
         }
         if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereDate(DB::raw('COALESCE(issue_date, created_at)'), '<=', $dateTo);
         }
 
         $paidTransactions = $query->get();

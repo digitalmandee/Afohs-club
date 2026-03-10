@@ -720,8 +720,12 @@ const NewYearEveReport = () => {
                                             }}
                                         >
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.invoice_no}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.current_city || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>
+                                                {transaction.invoice?.member?.current_city || transaction.invoice?.customer?.city || 'N/A'}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>
+                                                {transaction.invoice?.member?.full_name || transaction.invoice?.customer?.name || transaction.invoice?.data?.member_name || 'Guest'}
+                                            </TableCell>
                                             <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total).replace('PKR', 'Rs.')}</TableCell>
                                             <TableCell>
                                                 <Chip
@@ -734,10 +738,16 @@ const NewYearEveReport = () => {
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.member?.member_category?.name || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
+                                                {transaction.invoice?.member?.member_category?.name || transaction.invoice?.customer?.guest_type?.name || transaction.invoice?.customer?.guestType?.name || 'N/A'}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
+                                                {formatDate(transaction.invoice?.issue_date || transaction.invoice?.created_at || transaction.created_at)}
+                                            </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.start_date && transaction.end_date ? `${formatDate(transaction.start_date)} - ${formatDate(transaction.end_date)}` : 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>
+                                                {transaction.invoice?.member?.membership_no || transaction.invoice?.customer?.customer_no || transaction.invoice?.customer?.id || transaction.invoice?.customer_id || '-'}
+                                            </TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
                                                 {transaction.invoice?.created_by?.name || transaction.invoice?.createdBy?.name || 'N/A'}
                                             </TableCell>
