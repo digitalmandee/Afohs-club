@@ -303,11 +303,13 @@ class OrderController extends Controller
                 ->where('status', 'checked_in')
                 ->whereDate('check_in_date', '<=', Carbon::today())
                 ->where(function ($dateQ) {
-                    $dateQ->whereNull('check_out_date')
+                    $dateQ
+                        ->whereNull('check_out_date')
                         ->orWhereDate('check_out_date', '>=', Carbon::today());
                 });
 
-            if (!$hasMemberFilter) return;
+            if (!$hasMemberFilter)
+                return;
 
             if ($memberType == 0 || $memberType == 1) {
                 $q->where('member_id', (int) $memberId);
@@ -749,7 +751,7 @@ class OrderController extends Controller
                     $unit = (float) ($itemData['price'] ?? 0);
                     $itemTotal = isset($itemData['total_price']) ? (float) $itemData['total_price'] : ($qty * $unit);
                     $itemDisc = (float) ($itemData['discount_amount'] ?? 0);
-                    $calculatedTaxAmount += max(0, $itemTotal - $itemDisc) * $taxRate;
+                    $calculatedTaxAmount += round(max(0, $itemTotal - $itemDisc) * $taxRate);
                 }
             }
 
@@ -763,7 +765,7 @@ class OrderController extends Controller
                 'discount_type' => 'fixed',
                 'discount_value' => $order->discount ?? 0,
                 'discount_amount' => $order->discount ?? 0,
-                'tax_amount' => round($calculatedTaxAmount),
+                'tax_amount' => $calculatedTaxAmount,
                 'total' => $totalPrice,  // Note: verify if total_price in DB matches this calc
             ]);
 
@@ -1624,11 +1626,11 @@ class OrderController extends Controller
             $financialInvoice = FinancialInvoice::where('invoice_type', 'food_order')
                 ->whereJsonContains('data', ['order_id' => $order->id])
                 ->first();
-            $hasClientUpdate = $request->filled('client_type') && $request->filled('client_id');
+            $hasClientUpdate = ($request->filled('client_type') || $request->filled('customer_type')) && ($request->filled('client_id') || $request->filled('customer_id'));
             $isClientChanged = false;
             if ($hasClientUpdate) {
-                $clientType = (string) $request->input('client_type');
-                $clientId = (int) $request->input('client_id');
+                $clientType = (string) ($request->input('client_type') ?? $request->input('customer_type'));
+                $clientId = (int) ($request->input('client_id') ?? $request->input('customer_id'));
                 $currentClientType = $order->member_id ? 'member' : ($order->customer_id ? 'guest' : ($order->employee_id ? 'employee' : null));
                 $currentClientId = (int) ($order->member_id ?: ($order->customer_id ?: ($order->employee_id ?: 0)));
                 $isClientChanged = ((string) $clientType !== (string) $currentClientType) || ($clientId !== $currentClientId);
@@ -1744,7 +1746,10 @@ class OrderController extends Controller
                     $row['order_item'] = $recalcPricing($row['order_item']);
                     $baseKey = $itemKey($row['order_item']);
                     $status = $row['status'] ?? null;
-                    $key = $status === 'cancelled' ? ('cancelled|' . $baseKey . '|' . uniqid('row_', true)) : $baseKey;
+                    $rowId = isset($row['id']) ? (string) $row['id'] : uniqid('row_', true);
+                    $key = $status === 'cancelled'
+                        ? ('cancelled|' . $rowId . '|' . $baseKey . '|' . uniqid('row_', true))
+                        : ($rowId . '|' . $baseKey);
                     if ($key === '|') {
                         $key = uniqid('row_', true);
                     }
@@ -1805,8 +1810,8 @@ class OrderController extends Controller
                 'cancelType' => $request->cancelType ?? null,
             ];
             if ($hasClientUpdate) {
-                $clientType = (string) $request->input('client_type');
-                $clientId = (int) $request->input('client_id');
+                $clientType = (string) ($request->input('client_type') ?? $request->input('customer_type'));
+                $clientId = (int) ($request->input('client_id') ?? $request->input('customer_id'));
                 if (
                     ($clientType === 'member' && !Member::where('id', $clientId)->exists()) ||
                     ($clientType === 'guest' && !Customer::where('id', $clientId)->exists()) ||
@@ -1908,7 +1913,7 @@ class OrderController extends Controller
 
                 $subtotal += $lineTotal;
                 $totalDiscount += $lineDiscount;
-                $totalTax += $isTaxable ? ($net * $taxRate) : 0.0;
+                $totalTax += $isTaxable ? round($net * $taxRate) : 0.0;
             }
 
             $computedAmount = (float) round($subtotal);
@@ -2108,6 +2113,19 @@ class OrderController extends Controller
                         'total_price' => $computedTotal,
                     ]);
 
+                    $invoiceItem = FinancialInvoiceItem::where('invoice_id', $financialInvoice->id)->first();
+                    if ($invoiceItem) {
+                        $invoiceItem->update([
+                            'amount' => $computedAmount,
+                            'sub_total' => $computedAmount,
+                            'discount_type' => 'fixed',
+                            'discount_value' => $computedDiscount,
+                            'discount_amount' => $computedDiscount,
+                            'tax_amount' => round($totalTax),
+                            'total' => $computedTotal,
+                        ]);
+                    }
+
                     // ✅ Sync Ledger (Debit)
                     $transaction = Transaction::where('reference_type', FinancialInvoice::class)
                         ->where('reference_id', $financialInvoice->id)
@@ -2175,7 +2193,7 @@ class OrderController extends Controller
         }
 
         $productsQuery = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id);
-        if (! $request->routeIs('pos.*')) {
+        if (!$request->routeIs('pos.*')) {
             $restaurantId = session('active_restaurant_id') ?? tenant('id');
             $requestedId = $request->query('restaurant_id');
 
@@ -2216,7 +2234,7 @@ class OrderController extends Controller
     {
         $categoriesQuery = Category::query();
 
-        if (! $request->routeIs('pos.*')) {
+        if (!$request->routeIs('pos.*')) {
             $restaurantId = session('active_restaurant_id') ?? tenant('id');
             $requestedId = $request->query('restaurant_id');
 
@@ -2406,78 +2424,75 @@ class OrderController extends Controller
             'table_id', 'member_id', 'customer_id', 'employee_id',
             'tenant_id', 'waiter_id', 'created_by', 'cashier_id'
         ])
-        ->with([
-            'table:id,table_no',
-            'tenant:id,name',
-            // 'orderItems', // REMOVED: Fetching items for every order in the list is expensive
-            'member:id,member_type_id,full_name,membership_no',
-            'member.memberType:id,name',
-            'customer:id,name,customer_no,guest_type_id',
-            'customer.guestType:id,name',
-            'employee:id,employee_id,name',
-            'cashier:id,name',
-            'user:id,name',
-            'waiter:id,name',
-        ])
-        // Simplified invoice data fetching - only get what's needed for list filtering/display
-        // If specific invoice details (ENT/CTS breakdown) are needed only in modal, we can skip them here
-        // But keeping them if they are used in filters
-        ->addSelect([
-            // 'orders.*', // Already selected specific columns
-            'invoice_id' => FinancialInvoice::select('id')
-                ->where('invoice_type', 'food_order')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
-                ->orderByDesc('id')
-                ->limit(1),
-            'invoice_no' => FinancialInvoice::select('invoice_no')
-                ->where('invoice_type', 'food_order')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
-                ->orderByDesc('id')
-                ->limit(1),
-            // We can keep these if filters rely on them, otherwise move to detail fetch
-            'invoice_ent_amount' => FinancialInvoice::select('ent_amount')
-                ->where('invoice_type', 'food_order')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
-                ->orderByDesc('id')
-                ->limit(1),
-            'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
-                ->where('invoice_type', 'food_order')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
-                ->orderByDesc('id')
-                ->limit(1),
-            'invoice_tax_amount' => FinancialInvoiceItem::selectRaw('COALESCE(SUM(tax_amount), 0)')
-                ->where('invoice_id', FinancialInvoice::select('id')
+            ->with([
+                'table:id,table_no',
+                'tenant:id,name',
+                // 'orderItems', // REMOVED: Fetching items for every order in the list is expensive
+                'member:id,member_type_id,full_name,membership_no',
+                'member.memberType:id,name',
+                'customer:id,name,customer_no,guest_type_id',
+                'customer.guestType:id,name',
+                'employee:id,employee_id,name',
+                'cashier:id,name',
+                'user:id,name',
+                'waiter:id,name',
+            ])
+            // Simplified invoice data fetching - only get what's needed for list filtering/display
+            // If specific invoice details (ENT/CTS breakdown) are needed only in modal, we can skip them here
+            // But keeping them if they are used in filters
+            ->addSelect([
+                // 'orders.*', // Already selected specific columns
+                'invoice_id' => FinancialInvoice::select('id')
                     ->where('invoice_type', 'food_order')
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
                     ->orderByDesc('id')
-                    ->limit(1)
-                ),
-            'invoice_sub_total' => FinancialInvoiceItem::select('sub_total')
-                ->where('invoice_id', FinancialInvoice::select('id')
+                    ->limit(1),
+                'invoice_no' => FinancialInvoice::select('invoice_no')
                     ->where('invoice_type', 'food_order')
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
                     ->orderByDesc('id')
-                    ->limit(1)
-                )
-                ->limit(1),
-            'invoice_discount_amount' => FinancialInvoiceItem::select('discount_amount')
-                ->where('invoice_id', FinancialInvoice::select('id')
+                    ->limit(1),
+                // We can keep these if filters rely on them, otherwise move to detail fetch
+                'invoice_ent_amount' => FinancialInvoice::select('ent_amount')
                     ->where('invoice_type', 'food_order')
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
                     ->orderByDesc('id')
-                    ->limit(1)
-                )
-                ->limit(1),
-        ])
-        ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
-        ->where('status', '!=', 'pending');
+                    ->limit(1),
+                'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                    ->orderByDesc('id')
+                    ->limit(1),
+                'invoice_tax_amount' => FinancialInvoiceItem::selectRaw('COALESCE(SUM(tax_amount), 0)')
+                    ->where('invoice_id', FinancialInvoice::select('id')
+                        ->where('invoice_type', 'food_order')
+                        ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                        ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                        ->orderByDesc('id')
+                        ->limit(1)),
+                'invoice_sub_total' => FinancialInvoiceItem::select('sub_total')
+                    ->where('invoice_id', FinancialInvoice::select('id')
+                        ->where('invoice_type', 'food_order')
+                        ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                        ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                        ->orderByDesc('id')
+                        ->limit(1))
+                    ->limit(1),
+                'invoice_discount_amount' => FinancialInvoiceItem::select('discount_amount')
+                    ->where('invoice_id', FinancialInvoice::select('id')
+                        ->where('invoice_type', 'food_order')
+                        ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                        ->orderByRaw("CASE status WHEN 'unpaid' THEN 0 WHEN 'paid' THEN 1 ELSE 2 END")
+                        ->orderByDesc('id')
+                        ->limit(1))
+                    ->limit(1),
+            ])
+            ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
+            ->where('status', '!=', 'pending');
 
         // 🔍 Search by Order ID
         if ($request->filled('search_id')) {
@@ -2614,56 +2629,56 @@ class OrderController extends Controller
             'user:id,name',
             'waiter:id,name',
         ])
-        // Load invoice ENT/CTS data
-        ->addSelect([
-            'orders.*',
-            'invoice_id' => FinancialInvoice::select('id')
-                ->where('invoice_type', 'food_order')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_no' => FinancialInvoice::select('invoice_no')
-                ->where('invoice_type', 'food_order')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_status' => FinancialInvoice::select('status')
-                ->where('invoice_type', 'food_order')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_ent_amount' => FinancialInvoice::select('ent_amount')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_advance_payment' => FinancialInvoice::select('advance_payment')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_advance_deducted' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.advance_deducted')), '0') AS DECIMAL(10,2))")
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_ent_reason' => FinancialInvoice::select('ent_reason')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_ent_comment' => FinancialInvoice::select('ent_comment')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_cts_comment' => FinancialInvoice::select('cts_comment')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_bank_charges_amount' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.bank_charges_amount')), '0') AS DECIMAL(10,2))")
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_bank_charges_enabled' => FinancialInvoice::selectRaw("COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.bank_charges_enabled')), '0')")
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_bank_charges_type' => FinancialInvoice::selectRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.bank_charges_type'))")
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-            'invoice_bank_charges_value' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.bank_charges_value')), '0') AS DECIMAL(10,2))")
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
-                ->limit(1),
-        ])
-        ->find($id);
+            // Load invoice ENT/CTS data
+            ->addSelect([
+                'orders.*',
+                'invoice_id' => FinancialInvoice::select('id')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_no' => FinancialInvoice::select('invoice_no')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_status' => FinancialInvoice::select('status')
+                    ->where('invoice_type', 'food_order')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_ent_amount' => FinancialInvoice::select('ent_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_advance_payment' => FinancialInvoice::select('advance_payment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_advance_deducted' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\\$.advance_deducted')), '0') AS DECIMAL(10,2))")
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_ent_reason' => FinancialInvoice::select('ent_reason')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_ent_comment' => FinancialInvoice::select('ent_comment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_cts_comment' => FinancialInvoice::select('cts_comment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_bank_charges_amount' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\\$.bank_charges_amount')), '0') AS DECIMAL(10,2))")
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_bank_charges_enabled' => FinancialInvoice::selectRaw("COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\\$.bank_charges_enabled')), '0')")
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_bank_charges_type' => FinancialInvoice::selectRaw('JSON_UNQUOTE(JSON_EXTRACT(data, \'\$.bank_charges_type\'))')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_bank_charges_value' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\\$.bank_charges_value')), '0') AS DECIMAL(10,2))")
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+            ])
+            ->find($id);
 
         if (!$order) {
             return response()->json(null, 404);

@@ -6,6 +6,7 @@ import {
     Typography,
     Button,
     Grid,
+    Stack,
     Table,
     TableBody,
     TableCell,
@@ -14,23 +15,55 @@ import {
     TableRow,
     Card,
     CardContent,
-    Chip
+    Chip,
+    TextField,
+    Autocomplete
 } from '@mui/material';
 import PrintIcon from '@mui/icons-material/Print';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { format } from 'date-fns';
+import dayjs from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { Search } from '@mui/icons-material';
 
-export default function RunningSalesOrders({ runningOrders, totalOrders, totalAmount, reportDate }) {
+export default function RunningSalesOrders({ runningOrders, totalOrders, totalAmount, reportDate, startDate, endDate, tenants, cashiers, filters }) {
+
+    const toArray = (v) => {
+        if (Array.isArray(v)) return v.filter(Boolean);
+        if (!v) return [];
+        return String(v)
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+    };
+
+    const toIntArray = (v) =>
+        toArray(v)
+            .map((x) => Number(x))
+            .filter((n) => Number.isFinite(n) && n > 0);
+
+    const [reportFilters, setReportFilters] = useState({
+        start_date: filters?.start_date || startDate || reportDate,
+        end_date: filters?.end_date || endDate || reportDate,
+        tenant_ids: toIntArray(filters?.tenant_ids),
+        cashier_ids: toIntArray(filters?.cashier_ids),
+    });
+
+    const handleFilterChange = (field, value) => {
+        setReportFilters((prev) => ({ ...prev, [field]: value }));
+    };
 
     const handlePrint = () => {
-        const printUrl = route('admin.reports.pos.running-sales-orders.print');
+        const printUrl = route('admin.reports.pos.running-sales-orders.print', reportFilters);
         window.open(printUrl, '_blank');
     };
 
     const handleRefresh = () => {
-        router.get(route('admin.reports.pos.running-sales-orders'));
+        router.get(route('admin.reports.pos.running-sales-orders'), reportFilters, { preserveState: true });
     };
 
     const formatDate = (dateString) => {
@@ -71,6 +104,38 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
         }
     };
 
+    const formatOrderType = (type) => {
+        const types = {
+            dineIn: 'Dine-In',
+            delivery: 'Delivery',
+            takeaway: 'Takeaway',
+            reservation: 'Reservation',
+            room_service: 'Room Service',
+        };
+        return types[type] || type || '-';
+    };
+
+    const getCustomerType = (order) => {
+        if (order.employee) return 'Employee';
+        if (order.member) return order.member?.memberType?.name === 'Corporate' ? 'Corporate' : 'Member';
+        if (order.customer) return order.customer?.guestType?.name || order.customer?.guest_type?.name || 'Guest';
+        return 'Guest';
+    };
+
+    const getCustomerNo = (order) => {
+        if (order.member) return order.member.membership_no || '-';
+        if (order.customer) return order.customer.customer_no || '-';
+        if (order.employee) return order.employee.employee_id || '-';
+        return '-';
+    };
+
+    const getCustomerName = (order) => {
+        if (order.member) return order.member.full_name || '-';
+        if (order.customer) return order.customer.name || '-';
+        if (order.employee) return order.employee.name || '-';
+        return '-';
+    };
+
     return (
         <>
             {/* <Head title="Running Sales Orders" /> */}
@@ -88,7 +153,7 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                         <Grid container justifyContent="space-between" alignItems="center">
                             <Grid item>
                                 <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
-                                    Running Sales Orders
+                                    Running Sales Orders Report
                                 </Typography>
                             </Grid>
                             <Grid item>
@@ -97,7 +162,7 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                                         variant="outlined"
                                         startIcon={<RefreshIcon />}
                                         onClick={handleRefresh}
-                                        sx={{ 
+                                        sx={{
                                             borderColor: '#0a3d62',
                                             color: '#0a3d62',
                                             '&:hover': { borderColor: '#083049', backgroundColor: '#f5f5f5' }
@@ -122,9 +187,77 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                                 </Box>
                             </Grid>
                         </Grid>
-                        <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>
-                            Today's Active Orders - {formatDate(reportDate)}
-                        </Typography>
+                        <Box sx={{ mt: 1 }}>
+                            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="Start Date"
+                                        format="DD/MM/YYYY"
+                                        value={reportFilters.start_date ? dayjs(reportFilters.start_date) : null}
+                                        onChange={(newValue) =>
+                                            handleFilterChange('start_date', newValue ? newValue.format('YYYY-MM-DD') : '')
+                                        }
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                InputProps: { sx: { borderRadius: '16px', '& fieldset': { borderRadius: '16px' } } },
+                                            },
+                                        }}
+                                    />
+                                    <DatePicker
+                                        label="End Date"
+                                        format="DD/MM/YYYY"
+                                        value={reportFilters.end_date ? dayjs(reportFilters.end_date) : null}
+                                        onChange={(newValue) =>
+                                            handleFilterChange('end_date', newValue ? newValue.format('YYYY-MM-DD') : '')
+                                        }
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                InputProps: { sx: { borderRadius: '16px', '& fieldset': { borderRadius: '16px' } } },
+                                            },
+                                        }}
+                                    />
+                                </LocalizationProvider>
+
+                                <Autocomplete
+                                    multiple
+                                    size="small"
+                                    options={tenants || []}
+                                    getOptionLabel={(opt) => opt?.name || ''}
+                                    value={(tenants || []).filter((t) => reportFilters.tenant_ids.includes(t.id))}
+                                    onChange={(_, value) => handleFilterChange('tenant_ids', value.map((v) => v.id))}
+                                    renderInput={(params) => <TextField {...params} label="Restaurant" />}
+                                    sx={{ minWidth: 220 }}
+                                />
+
+                                <Autocomplete
+                                    multiple
+                                    size="small"
+                                    options={cashiers || []}
+                                    getOptionLabel={(opt) => opt?.name || ''}
+                                    value={(cashiers || []).filter((c) => reportFilters.cashier_ids.includes(c.id))}
+                                    onChange={(_, value) => handleFilterChange('cashier_ids', value.map((v) => v.id))}
+                                    renderInput={(params) => <TextField {...params} label="Cashier" />}
+                                    sx={{ minWidth: 220 }}
+                                />
+
+                                <Button
+                                    variant="contained"
+                                    startIcon={<Search />}
+                                    onClick={handleRefresh}
+                                    sx={{
+                                        backgroundColor: '#063455',
+                                        color: 'white',
+                                        borderRadius: '16px',
+                                        textTransform: 'none',
+                                        '&:hover': { backgroundColor: '#063455' },
+                                    }}
+                                >
+                                    Search
+                                </Button>
+                            </Stack>
+                        </Box>
                     </Box>
 
                     {/* Summary Stats */}
@@ -177,10 +310,10 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                                     <TableHead>
                                         <TableRow sx={{bgcolor:'#063455'}}>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                SR
+                                                Sr #
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Order
+                                                Invoice #
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
                                                 Date
@@ -189,28 +322,31 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                                                 Time
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Table
+                                                Table #
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
                                                 Restaurant
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Order Taker
+                                            </TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Customer Type
+                                            </TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Customer #
+                                            </TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
                                                 Customer Name
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Customer
-                                            </TableCell>
-                                            {/* <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                ITEMS
-                                            </TableCell> */}
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Total Amount
+                                                Grand Total
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
                                                 Cashier
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Status
+                                                Order Mode
                                             </TableCell>
                                         </TableRow>
                                     </TableHead>
@@ -231,39 +367,37 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                                                     {order.invoice_no || order.id}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
-                                                    {formatDate(order.created_at)}
+                                                    {formatDate(order.start_date || order.created_at)}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
-                                                    {formatTime(order.created_at)}
+                                                    {order.start_time ? order.start_time : formatTime(order.created_at)}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 'bold' }}>
-                                                    {order.table?.name || order.table_id || 'N/A'}
+                                                    {order.table?.table_no || order.table_id || 'N/A'}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '0.8rem' }}>
                                                     {order.tenant?.name || 'N/A'}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
-                                                    {order.member?.full_name || 'N/A'}
+                                                    {order.waiter?.name || 'N/A'}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
-                                                    {order.member?.membership_no || 'N/A'}
+                                                    {getCustomerType(order)}
                                                 </TableCell>
-                                                {/* <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 'bold' }}>
-                                                    {order.total_items || 'N/A'}
-                                                </TableCell> */}
-                                                <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 'bold', color: '#4caf50' }}>
+                                                <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
+                                                    {getCustomerNo(order)}
+                                                </TableCell>
+                                                <TableCell sx={{ fontSize: '0.8rem' }}>
+                                                    {getCustomerName(order)}
+                                                </TableCell>
+                                                <TableCell sx={{ fontSize: '0.8rem', textAlign: 'right', fontWeight: 'bold', color: '#4caf50' }}>
                                                     {formatCurrency(order.total_price || 0)}
                                                 </TableCell>
-                                                <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
-                                                    {order.cashier_name || 'N/A'}
+                                                <TableCell sx={{ fontSize: '0.8rem' }}>
+                                                    {order.cashier?.name || order.cashier_name || 'N/A'}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
-                                                    <Chip
-                                                        label={order.status || 'Pending'}
-                                                        color={getStatusColor(order.status)}
-                                                        size="small"
-                                                        sx={{ fontWeight: 'bold' }}
-                                                    />
+                                                    {formatOrderType(order.order_type)}
                                                 </TableCell>
                                             </TableRow>
                                         ))}

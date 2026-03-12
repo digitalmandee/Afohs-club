@@ -126,17 +126,15 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
     // Now apply tax on the discounted amount
     const taxRate = setting?.tax ? setting.tax / 100 : 0;
 
-    // Calculate taxable amount (sum of discounted price of taxable items)
-    const taxableAmount = orderDetails.order_items.reduce((acc, item) => {
+    // Calculate tax per item (round per item)
+    const taxAmount = orderDetails.order_items.reduce((acc, item) => {
         if (item.is_taxable) {
             // Only apply if item is taxable
             const itemTotal = item.total_price - (item.discount_amount || 0);
-            return acc + itemTotal;
+            return acc + Math.round(itemTotal * taxRate);
         }
         return acc;
     }, 0);
-
-    const taxAmount = Math.round(taxableAmount * taxRate);
 
     // Service Charges
     const serviceChargePct = parseFloat(serviceChargeRate) || 0;

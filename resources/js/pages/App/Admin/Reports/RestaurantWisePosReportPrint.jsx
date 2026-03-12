@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 import { format } from 'date-fns';
 
-export default function RestaurantWisePosReportPrint({ allReportsData, startDate, endDate, grandTotal, grandSubTotal, grandDiscount, grandTotalSale }) {
+export default function RestaurantWisePosReportPrint({ allReportsData, startDate, endDate, grandTotal, grandSubTotal, grandDiscount, grandTax, grandTotalSale }) {
     useEffect(() => {
         // Auto-print when page loads
         const timer = setTimeout(() => {
@@ -26,6 +26,10 @@ export default function RestaurantWisePosReportPrint({ allReportsData, startDate
             currency: 'PKR'
         }).format(amount).replace('PKR', 'Rs');
     };
+
+    const showTaxColumn =
+        Number(grandTax || 0) > 0 ||
+        (allReportsData || []).some((r) => Number(r?.report_data?.total_tax || 0) > 0);
 
     return (
         <>
@@ -223,6 +227,7 @@ export default function RestaurantWisePosReportPrint({ allReportsData, startDate
                                         <th className="price-col">SALE PRICE</th>
                                         <th className="subtotal-col">SUB TOTAL</th>
                                         <th className="discount-col">DISCOUNT</th>
+                                        {showTaxColumn && <th className="tax-col">TAX</th>}
                                         <th className="total-col">TOTAL SALE</th>
                                     </tr>
                                 </thead>
@@ -231,7 +236,7 @@ export default function RestaurantWisePosReportPrint({ allReportsData, startDate
                                         <React.Fragment key={categoryIndex}>
                                             {/* Category Header Row */}
                                             <tr className="category-header-row">
-                                                <td colSpan="7" style={{ fontWeight: 'bold', textAlign: 'left' }}>
+                                                <td colSpan={showTaxColumn ? 8 : 7} style={{ fontWeight: 'bold', textAlign: 'left' }}>
                                                     {category.category_name}
                                                 </td>
                                             </tr>
@@ -245,6 +250,7 @@ export default function RestaurantWisePosReportPrint({ allReportsData, startDate
                                                     <td className="price-col">{formatCurrency(item.price)}</td>
                                                     <td className="subtotal-col">{formatCurrency(item.sub_total)}</td>
                                                     <td className="discount-col">{formatCurrency(item.discount)}</td>
+                                                    {showTaxColumn && <td className="tax-col">{formatCurrency(item.tax)}</td>}
                                                     <td className="total-col">{formatCurrency(item.total_sale)}</td>
                                                 </tr>
                                             ))}
@@ -267,6 +273,11 @@ export default function RestaurantWisePosReportPrint({ allReportsData, startDate
                                                 <td className="discount-col" style={{ fontWeight: 'bold' }}>
                                                     {formatCurrency(category.total_discount)}
                                                 </td>
+                                                {showTaxColumn && (
+                                                    <td className="tax-col" style={{ fontWeight: 'bold' }}>
+                                                        {formatCurrency(category.total_tax)}
+                                                    </td>
+                                                )}
                                                 <td className="total-col" style={{ fontWeight: 'bold' }}>
                                                     {formatCurrency(category.total_sale)}
                                                 </td>
@@ -291,7 +302,8 @@ export default function RestaurantWisePosReportPrint({ allReportsData, startDate
                         <div>GRAND TOTALS ACROSS ALL RESTAURANTS</div>
                         <div style={{ marginTop: '10px' }}>
                             Items: {grandTotal} | Sub Total: {formatCurrency(grandSubTotal)} | 
-                            Discount: {formatCurrency(grandDiscount)} | Total Sale: {formatCurrency(grandTotalSale)}
+                            Discount: {formatCurrency(grandDiscount)}
+                            {showTaxColumn ? ` | Tax: ${formatCurrency(grandTax)}` : ''} | Total Sale: {formatCurrency(grandTotalSale)}
                         </div>
                     </div>
                 )}

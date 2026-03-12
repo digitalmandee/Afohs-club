@@ -153,7 +153,7 @@ export default function DailyDumpItemsReportPrint({
                     <table className="main-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '60px' }}>INVOICE KOT #</th>
+                                <th style={{ width: '60px' }}>ORDER #</th>
                                 <th style={{ width: '40px' }}>TABLE #</th>
                                 <th style={{ width: '55px' }}>DATE</th>
                                 <th style={{ width: '45px' }}>ITEM CODE</th>

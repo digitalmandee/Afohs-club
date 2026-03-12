@@ -66,10 +66,7 @@ const OrderMenu = () => {
 
         setIsSearching(true);
         try {
-            const url =
-                searchMode === 'booking'
-                    ? route(routeNameForContext('api.cake-bookings.search'))
-                    : route(routeNameForContext('order.search.products'));
+            const url = searchMode === 'booking' ? route(routeNameForContext('api.cake-bookings.search')) : route(routeNameForContext('order.search.products'));
             const params = searchMode === 'booking' ? { query: value.trim() } : { search: value.trim() };
 
             const response = await axios.get(url, { params });
@@ -582,9 +579,9 @@ const OrderMenu = () => {
                                                     setQuickQty(n < 1 ? 1 : n);
                                                 }}
                                                 onBlur={() => {
-                                                    if (quickQty === '') return;
-                                                    const n = Number(quickQty);
-                                                    if (!Number.isFinite(n) || n < 1) setQuickQty(1);
+                                                    // if (quickQty === '') return;
+                                                    // const n = Number(quickQty);
+                                                    // if (!Number.isFinite(n) || n < 1) setQuickQty(1);
                                                 }}
                                                 inputProps={{ min: 1 }}
                                                 sx={{
@@ -625,7 +622,7 @@ const OrderMenu = () => {
                                                 if (searchMode === 'booking') {
                                                     handleBookingClick(first);
                                                 } else {
-                                                    const qty = Number.isFinite(Number(quickQty)) && Number(quickQty) > 0 ? Number(quickQty) : 1;
+                                                    const qty = quickQty !== '' && Number.isFinite(Number(quickQty)) && Number(quickQty) > 0 ? Number(quickQty) : 1;
                                                     handleSearchProductClick(first, qty);
                                                 }
                                             }}

@@ -36,6 +36,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 export default function DailySalesListCashierWise({
     cashierData,
     allCashiers = [],
+    tenants,
+    waiters,
     startDate,
     endDate,
     grandTotalSale,
@@ -48,11 +50,24 @@ export default function DailySalesListCashierWise({
     grandTotal,
     filters
 }) {
-    // const [open, setOpen] = useState(true);
+    const toArray = (v) => {
+        if (Array.isArray(v)) return v.filter(Boolean);
+        if (!v) return [];
+        return String(v)
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+    };
+
+    const toIntArray = (v) =>
+        toArray(v)
+            .map((x) => Number(x))
+            .filter((n) => Number.isFinite(n) && n > 0);
+
     const [dateFilters, setDateFilters] = useState({
         start_date: filters?.start_date || startDate,
         end_date: filters?.end_date || endDate,
-        cashier_id: filters?.cashier_id || ''
+        cashier_ids: toIntArray(filters?.cashier_ids),
     });
 
     const handleFilterChange = (field, value) => {
@@ -228,18 +243,13 @@ export default function DailySalesListCashierWise({
                                 </Select>
                             </FormControl> */}
                             <Autocomplete
+                                multiple
                                 size="small"
-                                options={[
-                                    { id: "", name: "All Cashiers" },
-                                    ...allCashiers,
-                                ]}
+                                options={allCashiers}
                                 getOptionLabel={(option) => option.name || ""}
-                                value={
-                                    [{ id: "", name: "All Cashiers" }, ...allCashiers]
-                                        .find((cashier) => cashier.id === dateFilters.cashier_id) || null
-                                }
+                                value={allCashiers.filter((c) => dateFilters.cashier_ids.includes(c.id))}
                                 onChange={(event, newValue) =>
-                                    handleFilterChange("cashier_id", newValue ? newValue.id : "")
+                                    handleFilterChange("cashier_ids", newValue.map((v) => v.id))
                                 }
                                 isOptionEqualToValue={(option, value) => option.id === value.id}
                                 slotProps={{

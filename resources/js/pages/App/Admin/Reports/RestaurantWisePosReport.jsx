@@ -5,6 +5,7 @@ import {
     Paper,
     Typography,
     Button,
+    Checkbox,
     TextField,
     Grid,
     Divider,
@@ -16,11 +17,12 @@ import {
     TableRow,
     Card,
     CardContent,
-    Stack
+    Stack,
+    FormControlLabel,
+    Autocomplete
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import { format } from 'date-fns';
 import dayjs from "dayjs";
@@ -28,26 +30,50 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-export default function RestaurantWisePosReport({ allReportsData, tenants, startDate, endDate, grandTotal, grandSubTotal, grandDiscount, grandTotalSale, filters }) {
-    // const [open, setOpen] = useState(true);
-    const [dateFilters, setDateFilters] = useState({
+export default function RestaurantWisePosReport({ allReportsData, tenants, waiters, cashiers, startDate, endDate, grandTotal, grandSubTotal, grandDiscount, grandTax, grandTotalSale, filters }) {
+    const toArray = (v) => {
+        if (Array.isArray(v)) return v.filter(Boolean);
+        if (!v) return [];
+        return String(v)
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+    };
+
+    const toIntArray = (v) =>
+        toArray(v)
+            .map((x) => Number(x))
+            .filter((n) => Number.isFinite(n) && n > 0);
+
+    const [reportFilters, setReportFilters] = useState({
         start_date: filters?.start_date || startDate,
-        end_date: filters?.end_date || endDate
+        end_date: filters?.end_date || endDate,
+        tenant_ids: toIntArray(filters?.tenant_ids),
+        customer_types: toArray(filters?.customer_types),
+        customer_search: filters?.customer_search || '',
+        waiter_ids: toIntArray(filters?.waiter_ids),
+        cashier_ids: toIntArray(filters?.cashier_ids),
+        table_nos: toArray(filters?.table_nos),
+        category_names: toArray(filters?.category_names),
+        item_search: filters?.item_search || '',
+        discounted_only: Boolean(filters?.discounted_only) && String(filters?.discounted_only) !== '0',
+        taxed_only: Boolean(filters?.taxed_only) && String(filters?.taxed_only) !== '0',
+        payment_statuses: toArray(filters?.payment_statuses),
     });
 
     const handleFilterChange = (field, value) => {
-        setDateFilters(prev => ({
+        setReportFilters((prev) => ({
             ...prev,
-            [field]: value
+            [field]: value,
         }));
     };
 
     const applyFilters = () => {
-        router.get(route('admin.reports.pos.restaurant-wise'), dateFilters);
+        router.get(route('admin.reports.pos.restaurant-wise'), reportFilters);
     };
 
     const handlePrintAll = () => {
-        const printUrl = route('admin.reports.pos.restaurant-wise.print', dateFilters);
+        const printUrl = route('admin.reports.pos.restaurant-wise.print', reportFilters);
         window.open(printUrl, '_blank');
     };
 
@@ -66,6 +92,10 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
         }).format(amount).replace('PKR', 'Rs');
     };
 
+    const showTaxColumn =
+        Number(grandTax || 0) > 0 ||
+        (allReportsData || []).some((r) => Number(r?.report_data?.total_tax || 0) > 0);
+
     return (
         <>
             {/* <Head title="Restaurant-Wise POS Reports" /> */}
@@ -78,12 +108,11 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                 }}
             >
                 <Box sx={{ p: 2 }}>
-                    {/* Header */}
-                    <Box sx={{ mb: 2 }}>
+                    <Box sx={{ mb: 1 }}>
                         <Grid container justifyContent="space-between" alignItems="center">
                             <Grid item>
                                 <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
-                                    Restaurant-Wise POS Reports
+                                    DISH BREAKDOWN SUMMARY (RESTAURANT-WISE)
                                 </Typography>
                             </Grid>
                             <Grid item>
@@ -103,93 +132,177 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                                 </Button>
                             </Grid>
                         </Grid>
-                        <Typography sx={{ fontSize: '16px', fontWeight: '600', color: '#063455' }}>
-                            Dish Breakdown Summary with Financial Details
-                        </Typography>
                     </Box>
 
-                    {/* Filters */}
-                    <Box sx={{ mt: 4, mb: 2 }}>
-                        <Stack direction="row" spacing={2} alignItems="center">
-                            {/* <FilterListIcon color="primary" />
-                            <Typography variant="h6">Filters</Typography> */}
-                            {/* <TextField
-                                label="Start Date"
-                                type="date"
-                                size="small"
-                                value={dateFilters.start_date}
-                                onChange={(e) => handleFilterChange('start_date', e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            /> */}
+                    <Box sx={{ mb: 1.5 }}>
+                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
                                     label="Start Date"
                                     format="DD/MM/YYYY"
-                                    value={
-                                        dateFilters.start_date
-                                            ? dayjs(dateFilters.start_date)
-                                            : null
-                                    }
+                                    value={reportFilters.start_date ? dayjs(reportFilters.start_date) : null}
                                     onChange={(newValue) =>
-                                        handleFilterChange(
-                                            "start_date",
-                                            newValue ? newValue.format("YYYY-MM-DD") : ""
-                                        )
+                                        handleFilterChange('start_date', newValue ? newValue.format('YYYY-MM-DD') : '')
                                     }
                                     slotProps={{
                                         textField: {
-                                            size: "small",
+                                            size: 'small',
+                                            sx: { minWidth: 160 },
                                             InputProps: {
-                                                sx: {
-                                                    borderRadius: "16px",
-                                                    "& fieldset": {
-                                                        borderRadius: "16px",
-                                                    },
-                                                },
+                                                sx: { borderRadius: '16px', '& fieldset': { borderRadius: '16px' } },
+                                            },
+                                        },
+                                    }}
+                                />
+                                <DatePicker
+                                    label="End Date"
+                                    format="DD/MM/YYYY"
+                                    value={reportFilters.end_date ? dayjs(reportFilters.end_date) : null}
+                                    onChange={(newValue) =>
+                                        handleFilterChange('end_date', newValue ? newValue.format('YYYY-MM-DD') : '')
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            sx: { minWidth: 160 },
+                                            InputProps: {
+                                                sx: { borderRadius: '16px', '& fieldset': { borderRadius: '16px' } },
                                             },
                                         },
                                     }}
                                 />
                             </LocalizationProvider>
 
-                            {/* <TextField
-                                label="End Date"
-                                type="date"
+                            <Autocomplete
+                                multiple
                                 size="small"
-                                value={dateFilters.end_date}
-                                onChange={(e) => handleFilterChange('end_date', e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                            /> */}
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    label="End Date"
-                                    format="DD/MM/YYYY"
-                                    value={
-                                        dateFilters.end_date
-                                            ? dayjs(dateFilters.end_date)
-                                            : null
-                                    }
-                                    onChange={(newValue) =>
-                                        handleFilterChange(
-                                            "end_date",
-                                            newValue ? newValue.format("YYYY-MM-DD") : ""
-                                        )
-                                    }
-                                    slotProps={{
-                                        textField: {
-                                            size: "small",
-                                            InputProps: {
-                                                sx: {
-                                                    borderRadius: "16px",
-                                                    "& fieldset": {
-                                                        borderRadius: "16px",
-                                                    },
-                                                },
-                                            },
-                                        },
-                                    }}
-                                />
-                            </LocalizationProvider>
+                                options={tenants || []}
+                                getOptionLabel={(opt) => opt?.name || ''}
+                                value={(tenants || []).filter((t) => reportFilters.tenant_ids.includes(t.id))}
+                                onChange={(_, value) => handleFilterChange('tenant_ids', value.map((v) => v.id))}
+                                renderInput={(params) => <TextField {...params} label="Restaurant" />}
+                                sx={{ minWidth: 240 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={[
+                                    { label: 'Member', value: 'member' },
+                                    { label: 'Guest', value: 'guest' },
+                                    { label: 'Employee', value: 'employee' },
+                                ]}
+                                getOptionLabel={(opt) => opt.label}
+                                value={[
+                                    { label: 'Member', value: 'member' },
+                                    { label: 'Guest', value: 'guest' },
+                                    { label: 'Employee', value: 'employee' },
+                                ].filter((o) => reportFilters.customer_types.includes(o.value))}
+                                onChange={(_, value) => handleFilterChange('customer_types', value.map((v) => v.value))}
+                                renderInput={(params) => <TextField {...params} label="Customer Type" />}
+                                sx={{ minWidth: 220 }}
+                            />
+
+                            <TextField
+                                size="small"
+                                label="Customer Name/No"
+                                value={reportFilters.customer_search}
+                                onChange={(e) => handleFilterChange('customer_search', e.target.value)}
+                                sx={{ minWidth: 220 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={waiters || []}
+                                getOptionLabel={(opt) => opt?.name || ''}
+                                value={(waiters || []).filter((w) => reportFilters.waiter_ids.includes(w.id))}
+                                onChange={(_, value) => handleFilterChange('waiter_ids', value.map((v) => v.id))}
+                                renderInput={(params) => <TextField {...params} label="Waiter" />}
+                                sx={{ minWidth: 200 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={cashiers || []}
+                                getOptionLabel={(opt) => opt?.name || ''}
+                                value={(cashiers || []).filter((c) => reportFilters.cashier_ids.includes(c.id))}
+                                onChange={(_, value) => handleFilterChange('cashier_ids', value.map((v) => v.id))}
+                                renderInput={(params) => <TextField {...params} label="Cashier" />}
+                                sx={{ minWidth: 200 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                freeSolo
+                                size="small"
+                                options={[]}
+                                value={reportFilters.table_nos}
+                                onChange={(_, value) => handleFilterChange('table_nos', value)}
+                                renderInput={(params) => <TextField {...params} label="Table #" />}
+                                sx={{ minWidth: 140 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                freeSolo
+                                size="small"
+                                options={[]}
+                                value={reportFilters.category_names}
+                                onChange={(_, value) => handleFilterChange('category_names', value)}
+                                renderInput={(params) => <TextField {...params} label="Category" />}
+                                sx={{ minWidth: 220 }}
+                            />
+
+                            <TextField
+                                size="small"
+                                label="Item Code/Name"
+                                value={reportFilters.item_search}
+                                onChange={(e) => handleFilterChange('item_search', e.target.value)}
+                                sx={{ minWidth: 200 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={[
+                                    { label: 'Advance', value: 'advance' },
+                                    { label: 'Paid', value: 'paid' },
+                                    { label: 'Unpaid', value: 'unpaid' },
+                                ]}
+                                getOptionLabel={(opt) => opt.label}
+                                value={[
+                                    { label: 'Advance', value: 'advance' },
+                                    { label: 'Paid', value: 'paid' },
+                                    { label: 'Unpaid', value: 'unpaid' },
+                                ].filter((o) => reportFilters.payment_statuses.includes(o.value))}
+                                onChange={(_, value) => handleFilterChange('payment_statuses', value.map((v) => v.value))}
+                                renderInput={(params) => <TextField {...params} label="Status" />}
+                                sx={{ minWidth: 180 }}
+                            />
+
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={reportFilters.discounted_only}
+                                        onChange={(e) => handleFilterChange('discounted_only', e.target.checked)}
+                                        size="small"
+                                    />
+                                }
+                                label="Discounted"
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={reportFilters.taxed_only}
+                                        onChange={(e) => handleFilterChange('taxed_only', e.target.checked)}
+                                        size="small"
+                                    />
+                                }
+                                label="Taxed"
+                            />
+
                             <Button
                                 variant="contained"
                                 startIcon={<Search />}
@@ -199,7 +312,7 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                                     color: 'white',
                                     textTransform: 'none',
                                     borderRadius: '16px',
-                                    '&:hover': { backgroundColor: '#063455' }
+                                    '&:hover': { backgroundColor: '#063455' },
                                 }}
                             >
                                 Search
@@ -207,61 +320,23 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                         </Stack>
                     </Box>
 
-                    {/* Summary Stats */}
-                    <Grid container spacing={3} sx={{ mb: 3, mt: 2 }}>
-                        <Grid item xs={12} md={3}>
-                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
-                                <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
-                                        Total Items Sold
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
-                                        {grandTotal}
-                                    </Typography>
-
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
-                                <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
-                                        Total Sub Total
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
-                                        {formatCurrency(grandSubTotal)}
-                                    </Typography>
-
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
-                                <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
-                                        Total Discount
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
-                                        {formatCurrency(grandDiscount)}
-                                    </Typography>
-
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
-                                <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
-                                        Total Sale
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
-                                        {formatCurrency(grandTotalSale)}
-                                    </Typography>
-
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    </Grid>
+                    <Box sx={{ mb: 1.5, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+                        <Typography sx={{ fontWeight: 700, color: '#063455' }}>Items: {grandTotal}</Typography>
+                        <Typography sx={{ fontWeight: 700, color: '#063455' }}>
+                            Sub Total: {formatCurrency(grandSubTotal)}
+                        </Typography>
+                        <Typography sx={{ fontWeight: 700, color: '#063455' }}>
+                            Discount: {formatCurrency(grandDiscount)}
+                        </Typography>
+                        {showTaxColumn && (
+                            <Typography sx={{ fontWeight: 700, color: '#063455' }}>
+                                Tax: {formatCurrency(grandTax)}
+                            </Typography>
+                        )}
+                        <Typography sx={{ fontWeight: 700, color: '#063455' }}>
+                            Total Sale: {formatCurrency(grandTotalSale)}
+                        </Typography>
+                    </Box>
 
                     {/* Restaurants List */}
                     <Paper elevation={2} sx={{ p: 3 }}>
@@ -325,6 +400,9 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                                                     <TableCell sx={{ fontWeight: '600', color:'#fff'}}>
                                                         Discount
                                                     </TableCell>
+                                                    {showTaxColumn && (
+                                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Tax</TableCell>
+                                                    )}
                                                     <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
                                                         Total Sale
                                                     </TableCell>
@@ -336,7 +414,7 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                                                         {/* Category Header Row */}
                                                         <TableRow sx={{ bgcolor: '#f8f8f8' }}>
                                                             <TableCell
-                                                                colSpan={7}
+                                                                colSpan={showTaxColumn ? 8 : 7}
                                                                 sx={{
                                                                     fontWeight: 'bold',
                                                                     fontSize: '0.95rem',
@@ -377,6 +455,13 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                                                                 <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 'bold', color: '#ff9800' }}>
                                                                     {formatCurrency(item.discount)}
                                                                 </TableCell>
+                                                                {showTaxColumn && (
+                                                                    <TableCell
+                                                                        sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 'bold', color: '#1e88e5' }}
+                                                                    >
+                                                                        {formatCurrency(item.tax)}
+                                                                    </TableCell>
+                                                                )}
                                                                 <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center', fontWeight: 'bold', color: '#4caf50' }}>
                                                                     {formatCurrency(item.total_sale)}
                                                                 </TableCell>
@@ -402,6 +487,11 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
                                                                 {formatCurrency(category.total_discount)}
                                                             </TableCell>
+                                                            {showTaxColumn && (
+                                                                <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                                                    {formatCurrency(category.total_tax)}
+                                                                </TableCell>
+                                                            )}
                                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
                                                                 {formatCurrency(category.total_sale)}
                                                             </TableCell>
@@ -436,28 +526,25 @@ export default function RestaurantWisePosReport({ allReportsData, tenants, start
                                 >
                                     GRAND TOTALS ACROSS ALL RESTAURANTS
                                 </Typography>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={3}>
-                                        <Typography variant="body1" sx={{ textAlign: 'center' }}>
-                                            <strong>Items: {grandTotal}</strong>
+                                <Stack direction="row" spacing={2} flexWrap="wrap" justifyContent="center" useFlexGap>
+                                    <Typography variant="body1">
+                                        <strong>Items: {grandTotal}</strong>
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        <strong>Sub Total: {formatCurrency(grandSubTotal)}</strong>
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        <strong>Discount: {formatCurrency(grandDiscount)}</strong>
+                                    </Typography>
+                                    {showTaxColumn && (
+                                        <Typography variant="body1">
+                                            <strong>Tax: {formatCurrency(grandTax)}</strong>
                                         </Typography>
-                                    </Grid>
-                                    <Grid item xs={3}>
-                                        <Typography variant="body1" sx={{ textAlign: 'center' }}>
-                                            <strong>Sub Total: {formatCurrency(grandSubTotal)}</strong>
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={3}>
-                                        <Typography variant="body1" sx={{ textAlign: 'center' }}>
-                                            <strong>Discount: {formatCurrency(grandDiscount)}</strong>
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={3}>
-                                        <Typography variant="body1" sx={{ textAlign: 'center' }}>
-                                            <strong>Total Sale: {formatCurrency(grandTotalSale)}</strong>
-                                        </Typography>
-                                    </Grid>
-                                </Grid>
+                                    )}
+                                    <Typography variant="body1">
+                                        <strong>Total Sale: {formatCurrency(grandTotalSale)}</strong>
+                                    </Typography>
+                                </Stack>
                             </Box>
                         )}
                     </Paper>

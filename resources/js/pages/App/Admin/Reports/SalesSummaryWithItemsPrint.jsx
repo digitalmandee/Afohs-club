@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 import { format } from 'date-fns';
 
-export default function SalesSummaryWithItemsPrint({ salesData, startDate, endDate, grandTotalQty, grandTotalAmount, grandTotalDiscount, grandTotalSale }) {
+export default function SalesSummaryWithItemsPrint({ salesData, startDate, endDate, grandTotalQty, grandTotalAmount, grandTotalDiscount, grandTotalTax, grandTotalSale }) {
     useEffect(() => {
         // Auto-print when page loads
         const timer = setTimeout(() => {
@@ -26,6 +26,9 @@ export default function SalesSummaryWithItemsPrint({ salesData, startDate, endDa
             currency: 'PKR'
         }).format(amount).replace('PKR', 'Rs');
     };
+
+    const showTaxColumn =
+        Number(grandTotalTax || 0) > 0 || (salesData || []).some((inv) => Number(inv?.total_tax || 0) > 0);
 
     return (
         <>
@@ -176,7 +179,6 @@ export default function SalesSummaryWithItemsPrint({ salesData, startDate, endDa
                                         </div>
                                         <div>
                                             <strong>KOT:</strong> {invoice.kot} | 
-                                            <strong> TIME:</strong> {invoice.time}
                                         </div>
                                     </div>
                                     <div className="invoice-info">
@@ -192,24 +194,28 @@ export default function SalesSummaryWithItemsPrint({ salesData, startDate, endDa
                                 <table className="items-table">
                                     <thead>
                                         <tr>
+                                            <th style={{ width: '45px' }}>TIME</th>
                                             <th style={{ width: '50px' }}>ITEM CODE</th>
                                             <th style={{ width: '120px' }}>ITEM NAME</th>
                                             <th style={{ width: '40px' }}>QTY SOLD</th>
                                             <th style={{ width: '50px' }}>SALE PRICE</th>
                                             <th style={{ width: '50px' }}>SUB TOTAL</th>
                                             <th style={{ width: '50px' }}>DISCOUNT</th>
+                                            {showTaxColumn && <th style={{ width: '45px' }}>TAX</th>}
                                             <th style={{ width: '50px' }}>TOTAL SALE</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {invoice.items.map((item, itemIndex) => (
                                             <tr key={itemIndex}>
+                                                <td>{item.time || '-'}</td>
                                                 <td>{item.code}</td>
                                                 <td className="item-name">{item.name}</td>
                                                 <td>{item.qty}</td>
                                                 <td className="text-right">{formatCurrency(item.sale_price)}</td>
                                                 <td className="text-right">{formatCurrency(item.sub_total)}</td>
                                                 <td className="text-right">{formatCurrency(item.discount)}</td>
+                                                {showTaxColumn && <td className="text-right">{formatCurrency(item.tax)}</td>}
                                                 <td className="text-right">{formatCurrency(item.total_sale)}</td>
                                             </tr>
                                         ))}
@@ -217,10 +223,12 @@ export default function SalesSummaryWithItemsPrint({ salesData, startDate, endDa
                                         <tr className="total-row">
                                             <td><strong>TOTAL:</strong></td>
                                             <td></td>
+                                            <td></td>
                                             <td><strong>{invoice.total_qty}</strong></td>
                                             <td></td>
                                             <td className="text-right"><strong>{formatCurrency(invoice.total_amount)}</strong></td>
                                             <td className="text-right"><strong>{formatCurrency(invoice.total_discount)}</strong></td>
+                                            {showTaxColumn && <td className="text-right"><strong>{formatCurrency(invoice.total_tax)}</strong></td>}
                                             <td className="text-right"><strong>{formatCurrency(invoice.total_sale)}</strong></td>
                                         </tr>
                                     </tbody>
@@ -234,7 +242,7 @@ export default function SalesSummaryWithItemsPrint({ salesData, startDate, endDa
                             <div style={{ marginTop: '5px' }}>
                                 Invoices: {salesData.length} | Quantity: {grandTotalQty} | 
                                 Sub Total: {formatCurrency(grandTotalAmount)} | 
-                                Discount: {formatCurrency(grandTotalDiscount)} | 
+                                Discount: {formatCurrency(grandTotalDiscount)}{showTaxColumn ? ` | Tax: ${formatCurrency(grandTotalTax)}` : ''} | 
                                 Total Sale: {formatCurrency(grandTotalSale)}
                             </div>
                         </div>

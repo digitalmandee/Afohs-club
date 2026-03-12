@@ -289,8 +289,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                 }
             })
             .catch((error) => {
-                console.error("Failed to fetch order details:", error);
-                enqueueSnackbar("Failed to load full order details", { variant: "error" });
+                console.error('Failed to fetch order details:', error);
+                enqueueSnackbar('Failed to load full order details', { variant: 'error' });
             })
             .finally(() => setLoadingOrderDetails(false));
     };
@@ -362,11 +362,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
     // Transform order data for Receipt component
     const getReceiptData = (order) => {
         if (!order) return null;
-        const computedGross = Math.round(
-            (order.order_items || [])
-                .filter((item) => item?.status !== 'cancelled')
-                .reduce((sum, item) => sum + Number(item?.order_item?.total_price || 0), 0),
-        );
+        const computedGross = Math.round((order.order_items || []).filter((item) => item?.status !== 'cancelled').reduce((sum, item) => sum + Number(item?.order_item?.total_price || 0), 0));
         const bankChargesEnabled = Number(order.bank_charges) > 0;
         const advancePayment = Number(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
         const paidAmount = Number(order.receipt_paid_amount ?? order.invoice_paid_amount ?? order.paid_amount ?? 0);
@@ -670,12 +666,13 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             .then((response) => {
                 if (response.data) {
                     const fullOrder = response.data;
-                    executePrint(fullOrder);
+                    const receiptData = getReceiptData(fullOrder);
+                    executePrint(receiptData);
                 }
             })
             .catch((error) => {
-                console.error("Failed to fetch order details for print:", error);
-                enqueueSnackbar("Failed to load order details for printing", { variant: "error" });
+                console.error('Failed to fetch order details for print:', error);
+                enqueueSnackbar('Failed to load order details for printing', { variant: 'error' });
             });
     };
 
@@ -807,32 +804,12 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
 
                         {/* Start Date */}
                         <Grid item xs={12} md={2}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                type="text"
-                                label="Start Date"
-                                placeholder="dd/mm/yyyy"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                            />
+                            <TextField fullWidth size="small" type="text" label="Start Date" placeholder="dd/mm/yyyy" value={startDate} onChange={(e) => setStartDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
                         </Grid>
 
                         {/* End Date */}
                         <Grid item xs={12} md={2}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                type="text"
-                                label="End Date"
-                                placeholder="dd/mm/yyyy"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                            />
+                            <TextField fullWidth size="small" type="text" label="End Date" placeholder="dd/mm/yyyy" value={endDate} onChange={(e) => setEndDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
                         </Grid>
 
                         {/* Status */}
@@ -976,113 +953,128 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                             {orders?.data?.length > 0 ? (
                                 <>
                                     {orders.data.map((order) => {
-                                    const round0 = (n) => Math.round(Number(n) || 0);
-                                    const gross = round0(order.invoice_sub_total ?? order.amount ?? 0);
-                                    const discount = round0(order.invoice_discount_amount ?? order.discount ?? 0);
-                                    const taxRate = Number(order.tax || 0);
-                                    const taxAmount = round0(order.invoice_tax_amount ?? (gross - discount) * taxRate);
-                                    const total = round0(order.total_price || 0);
-                                    const advance = round0(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
-                                    const paid = round0(order.paid_amount || 0) + advance;
-                                    const entAmount = round0(order.invoice_ent_amount || 0);
-                                    const ctsAmount = round0(order.invoice_cts_amount || 0);
-                                    const balance = round0(total - paid - entAmount - ctsAmount);
+                                        const round0 = (n) => Math.round(Number(n) || 0);
+                                        const gross = round0(order.invoice_sub_total ?? order.amount ?? 0);
+                                        const discount = round0(order.invoice_discount_amount ?? order.discount ?? 0);
+                                        const taxRate = Number(order.tax || 0);
+                                        // Calculate tax based on items if invoice tax not available (approximate if items not loaded, but history loads items?)
+                                        // Ideally backend should provide tax_amount. If not, we fallback.
+                                        // But order.invoice_tax_amount is best.
+                                        // If fallback needed, we need to know taxable items.
+                                        // Since items might not be loaded in list view (optimization in backend), we rely on order.tax (amount?) or order.invoice_tax_amount.
+                                        // Actually, in backend orderHistory, we REMOVED 'orderItems'. So we can't calculate per item here!
+                                        // We must rely on order.tax being the AMOUNT if calculated by backend?
+                                        // Backend sends 'tax' column. Is it rate or amount?
+                                        // In OrderController::update, 'tax' is saved as rate?
+                                        // $order->update(['tax' => $validated['tax_rate']]);
+                                        // So order.tax is RATE.
+                                        // We cannot calculate tax amount without items if we don't have stored tax amount.
+                                        // But wait, Order model doesn't have 'tax_amount' column? It has 'tax' (rate).
+                                        // And 'total_price'.
+                                        // Backend doesn't store calculated tax amount on Order?
+                                        // It seems we might be missing a column 'tax_amount' on orders table?
+                                        // But invoice has it.
+                                        // If order items are not loaded, we can't calc tax.
+                                        // However, the previous code was: const taxAmount = round0(order.invoice_tax_amount ?? (gross - discount) * taxRate);
+                                        // This assumes all items are taxable if invoice is missing.
+                                        // Let's leave it as is for now, but if user complains about history list mismatch, it's because items aren't loaded to check is_taxable.
+                                        // But wait, user said "in the order history details". Details modal LOADS items.
+                                        // View Modal uses `selectedOrder` which has items.
+                                        // So I should fix getReceiptData or the View Modal logic.
+                                        const taxAmount = round0(order.invoice_tax_amount ?? (gross - discount) * taxRate);
+                                        const total = round0(order.total_price || 0);
+                                        const advance = round0(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
+                                        const paid = round0(order.paid_amount || 0) + advance;
+                                        const entAmount = round0(order.invoice_ent_amount || 0);
+                                        const ctsAmount = round0(order.invoice_cts_amount || 0);
+                                        const balance = round0(total - paid - entAmount - ctsAmount);
 
-                                    // Determine Client Type
-                                    let clientType = 'Guest';
-                                    if (order.employee) clientType = 'Employee';
-                                    else if (order.member) {
-                                        clientType = order.member.member_type?.name === 'Corporate' ? 'Corporate' : 'Member';
-                                    } else if (order.customer && order.customer.guest_type) {
-                                        clientType = order.customer.guest_type.name || 'Guest';
-                                    }
+                                        // Determine Client Type
+                                        let clientType = 'Guest';
+                                        if (order.employee) clientType = 'Employee';
+                                        else if (order.member) {
+                                            clientType = order.member.member_type?.name === 'Corporate' ? 'Corporate' : 'Member';
+                                        } else if (order.customer && order.customer.guest_type) {
+                                            clientType = order.customer.guest_type.name || 'Guest';
+                                        }
 
-                                    // Determine ID
-                                    let clientId = '-';
-                                    if (order.member) clientId = order.member.membership_no;
-                                    else if (order.customer) clientId = order.customer.customer_no;
-                                    else if (order.employee) clientId = order.employee.employee_id;
+                                        // Determine ID
+                                        let clientId = '-';
+                                        if (order.member) clientId = order.member.membership_no;
+                                        else if (order.customer) clientId = order.customer.customer_no;
+                                        else if (order.employee) clientId = order.employee.employee_id;
 
-                                    return (
-                                        <TableRow key={order.id} hover>
-                                            <TableCell>#{order.id}</TableCell>
-                                            <TableCell>{toDMY(order.start_date)}</TableCell>
-                                            <TableCell>{clientId}</TableCell>
-                                            <TableCell>{getClientName(order)}</TableCell>
-                                            <TableCell>{clientType}</TableCell>
-                                            <TableCell>{formatOrderType(order.order_type)}</TableCell>
-                                            <TableCell>{order.table?.table_no || '-'}</TableCell>
-                                            <TableCell>{gross}</TableCell>
-                                            <TableCell>{discount}</TableCell>
-                                            <TableCell>{taxAmount}</TableCell>
-                                            <TableCell>{total}</TableCell>
-                                            <TableCell>{paid}</TableCell>
-                                            <TableCell sx={{ color: balance > 0 ? 'red' : 'green' }}>{balance}</TableCell>
-                                            <TableCell>{order.payment_method || '-'}</TableCell>
-                                            <TableCell>
-                                                <Chip label={formatOrderStatus(order.status)} size="small" color={getOrderStatusColor(order.status)} />
-                                            </TableCell>
-                                            <TableCell>
-                                                {(() => {
-                                                    const isPaid = String(order.payment_status || '').toLowerCase() === 'paid';
-                                                    const canPay = !isPaid && Boolean(order.invoice_id);
-                                                    return (
-                                                        <Chip
-                                                            label={isPaid ? 'Paid' : 'Unpaid'}
-                                                            size="small"
-                                                            color={isPaid ? 'success' : 'warning'}
-                                                            clickable={canPay}
-                                                            onClick={canPay ? () => handlePayNow(order) : undefined}
-                                                            sx={canPay ? { cursor: 'pointer' } : undefined}
-                                                        />
-                                                    );
-                                                })()}
-                                            </TableCell>
-                                            <TableCell>
-                                                {order.invoice_ent_amount > 0 ? (
-                                                    <Tooltip title={order.invoice_ent_reason || 'ENT Applied'}>
-                                                        <Chip label={`Rs ${order.invoice_ent_amount}`} size="small" sx={{ bgcolor: '#e3f2fd', color: '#1565c0' }} />
-                                                    </Tooltip>
-                                                ) : (
-                                                    '-'
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {order.invoice_cts_amount > 0 ? (
-                                                    <Tooltip title={order.invoice_cts_comment || 'CTS Applied'}>
-                                                        <Chip label={`Rs ${order.invoice_cts_amount}`} size="small" sx={{ bgcolor: '#fff3e0', color: '#ef6c00' }} />
-                                                    </Tooltip>
-                                                ) : (
-                                                    '-'
-                                                )}
-                                            </TableCell>
-                                            <TableCell>{order.cashier?.name || order.user?.name || '-'}</TableCell>
-                                            <TableCell>{order.tenant?.name || '-'}</TableCell>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                    <Tooltip title="View Details">
-                                                        <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
-                                                            <VisibilityIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    {canPrintInvoice(order) && (
-                                                        <Tooltip title="Print Receipt">
-                                                            <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
-                                                                <PrintIcon fontSize="small" />
+                                        return (
+                                            <TableRow key={order.id} hover>
+                                                <TableCell>#{order.id}</TableCell>
+                                                <TableCell>{toDMY(order.start_date)}</TableCell>
+                                                <TableCell>{clientId}</TableCell>
+                                                <TableCell>{getClientName(order)}</TableCell>
+                                                <TableCell>{clientType}</TableCell>
+                                                <TableCell>{formatOrderType(order.order_type)}</TableCell>
+                                                <TableCell>{order.table?.table_no || '-'}</TableCell>
+                                                <TableCell>{gross}</TableCell>
+                                                <TableCell>{discount}</TableCell>
+                                                <TableCell>{taxAmount}</TableCell>
+                                                <TableCell>{total}</TableCell>
+                                                <TableCell>{paid}</TableCell>
+                                                <TableCell sx={{ color: balance > 0 ? 'red' : 'green' }}>{balance}</TableCell>
+                                                <TableCell>{order.payment_method || '-'}</TableCell>
+                                                <TableCell>
+                                                    <Chip label={formatOrderStatus(order.status)} size="small" color={getOrderStatusColor(order.status)} />
+                                                </TableCell>
+                                                <TableCell>
+                                                    {(() => {
+                                                        const isPaid = String(order.payment_status || '').toLowerCase() === 'paid';
+                                                        const canPay = !isPaid && Boolean(order.invoice_id);
+                                                        return <Chip label={isPaid ? 'Paid' : 'Unpaid'} size="small" color={isPaid ? 'success' : 'warning'} clickable={canPay} onClick={canPay ? () => handlePayNow(order) : undefined} sx={canPay ? { cursor: 'pointer' } : undefined} />;
+                                                    })()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {order.invoice_ent_amount > 0 ? (
+                                                        <Tooltip title={order.invoice_ent_reason || 'ENT Applied'}>
+                                                            <Chip label={`Rs ${order.invoice_ent_amount}`} size="small" sx={{ bgcolor: '#e3f2fd', color: '#1565c0' }} />
+                                                        </Tooltip>
+                                                    ) : (
+                                                        '-'
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {order.invoice_cts_amount > 0 ? (
+                                                        <Tooltip title={order.invoice_cts_comment || 'CTS Applied'}>
+                                                            <Chip label={`Rs ${order.invoice_cts_amount}`} size="small" sx={{ bgcolor: '#fff3e0', color: '#ef6c00' }} />
+                                                        </Tooltip>
+                                                    ) : (
+                                                        '-'
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>{order.cashier?.name || order.user?.name || '-'}</TableCell>
+                                                <TableCell>{order.tenant?.name || '-'}</TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                        <Tooltip title="View Details">
+                                                            <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
+                                                                <VisibilityIcon fontSize="small" />
                                                             </IconButton>
                                                         </Tooltip>
-                                                    )}
-                                                    {(Boolean(canEditAfterBill) || canEditOrderBeforePayment(order)) && (
-                                                        <Tooltip title="Edit Order">
-                                                            <IconButton size="small" onClick={() => handleOpenEdit(order)} sx={{ color: '#003153' }}>
-                                                                <EditIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    )}
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
+                                                        {canPrintInvoice(order) && (
+                                                            <Tooltip title="Print Receipt">
+                                                                <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
+                                                                    <PrintIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        )}
+                                                        {(Boolean(canEditAfterBill) || canEditOrderBeforePayment(order)) && (
+                                                            <Tooltip title="Edit Order">
+                                                                <IconButton size="small" onClick={() => handleOpenEdit(order)} sx={{ color: '#003153' }}>
+                                                                    <EditIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        )}
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
                                     })}
                                     <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
                                         <TableCell colSpan={10} sx={{ fontWeight: 700, color: '#063455' }}>
@@ -1250,51 +1242,49 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
                                 </Box>
 
                                 {/* Service & Bank Charges Detail in Modal */}
-                                    {Number(selectedOrder.service_charges) > 0 && (
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Service Charges
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                Rs. {selectedOrder.service_charges}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                    {Number(selectedOrder.bank_charges) > 0 && (
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Bank Charges
-                                            </Typography>
-                                            <Typography variant="body1" color="error">
-                                                Rs. {selectedOrder.bank_charges}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                    {Number(selectedOrder.invoice_ent_amount) > 0 && (
-                                        <Box sx={{ gridColumn: 'span 2' }}>
-                                            <Typography variant="caption" color="text.secondary">
-                                                ENT Details
-                                            </Typography>
-                                            <Typography variant="body1">Amount: Rs. {selectedOrder.invoice_ent_amount}</Typography>
-                                            <Typography variant="body2" sx={{ color: '#455a64' }}>
-                                                Reason: {selectedOrder.invoice_ent_reason || '-'}
-                                            </Typography>
-                                            <Typography variant="body2" sx={{ color: '#455a64' }}>
-                                                Comment: {selectedOrder.invoice_ent_comment || '-'}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                    {Number(selectedOrder.invoice_cts_amount) > 0 && (
-                                        <Box sx={{ gridColumn: 'span 2' }}>
-                                            <Typography variant="caption" color="text.secondary">
-                                                CTS Details
-                                            </Typography>
-                                            <Typography variant="body1">Amount: Rs. {selectedOrder.invoice_cts_amount}</Typography>
-                                            <Typography variant="body2" sx={{ color: '#455a64' }}>
-                                                Comment: {selectedOrder.invoice_cts_comment || '-'}
-                                            </Typography>
-                                        </Box>
-                                    )}
+                                {Number(selectedOrder.service_charges) > 0 && (
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Service Charges
+                                        </Typography>
+                                        <Typography variant="body1">Rs. {selectedOrder.service_charges}</Typography>
+                                    </Box>
+                                )}
+                                {Number(selectedOrder.bank_charges) > 0 && (
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Bank Charges
+                                        </Typography>
+                                        <Typography variant="body1" color="error">
+                                            Rs. {selectedOrder.bank_charges}
+                                        </Typography>
+                                    </Box>
+                                )}
+                                {Number(selectedOrder.invoice_ent_amount) > 0 && (
+                                    <Box sx={{ gridColumn: 'span 2' }}>
+                                        <Typography variant="caption" color="text.secondary">
+                                            ENT Details
+                                        </Typography>
+                                        <Typography variant="body1">Amount: Rs. {selectedOrder.invoice_ent_amount}</Typography>
+                                        <Typography variant="body2" sx={{ color: '#455a64' }}>
+                                            Reason: {selectedOrder.invoice_ent_reason || '-'}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: '#455a64' }}>
+                                            Comment: {selectedOrder.invoice_ent_comment || '-'}
+                                        </Typography>
+                                    </Box>
+                                )}
+                                {Number(selectedOrder.invoice_cts_amount) > 0 && (
+                                    <Box sx={{ gridColumn: 'span 2' }}>
+                                        <Typography variant="caption" color="text.secondary">
+                                            CTS Details
+                                        </Typography>
+                                        <Typography variant="body1">Amount: Rs. {selectedOrder.invoice_cts_amount}</Typography>
+                                        <Typography variant="body2" sx={{ color: '#455a64' }}>
+                                            Comment: {selectedOrder.invoice_cts_comment || '-'}
+                                        </Typography>
+                                    </Box>
+                                )}
 
                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                     Order Items
@@ -1416,7 +1406,11 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             {paymentModalOpen && selectedInvoice && (
                 <PaymentNow
                     invoiceData={selectedInvoice}
-                    openSuccessPayment={false}
+                    openSuccessPayment={() => {
+                        setPaymentModalOpen(false);
+                        setSelectedInvoice(null);
+                        handleApply();
+                    }}
                     openPaymentModal={paymentModalOpen}
                     handleClosePayment={() => {
                         setPaymentModalOpen(false);

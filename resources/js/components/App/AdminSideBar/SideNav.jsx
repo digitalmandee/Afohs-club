@@ -540,31 +540,6 @@ export default function SideNav({ open, setOpen }) {
                     path: route('admin.reports.pos.all'),
                     permission: 'reports.pos.view',
                 },
-                {
-                    text: 'POS Restaurant',
-                    path: route('admin.reports.pos.restaurant-wise'),
-                    permission: 'reports.pos.restaurant-wise',
-                },
-                {
-                    text: 'Running Orders',
-                    path: route('admin.reports.pos.running-sales-orders'),
-                    permission: 'reports.pos.running-sales',
-                },
-                {
-                    text: 'Sales Summary',
-                    path: route('admin.reports.pos.sales-summary-with-items'),
-                    permission: 'reports.pos.sales-summary',
-                },
-                {
-                    text: 'Cashier Sales List',
-                    path: route('admin.reports.pos.daily-sales-list-cashier-wise'),
-                    permission: 'reports.pos.cashier-sales',
-                },
-                {
-                    text: 'Dump Report',
-                    path: route('admin.reports.pos.daily-dump-items-report'),
-                    permission: 'reports.pos.dump-report',
-                },
             ],
         },
         {

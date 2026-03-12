@@ -5,6 +5,7 @@ import {
     Paper,
     Typography,
     Button,
+    Checkbox,
     TextField,
     Grid,
     Divider,
@@ -16,11 +17,12 @@ import {
     TableRow,
     Card,
     CardContent,
-    Stack
+    Stack,
+    FormControlLabel,
+    Autocomplete
 } from '@mui/material';
 import PrintIcon from '@mui/icons-material/Print';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { format } from 'date-fns';
 import { Search } from '@mui/icons-material';
 import dayjs from "dayjs";
@@ -28,19 +30,36 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-export default function DailyDumpItemsReport({
-    dumpItemsData,
-    startDate,
-    endDate,
-    totalQuantity,
-    totalSalePrice,
-    totalFoodValue,
-    filters
-}) {
-    const [open, setOpen] = useState(true);
+export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, cashiers, cancelledByUsers, startDate, endDate, totalQuantity, totalSalePrice, totalFoodValue, filters }) {
+    const toArray = (v) => {
+        if (Array.isArray(v)) return v.filter(Boolean);
+        if (!v) return [];
+        return String(v)
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+    };
+
+    const toIntArray = (v) =>
+        toArray(v)
+            .map((x) => Number(x))
+            .filter((n) => Number.isFinite(n) && n > 0);
+
     const [dateFilters, setDateFilters] = useState({
         start_date: filters?.start_date || startDate,
-        end_date: filters?.end_date || endDate
+        end_date: filters?.end_date || endDate,
+        tenant_ids: toIntArray(filters?.tenant_ids),
+        table_nos: toArray(filters?.table_nos),
+        waiter_ids: toIntArray(filters?.waiter_ids),
+        cashier_ids: toIntArray(filters?.cashier_ids),
+        cancelled_by_ids: toIntArray(filters?.cancelled_by_ids),
+        customer_types: toArray(filters?.customer_types),
+        customer_search: filters?.customer_search || '',
+        category_names: toArray(filters?.category_names),
+        item_search: filters?.item_search || '',
+        discounted_only: Boolean(filters?.discounted_only) && String(filters?.discounted_only) !== '0',
+        taxed_only: Boolean(filters?.taxed_only) && String(filters?.taxed_only) !== '0',
+        payment_statuses: toArray(filters?.payment_statuses),
     });
 
     const handleFilterChange = (field, value) => {
@@ -120,7 +139,7 @@ export default function DailyDumpItemsReport({
 
                     {/* Filters */}
                     <Box sx={{ mb: 2 }}>
-                        <Stack direction="row" spacing={2} alignItems="center">
+                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
                             {/* <FilterListIcon color="primary" />
                             <Typography variant="h6">Filters</Typography> */}
                             {/* <TextField
@@ -199,6 +218,136 @@ export default function DailyDumpItemsReport({
                                     }}
                                 />
                             </LocalizationProvider>
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={tenants || []}
+                                getOptionLabel={(opt) => opt?.name || ''}
+                                value={(tenants || []).filter((t) => dateFilters.tenant_ids.includes(t.id))}
+                                onChange={(_, value) => handleFilterChange('tenant_ids', value.map((v) => v.id))}
+                                renderInput={(params) => <TextField {...params} label="Restaurant" />}
+                                sx={{ minWidth: 220 }}
+                            />
+                            <Autocomplete
+                                multiple
+                                freeSolo
+                                size="small"
+                                options={[]}
+                                value={dateFilters.table_nos}
+                                onChange={(_, value) => handleFilterChange('table_nos', value)}
+                                renderInput={(params) => <TextField {...params} label="Table #" />}
+                                sx={{ minWidth: 140 }}
+                            />
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={waiters || []}
+                                getOptionLabel={(opt) => opt?.name || ''}
+                                value={(waiters || []).filter((w) => dateFilters.waiter_ids.includes(w.id))}
+                                onChange={(_, value) => handleFilterChange('waiter_ids', value.map((v) => v.id))}
+                                renderInput={(params) => <TextField {...params} label="Waiter" />}
+                                sx={{ minWidth: 180 }}
+                            />
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={cashiers || []}
+                                getOptionLabel={(opt) => opt?.name || ''}
+                                value={(cashiers || []).filter((c) => dateFilters.cashier_ids.includes(c.id))}
+                                onChange={(_, value) => handleFilterChange('cashier_ids', value.map((v) => v.id))}
+                                renderInput={(params) => <TextField {...params} label="Cashier" />}
+                                sx={{ minWidth: 180 }}
+                            />
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={cancelledByUsers || []}
+                                getOptionLabel={(opt) => opt?.name || ''}
+                                value={(cancelledByUsers || []).filter((u) => dateFilters.cancelled_by_ids.includes(u.id))}
+                                onChange={(_, value) => handleFilterChange('cancelled_by_ids', value.map((v) => v.id))}
+                                renderInput={(params) => <TextField {...params} label="Cancelled By" />}
+                                sx={{ minWidth: 200 }}
+                            />
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={[
+                                    { label: 'Member', value: 'member' },
+                                    { label: 'Guest', value: 'guest' },
+                                    { label: 'Employee', value: 'employee' },
+                                ]}
+                                getOptionLabel={(opt) => opt.label}
+                                value={[
+                                    { label: 'Member', value: 'member' },
+                                    { label: 'Guest', value: 'guest' },
+                                    { label: 'Employee', value: 'employee' },
+                                ].filter((o) => dateFilters.customer_types.includes(o.value))}
+                                onChange={(_, value) => handleFilterChange('customer_types', value.map((v) => v.value))}
+                                renderInput={(params) => <TextField {...params} label="Customer Type" />}
+                                sx={{ minWidth: 220 }}
+                            />
+                            <TextField
+                                size="small"
+                                label="Customer Name/No"
+                                value={dateFilters.customer_search}
+                                onChange={(e) => handleFilterChange('customer_search', e.target.value)}
+                                sx={{ minWidth: 220 }}
+                            />
+                            <Autocomplete
+                                multiple
+                                freeSolo
+                                size="small"
+                                options={[]}
+                                value={dateFilters.category_names}
+                                onChange={(_, value) => handleFilterChange('category_names', value)}
+                                renderInput={(params) => <TextField {...params} label="Category" />}
+                                sx={{ minWidth: 220 }}
+                            />
+                            <TextField
+                                size="small"
+                                label="Item Code/Name"
+                                value={dateFilters.item_search}
+                                onChange={(e) => handleFilterChange('item_search', e.target.value)}
+                                sx={{ minWidth: 200 }}
+                            />
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={[
+                                    { label: 'Advance', value: 'advance' },
+                                    { label: 'Paid', value: 'paid' },
+                                    { label: 'Unpaid', value: 'unpaid' },
+                                ]}
+                                getOptionLabel={(opt) => opt.label}
+                                value={[
+                                    { label: 'Advance', value: 'advance' },
+                                    { label: 'Paid', value: 'paid' },
+                                    { label: 'Unpaid', value: 'unpaid' },
+                                ].filter((o) => dateFilters.payment_statuses.includes(o.value))}
+                                onChange={(_, value) => handleFilterChange('payment_statuses', value.map((v) => v.value))}
+                                renderInput={(params) => <TextField {...params} label="Status" />}
+                                sx={{ minWidth: 180 }}
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={dateFilters.discounted_only}
+                                        onChange={(e) => handleFilterChange('discounted_only', e.target.checked)}
+                                        size="small"
+                                    />
+                                }
+                                label="Discounted"
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={dateFilters.taxed_only}
+                                        onChange={(e) => handleFilterChange('taxed_only', e.target.checked)}
+                                        size="small"
+                                    />
+                                }
+                                label="Taxed"
+                            />
                             <Button
                                 variant="contained"
                                 startIcon={<Search />}
@@ -270,7 +419,7 @@ export default function DailyDumpItemsReport({
                                     <TableHead>
                                         <TableRow sx={{ backgroundColor: '#063455' }}>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Invoice KOT
+                                                Order #
                                             </TableCell>
                                             <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
                                                 Table

@@ -1386,9 +1386,6 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
     // Admin POS Reports Routes
     Route::prefix('admin/reports')->middleware('super.admin:reports.pos.view')->group(function () {
         Route::get('pos/all', [AdminPosReportController::class, 'index'])->name('admin.reports.pos.all');
-        Route::get('pos/restaurant/{tenantId}', [AdminPosReportController::class, 'singleRestaurant'])->name('admin.reports.pos.single')->middleware('super.admin:reports.pos.restaurant-wise');
-        Route::get('pos/all/print', [AdminPosReportController::class, 'printAll'])->name('admin.reports.pos.all.print');
-        Route::get('pos/restaurant/{tenantId}/print', [AdminPosReportController::class, 'printSingle'])->name('admin.reports.pos.single.print')->middleware('super.admin:reports.pos.restaurant-wise');
         Route::get('pos/restaurant-wise', [AdminPosReportController::class, 'restaurantWise'])->name('admin.reports.pos.restaurant-wise')->middleware('super.admin:reports.pos.restaurant-wise');
         Route::get('pos/restaurant-wise/print', [AdminPosReportController::class, 'restaurantWisePrint'])->name('admin.reports.pos.restaurant-wise.print')->middleware('super.admin:reports.pos.restaurant-wise');
         Route::get('pos/running-sales-orders', [AdminPosReportController::class, 'runningSalesOrders'])->name('admin.reports.pos.running-sales-orders')->middleware('super.admin:reports.pos.running-sales');
@@ -1399,6 +1396,11 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
         Route::get('pos/daily-sales-list-cashier-wise/print', [AdminPosReportController::class, 'dailySalesListCashierWisePrint'])->name('admin.reports.pos.daily-sales-list-cashier-wise.print')->middleware('super.admin:reports.pos.cashier-sales');
         Route::get('pos/daily-dump-items-report', [AdminPosReportController::class, 'dailyDumpItemsReport'])->name('admin.reports.pos.daily-dump-items-report')->middleware('super.admin:reports.pos.dump-report');
         Route::get('pos/daily-dump-items-report/print', [AdminPosReportController::class, 'dailyDumpItemsReportPrint'])->name('admin.reports.pos.daily-dump-items-report.print')->middleware('super.admin:reports.pos.dump-report');
+        Route::get('pos/dish-breakdown-price', [AdminPosReportController::class, 'dishBreakdownPrice'])->name('admin.reports.pos.dish-breakdown-price');
+        Route::get('pos/dish-breakdown-quantity', [AdminPosReportController::class, 'dishBreakdownQuantity'])->name('admin.reports.pos.dish-breakdown-quantity');
+        Route::get('pos/closing-sales', [AdminPosReportController::class, 'closingSales'])->name('admin.reports.pos.closing-sales');
+        Route::get('pos/monthly-employee-food-bills', [AdminPosReportController::class, 'monthlyEmployeeFoodBills'])->name('admin.reports.pos.monthly-employee-food-bills');
+        Route::get('pos/graphical', [AdminPosReportController::class, 'graphical'])->name('admin.reports.pos.graphical');
     });
 
     // Voucher Management Routes

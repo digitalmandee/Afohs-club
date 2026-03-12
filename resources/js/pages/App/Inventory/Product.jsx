@@ -388,7 +388,10 @@ const AddProduct = ({ product, id }) => {
                 cost: ing.cost,
             })),
         }));
-        submit('post', route(routeNameForContext(id ? 'inventory.update' : 'inventory.store'), { id }), {
+        const isEdit = Boolean(id);
+        const routeName = isEdit ? 'inventory.update' : 'inventory.store';
+        const url = isEdit ? route(routeNameForContext(routeName), { id }) : route(routeNameForContext(routeName));
+        submit(isEdit ? 'put' : 'post', url, {
             onSuccess: () => {
                 enqueueSnackbar(id ? 'Product updated successfully' : 'Product added successfully', { variant: 'success' });
                 reset();

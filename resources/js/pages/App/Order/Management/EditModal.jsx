@@ -26,8 +26,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const [itemToCancel, setItemToCancel] = useState(null);
 
     const [openCancelDetails, setOpenCancelDetails] = useState({});
-    const [selectedClientType, setSelectedClientType] = useState('member');
-    const [selectedClient, setSelectedClient] = useState(null);
+    const [selectedCustomerType, setSelectedCustomerType] = useState('member');
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
 
     const toggleCancelDetails = (index) => {
         setOpenCancelDetails((prev) => ({
@@ -174,8 +174,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     useEffect(() => {
         setOrderStatus(order?.status || 'pending');
         if (order?.member) {
-            setSelectedClientType('member');
-            setSelectedClient({
+            setSelectedCustomerType('member');
+            setSelectedCustomer({
                 ...order.member,
                 id: order.member.id,
                 name: order.member.full_name || order.member.name,
@@ -184,8 +184,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
             return;
         }
         if (order?.customer) {
-            setSelectedClientType('guest');
-            setSelectedClient({
+            setSelectedCustomerType('guest');
+            setSelectedCustomer({
                 ...order.customer,
                 id: order.customer.id,
                 name: order.customer.name,
@@ -194,8 +194,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
             return;
         }
         if (order?.employee) {
-            setSelectedClientType('employee');
-            setSelectedClient({
+            setSelectedCustomerType('employee');
+            setSelectedCustomer({
                 ...order.employee,
                 id: order.employee.id,
                 name: order.employee.name,
@@ -203,8 +203,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
             });
             return;
         }
-        setSelectedClientType('member');
-        setSelectedClient(null);
+        setSelectedCustomerType('member');
+        setSelectedCustomer(null);
     }, [order]);
 
     const handleQuantityChange = (index, delta) => {
@@ -389,8 +389,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
         setLoading(true);
         try {
             await onSave(orderStatus, {
-                client_type: selectedClientType,
-                client: selectedClient,
+                customer_type: selectedCustomerType,
+                customer: selectedCustomer,
             });
             setShowAddItem(false);
         } catch (error) {
@@ -406,8 +406,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
         setLoading(true);
         try {
             await onSaveAndPrint(orderStatus, {
-                client_type: selectedClientType,
-                client: selectedClient,
+                customer_type: selectedCustomerType,
+                customer: selectedCustomer,
             });
             setShowAddItem(false);
         } catch (error) {
@@ -443,15 +443,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                         <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
                             Discount Rate
                         </Typography>
-                        <TextField
-                            fullWidth
-                            name="value"
-                            type="number"
-                            value={itemDiscountForm.value}
-                            onChange={(e) => setItemDiscountForm((prev) => ({ ...prev, value: e.target.value }))}
-                            placeholder={itemDiscountForm.type === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs (per unit)'}
-                            size="small"
-                        />
+                        <TextField fullWidth name="value" type="number" value={itemDiscountForm.value} onChange={(e) => setItemDiscountForm((prev) => ({ ...prev, value: e.target.value }))} placeholder={itemDiscountForm.type === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs (per unit)'} size="small" />
                     </Box>
 
                     <Box mb={3}>
@@ -560,7 +552,9 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 }}
                             >
                                 <AccessTime fontSize="small" sx={{ fontSize: 16, mr: 0.5 }} />
-                                <Typography variant="caption">02:02</Typography>
+                                <Typography variant="caption">
+                                    {order?.start_date ? new Date(order.start_date).toLocaleDateString('en-GB') : ''} {order?.start_time ? new Date(`2000-01-01 ${order.start_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                </Typography>
                             </Box>
                             <Box
                                 sx={{
@@ -622,10 +616,10 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 </Typography>
                                 <RadioGroup
                                     row
-                                    value={selectedClientType}
+                                    value={selectedCustomerType}
                                     onChange={(e) => {
-                                        setSelectedClientType(e.target.value);
-                                        setSelectedClient(null);
+                                        setSelectedCustomerType(e.target.value);
+                                        setSelectedCustomer(null);
                                     }}
                                     sx={{ mb: 1.5 }}
                                 >
@@ -633,14 +627,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                     <FormControlLabel value="guest" control={<Radio size="small" />} label="Guest" />
                                     <FormControlLabel value="employee" control={<Radio size="small" />} label="Employee" />
                                 </RadioGroup>
-                                <UserAutocomplete
-                                    routeUri={route(routeNameForContext('api.users.global-search'))}
-                                    memberType={selectedClientType === 'member' ? '0' : selectedClientType === 'guest' ? '1' : '3'}
-                                    value={selectedClient && selectedClient.id ? selectedClient : null}
-                                    onChange={(newValue) => setSelectedClient(newValue || null)}
-                                    label="Customer Name"
-                                    placeholder="Search by name, ID, or CNIC..."
-                                />
+                                <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={selectedCustomerType === 'member' ? '0' : selectedCustomerType === 'guest' ? '1' : '3'} value={selectedCustomer && selectedCustomer.id ? selectedCustomer : null} onChange={(newValue) => setSelectedCustomer(newValue || null)} label="Customer Name" placeholder="Search by name, ID, or CNIC..." />
                             </Box>
                             <List sx={{ py: 0 }}>
                                 {orderItems.length > 0 &&
@@ -664,11 +651,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
                                                             {item.order_item?.is_discountable && (
                                                                 <Chip
-                                                                    label={
-                                                                        Number(item.order_item?.discount_value || 0) > 0
-                                                                            ? `-${item.order_item?.discount_type === 'percentage' ? item.order_item?.discount_value + '%' : 'Rs ' + item.order_item?.discount_value}`
-                                                                            : 'Add Disc.'
-                                                                    }
+                                                                    label={Number(item.order_item?.discount_value || 0) > 0 ? `-${item.order_item?.discount_type === 'percentage' ? item.order_item?.discount_value + '%' : 'Rs ' + item.order_item?.discount_value}` : 'Add Disc.'}
                                                                     size="small"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
@@ -766,13 +749,12 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 const discountAmount = active.reduce((sum, x) => sum + Number(x?.order_item?.discount_amount || 0), 0);
                                 const discountedSubtotal = subtotal - discountAmount;
                                 const taxRate = Number(order?.tax || 0);
-                                const taxableAmount = active.reduce((sum, x) => {
-                                    if (x?.order_item?.is_taxable) {
-                                        return sum + (Number(x?.order_item?.total_price || 0) - Number(x?.order_item?.discount_amount || 0));
-                                    }
-                                    return sum;
+                                const taxAmount = active.reduce((sum, x) => {
+                                    const isTaxable = x?.order_item?.is_taxable === true || x?.order_item?.is_taxable === 'true' || x?.order_item?.is_taxable === 1;
+                                    if (!isTaxable) return sum;
+                                    const itemNet = Number(x?.order_item?.total_price || 0) - Number(x?.order_item?.discount_amount || 0);
+                                    return sum + Math.round(itemNet * taxRate);
                                 }, 0);
-                                const taxAmount = Math.round(taxableAmount * taxRate);
                                 const serviceCharges = Math.round(Number(order?.service_charges || 0));
                                 const bankCharges = Math.round(Number(order?.bank_charges || 0));
                                 const total = Math.round(discountedSubtotal + taxAmount + serviceCharges + bankCharges);
