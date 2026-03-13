@@ -27,3 +27,6 @@ yarn-error.log
 
 /afohs_database
 finance_invoices (1).sql
+
+/print-agent/PosPrintAgent/bin
+/print-agent/PosPrintAgent/obj
