@@ -21,6 +21,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PosCakeBooking;
 use App\Models\PosShift;
+use App\Models\PosPrintJob;
 use App\Models\Product;
 use App\Models\ProductVariantValue;
 use App\Models\Reservation;
@@ -1318,6 +1319,35 @@ class OrderController extends Controller
                 return $item;
             }, $orderItems));
 
+            $productIds = collect($orderItems)
+                ->pluck('id')
+                ->filter()
+                ->map(fn($v) => (int) $v)
+                ->unique()
+                ->values()
+                ->all();
+
+            $productsById = Product::with(['category:id,name,printer_device_id,printer_type,printer_name'])
+                ->whereIn('id', $productIds)
+                ->get()
+                ->keyBy('id');
+
+            foreach ($orderItems as &$oi) {
+                $pid = isset($oi['id']) ? (int) $oi['id'] : null;
+                if (!$pid) {
+                    continue;
+                }
+                $prod = $productsById->get($pid);
+                if (!$prod) {
+                    continue;
+                }
+                $oi['category_id'] = $prod->category_id;
+                if (!isset($oi['category']) || $oi['category'] === '' || $oi['category'] === null) {
+                    $oi['category'] = $prod->category?->name;
+                }
+            }
+            unset($oi);
+
             $groupedByKitchen = collect($orderItems)
                 ->filter(function ($item) {
                     return !empty($item['id']);
@@ -1385,6 +1415,115 @@ class OrderController extends Controller
                         'status' => 'in_progress',
                     ]);
                 }
+            }
+
+            $categoryIds = collect($orderItems)
+                ->pluck('category_id')
+                ->filter()
+                ->map(fn($v) => (int) $v)
+                ->unique()
+                ->values()
+                ->all();
+
+            $categoriesById = Category::whereIn('id', $categoryIds)->get()->keyBy('id');
+
+            $printableItems = collect($orderItems)
+                ->filter(fn($item) => !empty($item['id']) && !empty($item['category_id']))
+                ->map(function ($item) use ($categoriesById) {
+                    $categoryId = isset($item['category_id']) ? (int) $item['category_id'] : null;
+                    $category = $categoryId ? $categoriesById->get($categoryId) : null;
+                    if (!$category) {
+                        return null;
+                    }
+
+                    return array_merge($item, [
+                        'printer_device_id' => (string) ($category->printer_device_id ?? ''),
+                        'printer_type' => (string) ($category->printer_type ?? 'windows'),
+                        'printer_name' => (string) ($category->printer_name ?? ''),
+                        'category_name' => (string) ($category->name ?? ($item['category'] ?? '')),
+                    ]);
+                })
+                ->filter(fn($item) => is_array($item) && $item['printer_device_id'] !== '' && $item['printer_name'] !== '');
+
+            $printGroupsByTarget = $printableItems->groupBy(function ($item) {
+                return ($item['printer_device_id'] ?? '') . '|' . ($item['printer_type'] ?? '') . '|' . ($item['printer_name'] ?? '');
+            });
+
+            foreach ($printGroupsByTarget as $targetKey => $items) {
+                $first = $items->first();
+                $deviceId = (string) ($first['printer_device_id'] ?? '');
+                $printerType = (string) ($first['printer_type'] ?? 'windows');
+                $printerName = (string) ($first['printer_name'] ?? '');
+
+                if ($deviceId === '' || $printerName === '') {
+                    continue;
+                }
+
+                $normalizeItem = function ($item) {
+                    $variants = [];
+                    if (isset($item['variants']) && is_array($item['variants'])) {
+                        foreach ($item['variants'] as $v) {
+                            if (!is_array($v)) {
+                                continue;
+                            }
+                            $variants[] = [
+                                'name' => $v['name'] ?? null,
+                                'value' => $v['value'] ?? null,
+                                'price' => $v['price'] ?? null,
+                            ];
+                        }
+                    }
+                    return [
+                        'product_id' => $item['id'] ?? null,
+                        'name' => $item['name'] ?? null,
+                        'quantity' => $item['quantity'] ?? 1,
+                        'variants' => $variants,
+                        'instructions' => $item['instructions'] ?? null,
+                        'remark' => $item['remark'] ?? null,
+                        'category_id' => $item['category_id'] ?? null,
+                        'category_name' => $item['category_name'] ?? ($item['category'] ?? null),
+                    ];
+                };
+
+                $groups = $items
+                    ->groupBy('category_id')
+                    ->map(function ($groupItems, $categoryId) use ($normalizeItem) {
+                        $categoryName = (string) (($groupItems->first()['category_name'] ?? '') ?: 'Category');
+                        return [
+                            'category_id' => is_numeric($categoryId) ? (int) $categoryId : null,
+                            'category_name' => $categoryName,
+                            'items' => collect($groupItems)->map($normalizeItem)->values()->all(),
+                        ];
+                    })
+                    ->values()
+                    ->all();
+
+                $singleCategoryId = count($groups) === 1 ? ($groups[0]['category_id'] ?? null) : null;
+                $headerCategoryName = count($groups) === 1 ? ($groups[0]['category_name'] ?? null) : 'Multiple';
+
+                $payload = [
+                    'order_id' => $order->id,
+                    'order_type' => $order->order_type,
+                    'table_no' => $order->table?->table_no,
+                    'start_date' => $order->start_date,
+                    'start_time' => $order->start_time,
+                    'restaurant' => $order->tenant?->name,
+                    'category_id' => $singleCategoryId,
+                    'category_name' => $headerCategoryName,
+                    'kitchen_note' => $order->kitchen_note,
+                    'groups' => $groups,
+                    'items' => $items->map($normalizeItem)->values()->all(),
+                ];
+
+                PosPrintJob::create([
+                    'order_id' => $order->id,
+                    'category_id' => $singleCategoryId,
+                    'printer_device_id' => $deviceId,
+                    'printer_type' => $printerType,
+                    'printer_name' => $printerName,
+                    'payload' => $payload,
+                    'status' => 'pending',
+                ]);
             }
 
             // Handle Cancelled Items (if any)
@@ -1455,9 +1594,6 @@ class OrderController extends Controller
 
             $order->load(['table', 'orderItems']);
             broadcast(new OrderCreated($order));
-
-            // Dispatch print job (async, no delay in API response)
-            dispatch(new PrintOrderJob($groupedByKitchen, $order));
 
             return response()->json([
                 'success' => true,

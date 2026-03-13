@@ -194,6 +194,16 @@ export default function SideNav({ open, setOpen }) {
             path: route(routeNameForContext('printer.index', url)),
         },
         {
+            text: 'Print Devices',
+            icon: <FiPrinter style={{ height: '25px', width: '25px' }} />,
+            path: route(routeNameForContext('printer.devices.index', url)),
+        },
+        {
+            text: 'Print Jobs',
+            icon: <FiPrinter style={{ height: '25px', width: '25px' }} />,
+            path: route(routeNameForContext('printer.jobs.index', url)),
+        },
+        {
             text: 'Kitchen',
             icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
             path: route(routeNameForContext('kitchen.index', url)),

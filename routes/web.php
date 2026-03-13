@@ -38,10 +38,11 @@ use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MemberFeeRevenueController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MemberTransactionController;
-use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentAccountController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayrollApiController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\PosLocationController;
 use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\RoomBookingController;
 use App\Http\Controllers\RoomBookingRequestController;
@@ -54,7 +55,6 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SubscriptionCategoryController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
-use App\Http\Controllers\PosLocationController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserManagementController;
@@ -65,6 +65,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+Route::prefix('api/pos')->middleware('api')->group(function () {
+    Route::get('print-jobs/pull', [\App\Http\Controllers\PosPrintJobController::class, 'pull']);
+    Route::post('print-jobs/{id}/ack', [\App\Http\Controllers\PosPrintJobController::class, 'ack'])->whereNumber('id');
+});
 
 Route::get('/', function () {
     if (\Illuminate\Support\Facades\Auth::guard('web')->check()) {
@@ -239,6 +244,13 @@ Route::prefix('pos')->middleware('web')->group(function () {
 
         Route::get('settings/printer-test', [\App\Http\Controllers\PrinterTestController::class, 'index'])->name('pos.printer.index');
         Route::post('settings/printer-test', [\App\Http\Controllers\PrinterTestController::class, 'testPrint'])->name('pos.printer.test');
+        Route::get('settings/print-devices', [\App\Http\Controllers\PosPrintDeviceManagementController::class, 'index'])->name('pos.printer.devices.index');
+        Route::post('settings/print-devices', [\App\Http\Controllers\PosPrintDeviceManagementController::class, 'store'])->name('pos.printer.devices.store');
+        Route::put('settings/print-devices/{device}', [\App\Http\Controllers\PosPrintDeviceManagementController::class, 'update'])->name('pos.printer.devices.update');
+        Route::post('settings/print-devices/{device}/rotate', [\App\Http\Controllers\PosPrintDeviceManagementController::class, 'rotate'])->name('pos.printer.devices.rotate');
+        Route::delete('settings/print-devices/{device}', [\App\Http\Controllers\PosPrintDeviceManagementController::class, 'destroy'])->name('pos.printer.devices.destroy');
+        Route::get('settings/print-jobs', [\App\Http\Controllers\PosPrintJobManagementController::class, 'index'])->name('pos.printer.jobs.index');
+        Route::post('settings/print-jobs/{job}/retry', [\App\Http\Controllers\PosPrintJobManagementController::class, 'retry'])->name('pos.printer.jobs.retry');
 
         Route::get('kitchen', [\App\Http\Controllers\KitchenController::class, 'index'])->name('pos.kitchen.index');
         Route::post('kitchen/{order}/update-all', [\App\Http\Controllers\KitchenController::class, 'updateAll'])->name('pos.kitchen.update-all');

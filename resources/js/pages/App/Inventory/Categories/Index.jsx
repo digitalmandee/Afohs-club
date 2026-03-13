@@ -35,6 +35,9 @@ export default function CategoryIndex({ categories, filters }) {
     const { data, setData, post, reset, errors, processing } = useForm({
         name: '',
         status: 'active',
+        printer_device_id: '',
+        printer_type: 'windows',
+        printer_name: '',
         image: null,
         existingImage: null,
     });
@@ -86,6 +89,9 @@ export default function CategoryIndex({ categories, filters }) {
             const formData = new FormData();
             formData.append('name', data.name);
             formData.append('status', data.status);
+            if (data.printer_device_id) formData.append('printer_device_id', data.printer_device_id);
+            if (data.printer_type) formData.append('printer_type', data.printer_type);
+            if (data.printer_name) formData.append('printer_name', data.printer_name);
             if (data.image) {
                 formData.append('image', data.image);
             } else if (data.existingImage) {
@@ -130,6 +136,9 @@ export default function CategoryIndex({ categories, filters }) {
             setData({
                 name: category.name,
                 status: category.status || 'active',
+                printer_device_id: category.printer_device_id || '',
+                printer_type: category.printer_type || 'windows',
+                printer_name: category.printer_name || '',
                 image: null,
                 existingImage: category.image,
             });
@@ -383,6 +392,27 @@ export default function CategoryIndex({ categories, filters }) {
                                         <MenuItem value="inactive">Inactive</MenuItem>
                                     </Select>
                                 </FormControl>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Typography variant="body1" sx={{ mb: 1 }}>
+                                    Printer Device ID
+                                </Typography>
+                                <TextField fullWidth placeholder="e.g. KITCHEN-PC-01" name="printer_device_id" value={data.printer_device_id} onChange={handleInputChange} variant="outlined" size="small" error={!!errors.printer_device_id} helperText={errors.printer_device_id} />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Typography variant="body1" sx={{ mb: 1 }}>
+                                    Printer Type
+                                </Typography>
+                                <TextField select fullWidth name="printer_type" value={data.printer_type} onChange={handleInputChange} size="small" error={!!errors.printer_type} helperText={errors.printer_type}>
+                                    <MenuItem value="windows">Windows Printer</MenuItem>
+                                    <MenuItem value="network_9100">Network (9100)</MenuItem>
+                                </TextField>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Typography variant="body1" sx={{ mb: 1 }}>
+                                    Printer Name
+                                </Typography>
+                                <TextField fullWidth placeholder="Windows printer name OR IP for 9100" name="printer_name" value={data.printer_name} onChange={handleInputChange} variant="outlined" size="small" error={!!errors.printer_name} helperText={errors.printer_name} />
                             </Grid>
                             <Grid item xs={12}>
                                 <Typography variant="body1" sx={{ mb: 1 }}>

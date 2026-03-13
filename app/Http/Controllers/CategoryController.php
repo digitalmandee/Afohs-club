@@ -51,6 +51,9 @@ class CategoryController extends Controller
                 Rule::unique('pos_categories', 'name')->whereNull('deleted_at'),
             ],
             'status' => 'required|in:active,inactive',
+            'printer_device_id' => 'nullable|string|max:100',
+            'printer_type' => 'nullable|in:windows,network_9100',
+            'printer_name' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -80,6 +83,9 @@ class CategoryController extends Controller
                     ->whereNull('deleted_at'),
             ],
             'status' => 'required|in:active,inactive',
+            'printer_device_id' => 'nullable|string|max:100',
+            'printer_type' => 'nullable|in:windows,network_9100',
+            'printer_name' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'existingImage' => 'nullable|string',
         ]);
