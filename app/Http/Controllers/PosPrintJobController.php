@@ -56,6 +56,25 @@ class PosPrintJobController extends Controller
         $this->authenticateDevice($request, $deviceId);
 
         $jobs = DB::transaction(function () use ($deviceId, $limit) {
+            $staleBefore = Carbon::now()->subMinutes(2);
+            $staleCount = PosPrintJob::query()
+                ->where('printer_device_id', $deviceId)
+                ->where('status', 'printing')
+                ->whereNotNull('locked_at')
+                ->where('locked_at', '<', $staleBefore)
+                ->update([
+                    'status' => 'pending',
+                    'locked_at' => null,
+                    'locked_by_device_id' => null,
+                ]);
+
+            if ($staleCount > 0) {
+                Log::warning('pos_print_agent_unlock_stale', [
+                    'device_id' => $deviceId,
+                    'stale_unlocked' => $staleCount,
+                ]);
+            }
+
             $rows = PosPrintJob::query()
                 ->where('printer_device_id', $deviceId)
                 ->where('status', 'pending')

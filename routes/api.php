@@ -4,6 +4,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCategoryController;
 use App\Http\Controllers\PayrollApiController;
+use App\Http\Controllers\PosPrintJobController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+Route::prefix('pos')->group(function () {
+    Route::get('print-jobs/pull', [PosPrintJobController::class, 'pull']);
+    Route::post('print-jobs/{id}/ack', [PosPrintJobController::class, 'ack'])->whereNumber('id');
 });
 
 // Attendance API Routes

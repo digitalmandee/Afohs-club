@@ -66,11 +66,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::prefix('api/pos')->middleware('api')->group(function () {
-    Route::get('print-jobs/pull', [\App\Http\Controllers\PosPrintJobController::class, 'pull']);
-    Route::post('print-jobs/{id}/ack', [\App\Http\Controllers\PosPrintJobController::class, 'ack'])->whereNumber('id');
-});
-
 Route::get('/', function () {
     if (\Illuminate\Support\Facades\Auth::guard('web')->check()) {
         return redirect()->route('dashboard');
