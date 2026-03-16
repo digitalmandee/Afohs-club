@@ -20,8 +20,8 @@ use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PosCakeBooking;
-use App\Models\PosShift;
 use App\Models\PosPrintJob;
+use App\Models\PosShift;
 use App\Models\Product;
 use App\Models\ProductVariantValue;
 use App\Models\Reservation;
@@ -1449,6 +1449,17 @@ class OrderController extends Controller
                 return ($item['printer_device_id'] ?? '') . '|' . ($item['printer_type'] ?? '') . '|' . ($item['printer_name'] ?? '');
             });
 
+            $printJobsCreated = 0;
+            $printJobsSkipped = [
+                'no_category' => 0,
+                'no_printer_mapping' => 0,
+                'no_printable_items' => 0,
+            ];
+
+            if ($printableItems->isEmpty()) {
+                $printJobsSkipped['no_printable_items'] = 1;
+            }
+
             foreach ($printGroupsByTarget as $targetKey => $items) {
                 $first = $items->first();
                 $deviceId = (string) ($first['printer_device_id'] ?? '');
@@ -1456,6 +1467,7 @@ class OrderController extends Controller
                 $printerName = (string) ($first['printer_name'] ?? '');
 
                 if ($deviceId === '' || $printerName === '') {
+                    $printJobsSkipped['no_printer_mapping']++;
                     continue;
                 }
 
@@ -1524,6 +1536,7 @@ class OrderController extends Controller
                     'payload' => $payload,
                     'status' => 'pending',
                 ]);
+                $printJobsCreated++;
             }
 
             // Handle Cancelled Items (if any)
@@ -1595,10 +1608,16 @@ class OrderController extends Controller
             $order->load(['table', 'orderItems']);
             broadcast(new OrderCreated($order));
 
+            Log::info('printJobsCreated: ' . $printJobsCreated);
+            Log::info('printJobsSkipped: ' . $printJobsSkipped);
             return response()->json([
                 'success' => true,
                 'message' => 'Order sent to kitchen successfully.',
-                'order' => $order
+                'order' => $order,
+                'print' => [
+                    'jobs_created' => $printJobsCreated,
+                    'skipped' => $printJobsSkipped,
+                ],
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();

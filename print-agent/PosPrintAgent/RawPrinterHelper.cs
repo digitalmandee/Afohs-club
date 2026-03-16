@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using System.ComponentModel;
 
 namespace PosPrintAgent;
 
@@ -47,7 +48,8 @@ public static class RawPrinterHelper
     {
         if (!OpenPrinter(printerName, out var hPrinter, nint.Zero))
         {
-            throw new InvalidOperationException("OpenPrinter failed. Printer: " + printerName);
+            var code = Marshal.GetLastWin32Error();
+            throw new Win32Exception(code, "OpenPrinter failed. Printer: " + printerName);
         }
 
         try
@@ -55,14 +57,16 @@ public static class RawPrinterHelper
             var di = new DOCINFOA { pDocName = documentName, pDataType = "RAW" };
             if (!StartDocPrinter(hPrinter, 1, di))
             {
-                throw new InvalidOperationException("StartDocPrinter failed.");
+                var code = Marshal.GetLastWin32Error();
+                throw new Win32Exception(code, "StartDocPrinter failed.");
             }
 
             try
             {
                 if (!StartPagePrinter(hPrinter))
                 {
-                    throw new InvalidOperationException("StartPagePrinter failed.");
+                    var code = Marshal.GetLastWin32Error();
+                    throw new Win32Exception(code, "StartPagePrinter failed.");
                 }
 
                 try
@@ -73,7 +77,8 @@ public static class RawPrinterHelper
                         Marshal.Copy(bytes, 0, unmanagedBytes, bytes.Length);
                         if (!WritePrinter(hPrinter, unmanagedBytes, bytes.Length, out _))
                         {
-                            throw new InvalidOperationException("WritePrinter failed.");
+                            var code = Marshal.GetLastWin32Error();
+                            throw new Win32Exception(code, "WritePrinter failed.");
                         }
                     }
                     finally
@@ -97,4 +102,3 @@ public static class RawPrinterHelper
         }
     }
 }
-

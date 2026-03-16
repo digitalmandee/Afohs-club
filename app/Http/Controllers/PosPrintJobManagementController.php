@@ -38,13 +38,25 @@ class PosPrintJobManagementController extends Controller
         $restaurantId = $this->selectedRestaurantId($request);
         $filters = $request->only(['status', 'device_id', 'order_id', 'category_id']);
 
+        $allowedDeviceIds = Category::query()
+            ->where('tenant_id', $restaurantId)
+            ->whereNotNull('printer_device_id')
+            ->where('printer_device_id', '!=', '')
+            ->pluck('printer_device_id')
+            ->unique()
+            ->values()
+            ->all();
+
         $query = PosPrintJob::query()
             ->with([
                 'category:id,name',
                 'order:id,tenant_id,table_id,start_date,start_time',
                 'order.table:id,table_no',
-            ])
-            ->whereHas('order', fn($q) => $q->where('tenant_id', $restaurantId));
+            ]);
+
+        if (empty($filters['device_id']) && !empty($allowedDeviceIds)) {
+            $query->whereIn('printer_device_id', $allowedDeviceIds);
+        }
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -104,4 +116,3 @@ class PosPrintJobManagementController extends Controller
         return redirect()->back();
     }
 }
-

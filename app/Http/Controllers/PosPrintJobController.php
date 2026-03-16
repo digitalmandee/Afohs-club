@@ -7,6 +7,7 @@ use App\Models\PosPrintJob;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PosPrintJobController extends Controller
 {
@@ -80,6 +81,13 @@ class PosPrintJobController extends Controller
             return $rows->fresh();
         });
 
+        Log::info('pos_print_agent_pull', [
+            'device_id' => $deviceId,
+            'limit' => $limit,
+            'jobs_count' => $jobs->count(),
+            'job_ids' => $jobs->pluck('id')->values()->all(),
+        ]);
+
         return response()->json([
             'device_id' => $deviceId,
             'jobs' => $jobs->map(function (PosPrintJob $job) {
@@ -117,9 +125,19 @@ class PosPrintJobController extends Controller
                 'printed_at' => now(),
                 'last_error' => null,
             ])->save();
+
+            Log::info('pos_print_agent_ack', [
+                'device_id' => $deviceId,
+                'job_id' => $job->id,
+                'status' => 'printed',
+            ]);
         } else {
             $maxAttempts = 5;
             $shouldRetry = ((int) $job->attempts) < $maxAttempts;
+            $err = $validated['error'] ?? 'Print failed';
+            if (is_string($err) && strlen($err) > 800) {
+                $err = substr($err, 0, 800);
+            }
             $job->forceFill([
                 'status' => $shouldRetry ? 'pending' : 'failed',
                 'failed_at' => $shouldRetry ? null : now(),
@@ -127,9 +145,16 @@ class PosPrintJobController extends Controller
                 'locked_by_device_id' => null,
                 'last_error' => $validated['error'] ?? 'Print failed',
             ])->save();
+
+            Log::warning('pos_print_agent_ack', [
+                'device_id' => $deviceId,
+                'job_id' => $job->id,
+                'status' => $shouldRetry ? 'pending' : 'failed',
+                'attempts' => (int) $job->attempts,
+                'error' => $err,
+            ]);
         }
 
         return response()->json(['success' => true]);
     }
 }
-

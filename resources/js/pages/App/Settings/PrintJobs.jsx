@@ -191,10 +191,12 @@ export default function PrintJobs({ jobs, devices = [], categories = [], filters
                                         <TableCell>{formatDateTime(j.created_at)}</TableCell>
                                         <TableCell>{formatDateTime(j.printed_at)}</TableCell>
                                         <TableCell>
-                                            {j.failed_at ? (
-                                                <Tooltip title={j.last_error || ''}>
-                                                    <span>{formatDateTime(j.failed_at)}</span>
+                                            {j.last_error ? (
+                                                <Tooltip title={j.last_error}>
+                                                    <span>{j.failed_at ? formatDateTime(j.failed_at) : 'Error'}</span>
                                                 </Tooltip>
+                                            ) : j.failed_at ? (
+                                                formatDateTime(j.failed_at)
                                             ) : (
                                                 '-'
                                             )}
