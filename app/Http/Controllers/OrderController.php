@@ -1587,6 +1587,7 @@ class OrderController extends Controller
                             'remark' => $item['remark'] ?? null,
                             'instructions' => $item['instructions'] ?? null,
                             'cancelType' => $cancelType,
+                            'cancelled_by' => Auth::id(),
                         ]);
                     }
                 }
@@ -1608,8 +1609,6 @@ class OrderController extends Controller
             $order->load(['table', 'orderItems']);
             broadcast(new OrderCreated($order));
 
-            Log::info('printJobsCreated: ' . $printJobsCreated);
-            Log::info('printJobsSkipped: ' . $printJobsSkipped);
             return response()->json([
                 'success' => true,
                 'message' => 'Order sent to kitchen successfully.',
@@ -2018,26 +2017,34 @@ class OrderController extends Controller
                     continue;
                 }
                 $normalizedOrderItem = $recalcPricing($itemData['order_item'] ?? []);
-                $order->orderItems()->where('id', $itemId)->update([
+                $updatePayload = [
                     'order_item' => $normalizedOrderItem,
                     'status' => $itemData['status'],
                     'remark' => $itemData['remark'] ?? null,
                     'instructions' => $itemData['instructions'] ?? null,
                     'cancelType' => $itemData['cancelType'] ?? null,
-                ]);
+                ];
+                if (($itemData['status'] ?? null) === 'cancelled') {
+                    $updatePayload['cancelled_by'] = Auth::id();
+                }
+                $order->orderItems()->where('id', $itemId)->update($updatePayload);
             }
 
             // Add new order items
             foreach ($mergedNewItems as $itemData) {
                 $normalizedOrderItem = $recalcPricing($itemData['order_item'] ?? []);
-                $order->orderItems()->create([
+                $createPayload = [
                     'tenant_id' => $normalizedOrderItem['tenant_id'] ?? null,
                     'order_item' => $normalizedOrderItem,
                     'status' => $itemData['status'] ?? 'pending',
                     'remark' => $itemData['remark'] ?? null,
                     'instructions' => $itemData['instructions'] ?? null,
                     'cancelType' => $itemData['cancelType'] ?? null,
-                ]);
+                ];
+                if (($itemData['status'] ?? null) === 'cancelled') {
+                    $createPayload['cancelled_by'] = Auth::id();
+                }
+                $order->orderItems()->create($createPayload);
             }
 
             $freshItems = $order->orderItems()->where('status', '!=', 'cancelled')->get();

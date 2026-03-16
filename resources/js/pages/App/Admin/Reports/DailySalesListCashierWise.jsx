@@ -67,7 +67,13 @@ export default function DailySalesListCashierWise({
     const [dateFilters, setDateFilters] = useState({
         start_date: filters?.start_date || startDate,
         end_date: filters?.end_date || endDate,
+        tenant_ids: toIntArray(filters?.tenant_ids),
         cashier_ids: toIntArray(filters?.cashier_ids),
+        waiter_ids: toIntArray(filters?.waiter_ids),
+        table_nos: toArray(filters?.table_nos),
+        order_types: toArray(filters?.order_types),
+        customer_types: toArray(filters?.customer_types),
+        customer_search: filters?.customer_search || '',
     });
 
     const handleFilterChange = (field, value) => {
@@ -297,6 +303,89 @@ export default function DailySalesListCashierWise({
                                         }}
                                     />
                                 )}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={tenants || []}
+                                getOptionLabel={(opt) => opt?.name || ''}
+                                value={(tenants || []).filter((t) => dateFilters.tenant_ids.includes(t.id))}
+                                onChange={(_, value) => handleFilterChange('tenant_ids', value.map((v) => v.id))}
+                                renderInput={(params) => <TextField {...params} label="Restaurant" />}
+                                sx={{ minWidth: 220 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={waiters || []}
+                                getOptionLabel={(opt) => opt?.name || ''}
+                                value={(waiters || []).filter((w) => dateFilters.waiter_ids.includes(w.id))}
+                                onChange={(_, value) => handleFilterChange('waiter_ids', value.map((v) => v.id))}
+                                renderInput={(params) => <TextField {...params} label="Waiter" />}
+                                sx={{ minWidth: 200 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                freeSolo
+                                size="small"
+                                options={[]}
+                                value={dateFilters.table_nos}
+                                onChange={(_, value) => handleFilterChange('table_nos', value)}
+                                renderInput={(params) => <TextField {...params} label="Table #" />}
+                                sx={{ minWidth: 140 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={[
+                                    { label: 'Dine-In', value: 'dineIn' },
+                                    { label: 'Delivery', value: 'delivery' },
+                                    { label: 'Takeaway', value: 'takeaway' },
+                                    { label: 'Reservation', value: 'reservation' },
+                                    { label: 'Room Service', value: 'room_service' },
+                                ]}
+                                getOptionLabel={(opt) => opt.label}
+                                value={[
+                                    { label: 'Dine-In', value: 'dineIn' },
+                                    { label: 'Delivery', value: 'delivery' },
+                                    { label: 'Takeaway', value: 'takeaway' },
+                                    { label: 'Reservation', value: 'reservation' },
+                                    { label: 'Room Service', value: 'room_service' },
+                                ].filter((o) => dateFilters.order_types.includes(o.value))}
+                                onChange={(_, value) => handleFilterChange('order_types', value.map((v) => v.value))}
+                                renderInput={(params) => <TextField {...params} label="Order Type" />}
+                                sx={{ minWidth: 220 }}
+                            />
+
+                            <Autocomplete
+                                multiple
+                                size="small"
+                                options={[
+                                    { label: 'Member', value: 'member' },
+                                    { label: 'Guest', value: 'guest' },
+                                    { label: 'Employee', value: 'employee' },
+                                ]}
+                                getOptionLabel={(opt) => opt.label}
+                                value={[
+                                    { label: 'Member', value: 'member' },
+                                    { label: 'Guest', value: 'guest' },
+                                    { label: 'Employee', value: 'employee' },
+                                ].filter((o) => dateFilters.customer_types.includes(o.value))}
+                                onChange={(_, value) => handleFilterChange('customer_types', value.map((v) => v.value))}
+                                renderInput={(params) => <TextField {...params} label="Customer Type" />}
+                                sx={{ minWidth: 220 }}
+                            />
+
+                            <TextField
+                                size="small"
+                                label="Customer Name/No"
+                                value={dateFilters.customer_search}
+                                onChange={(e) => handleFilterChange('customer_search', e.target.value)}
+                                sx={{ minWidth: 220 }}
                             />
 
                             <Button

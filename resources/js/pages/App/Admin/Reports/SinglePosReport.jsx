@@ -51,7 +51,7 @@ export default function SinglePosReport({ reportData, tenant, startDate, endDate
     };
 
     const goBackToAll = () => {
-        router.get(route('admin.reports.pos.all'), dateFilters);
+        router.get(route('admin.reports.pos.index'), dateFilters);
     };
 
     const formatDate = (dateString) => {

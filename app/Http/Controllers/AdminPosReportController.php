@@ -40,7 +40,7 @@ class AdminPosReportController extends Controller
         $itemSearch = $this->normalizeFilterString($filters['item_search'] ?? null);
 
         $data = $this->buildDishBreakdownData($startDate, $endDate, $tenantIds, $categoryNames, $itemSearch);
-        usort($data, fn ($a, $b) => ($b['total_sale'] <=> $a['total_sale']));
+        usort($data, fn($a, $b) => ($b['total_sale'] <=> $a['total_sale']));
 
         return Inertia::render('App/Admin/Reports/DishBreakdownSummary', [
             'metric' => 'price',
@@ -64,7 +64,7 @@ class AdminPosReportController extends Controller
         $itemSearch = $this->normalizeFilterString($filters['item_search'] ?? null);
 
         $data = $this->buildDishBreakdownData($startDate, $endDate, $tenantIds, $categoryNames, $itemSearch);
-        usort($data, fn ($a, $b) => ($b['qty'] <=> $a['qty']));
+        usort($data, fn($a, $b) => ($b['qty'] <=> $a['qty']));
 
         return Inertia::render('App/Admin/Reports/DishBreakdownSummary', [
             'metric' => 'quantity',
@@ -119,7 +119,7 @@ class AdminPosReportController extends Controller
         }
 
         $rows = array_values($byMethod);
-        usort($rows, fn ($a, $b) => ($b['total'] <=> $a['total']));
+        usort($rows, fn($a, $b) => ($b['total'] <=> $a['total']));
 
         return Inertia::render('App/Admin/Reports/ClosingSalesReport', [
             'startDate' => $startDate,
@@ -146,7 +146,8 @@ class AdminPosReportController extends Controller
 
         if ($employeeSearch) {
             $ordersQuery->whereHas('employee', function ($q) use ($employeeSearch) {
-                $q->where('name', 'like', "%{$employeeSearch}%")
+                $q
+                    ->where('name', 'like', "%{$employeeSearch}%")
                     ->orWhere('employee_id', 'like', "%{$employeeSearch}%");
             });
         }
@@ -173,7 +174,7 @@ class AdminPosReportController extends Controller
         }
 
         $rows = array_values($rows);
-        usort($rows, fn ($a, $b) => ($b['total'] <=> $a['total']));
+        usort($rows, fn($a, $b) => ($b['total'] <=> $a['total']));
 
         return Inertia::render('App/Admin/Reports/MonthlyEmployeeFoodBillsReport', [
             'startDate' => $startDate,
@@ -211,7 +212,7 @@ class AdminPosReportController extends Controller
         }
 
         $rows = array_values($byDate);
-        usort($rows, fn ($a, $b) => strcmp($a['date'], $b['date']));
+        usort($rows, fn($a, $b) => strcmp($a['date'], $b['date']));
 
         return Inertia::render('App/Admin/Reports/PosGraphicalReport', [
             'startDate' => $startDate,
@@ -445,7 +446,12 @@ class AdminPosReportController extends Controller
         $cashierIds = $this->normalizeFilterIntArray($filters['cashier_ids'] ?? null);
 
         $query = Order::whereBetween('start_date', [$startDate, $endDate])
-            ->whereNotIn('status', ['completed', 'cancelled', 'saved'])
+            ->whereNotIn('status', ['cancelled', 'saved'])
+            ->where(function ($q) {
+                $q
+                    ->whereNull('payment_status')
+                    ->orWhereRaw('LOWER(COALESCE(payment_status, "")) != "paid"');
+            })
             ->with(['tenant', 'table', 'member', 'customer', 'employee', 'cashier', 'waiter'])
             ->orderBy('start_date', 'desc')
             ->orderBy('start_time', 'desc')
@@ -517,7 +523,12 @@ class AdminPosReportController extends Controller
         $cashierIds = $this->normalizeFilterIntArray($filters['cashier_ids'] ?? null);
 
         $query = Order::whereBetween('start_date', [$startDate, $endDate])
-            ->whereNotIn('status', ['completed', 'cancelled', 'saved'])
+            ->whereNotIn('status', ['cancelled', 'saved'])
+            ->where(function ($q) {
+                $q
+                    ->whereNull('payment_status')
+                    ->orWhereRaw('LOWER(COALESCE(payment_status, "")) != "paid"');
+            })
             ->with(['tenant', 'table', 'member', 'customer', 'employee', 'cashier', 'waiter'])
             ->orderBy('start_date', 'desc')
             ->orderBy('start_time', 'desc')
@@ -645,20 +656,23 @@ class AdminPosReportController extends Controller
         if ($customerSearch) {
             $ordersQuery->where(function ($q) use ($customerSearch) {
                 $q->whereHas('member', function ($mq) use ($customerSearch) {
-                    $mq->where('full_name', 'like', "%{$customerSearch}%")
+                    $mq
+                        ->where('full_name', 'like', "%{$customerSearch}%")
                         ->orWhere('membership_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('customer', function ($cq) use ($customerSearch) {
-                    $cq->where('name', 'like', "%{$customerSearch}%")
+                    $cq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('customer_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('employee', function ($eq) use ($customerSearch) {
-                    $eq->where('name', 'like', "%{$customerSearch}%")
+                    $eq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('employee_id', 'like', "%{$customerSearch}%");
                 });
             });
         }
         if (!empty($paymentStatuses)) {
             $ordersQuery->where(function ($q) use ($paymentStatuses) {
-                $statusValues = array_map(fn ($s) => strtolower(trim((string) $s)), $paymentStatuses);
+                $statusValues = array_map(fn($s) => strtolower(trim((string) $s)), $paymentStatuses);
                 if (in_array('paid', $statusValues, true)) {
                     $q->orWhereRaw('LOWER(COALESCE(payment_status, "")) = "paid"');
                 }
@@ -725,7 +739,28 @@ class AdminPosReportController extends Controller
                 $taxRate = $taxRate / 100;
             }
 
+            $orderLevelDiscount = (float) ($order->discount ?? 0);
+            $orderSubTotalAll = 0.0;
+            foreach ($order->orderItems as $oi) {
+                if (($oi->status ?? null) === 'cancelled') {
+                    continue;
+                }
+                $it = $oi->order_item ?? [];
+                if (!is_array($it)) {
+                    continue;
+                }
+                $q = (float) ($it['quantity'] ?? 0);
+                $p = (float) ($it['price'] ?? 0);
+                $st = $p * $q;
+                if ($q > 0 && $st > 0) {
+                    $orderSubTotalAll += $st;
+                }
+            }
+
             foreach ($order->orderItems as $orderItem) {
+                if (($orderItem->status ?? null) === 'cancelled') {
+                    continue;
+                }
                 $item = $orderItem->order_item ?? [];
                 if (!is_array($item)) {
                     continue;
@@ -758,6 +793,9 @@ class AdminPosReportController extends Controller
                 }
 
                 $discount = (float) ($item['discount_amount'] ?? 0);
+                if ($discount <= 0 && $orderLevelDiscount > 0 && $orderSubTotalAll > 0) {
+                    $discount = round(($orderLevelDiscount * ($subTotal / $orderSubTotalAll)), 2);
+                }
                 if ($discount < 0) {
                     $discount = 0;
                 }
@@ -769,7 +807,7 @@ class AdminPosReportController extends Controller
                     continue;
                 }
 
-                $isTaxable = (bool) ($item['is_taxable'] ?? false);
+                $isTaxable = array_key_exists('is_taxable', $item) ? (bool) $item['is_taxable'] : true;
                 $taxableNet = $isTaxable ? max(0, $subTotal - $discount) : 0;
                 $tax = $taxableNet > 0 ? round($taxableNet * $taxRate) : 0;
 
@@ -920,20 +958,23 @@ class AdminPosReportController extends Controller
         if ($customerSearch) {
             $ordersQuery->where(function ($q) use ($customerSearch) {
                 $q->whereHas('member', function ($mq) use ($customerSearch) {
-                    $mq->where('full_name', 'like', "%{$customerSearch}%")
+                    $mq
+                        ->where('full_name', 'like', "%{$customerSearch}%")
                         ->orWhere('membership_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('customer', function ($cq) use ($customerSearch) {
-                    $cq->where('name', 'like', "%{$customerSearch}%")
+                    $cq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('customer_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('employee', function ($eq) use ($customerSearch) {
-                    $eq->where('name', 'like', "%{$customerSearch}%")
+                    $eq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('employee_id', 'like', "%{$customerSearch}%");
                 });
             });
         }
         if (!empty($paymentStatuses)) {
             $ordersQuery->where(function ($q) use ($paymentStatuses) {
-                $statusValues = array_map(fn ($s) => strtolower(trim((string) $s)), $paymentStatuses);
+                $statusValues = array_map(fn($s) => strtolower(trim((string) $s)), $paymentStatuses);
                 if (in_array('paid', $statusValues, true)) {
                     $q->orWhereRaw('LOWER(COALESCE(payment_status, "")) = "paid"');
                 }
@@ -1000,7 +1041,28 @@ class AdminPosReportController extends Controller
                 $taxRate = $taxRate / 100;
             }
 
+            $orderLevelDiscount = (float) ($order->discount ?? 0);
+            $orderSubTotalAll = 0.0;
+            foreach ($order->orderItems as $oi) {
+                if (($oi->status ?? null) === 'cancelled') {
+                    continue;
+                }
+                $it = $oi->order_item ?? [];
+                if (!is_array($it)) {
+                    continue;
+                }
+                $q = (float) ($it['quantity'] ?? 0);
+                $p = (float) ($it['price'] ?? 0);
+                $st = $p * $q;
+                if ($q > 0 && $st > 0) {
+                    $orderSubTotalAll += $st;
+                }
+            }
+
             foreach ($order->orderItems as $orderItem) {
+                if (($orderItem->status ?? null) === 'cancelled') {
+                    continue;
+                }
                 $item = $orderItem->order_item ?? [];
                 if (!is_array($item)) {
                     continue;
@@ -1033,6 +1095,9 @@ class AdminPosReportController extends Controller
                 }
 
                 $discount = (float) ($item['discount_amount'] ?? 0);
+                if ($discount <= 0 && $orderLevelDiscount > 0 && $orderSubTotalAll > 0) {
+                    $discount = round(($orderLevelDiscount * ($subTotal / $orderSubTotalAll)), 2);
+                }
                 if ($discount < 0) {
                     $discount = 0;
                 }
@@ -1044,7 +1109,7 @@ class AdminPosReportController extends Controller
                     continue;
                 }
 
-                $isTaxable = (bool) ($item['is_taxable'] ?? false);
+                $isTaxable = array_key_exists('is_taxable', $item) ? (bool) $item['is_taxable'] : true;
                 $taxableNet = $isTaxable ? max(0, $subTotal - $discount) : 0;
                 $tax = $taxableNet > 0 ? round($taxableNet * $taxRate) : 0;
 
@@ -1197,13 +1262,16 @@ class AdminPosReportController extends Controller
         if ($customerSearch) {
             $ordersQuery->where(function ($q) use ($customerSearch) {
                 $q->whereHas('member', function ($mq) use ($customerSearch) {
-                    $mq->where('full_name', 'like', "%{$customerSearch}%")
+                    $mq
+                        ->where('full_name', 'like', "%{$customerSearch}%")
                         ->orWhere('membership_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('customer', function ($cq) use ($customerSearch) {
-                    $cq->where('name', 'like', "%{$customerSearch}%")
+                    $cq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('customer_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('employee', function ($eq) use ($customerSearch) {
-                    $eq->where('name', 'like', "%{$customerSearch}%")
+                    $eq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('employee_id', 'like', "%{$customerSearch}%");
                 });
             });
@@ -1321,7 +1389,7 @@ class AdminPosReportController extends Controller
                     $disc = $subTotal;
                 }
                 $discountAmount += $disc;
-                $isTaxable = (bool) ($item['is_taxable'] ?? false);
+                $isTaxable = array_key_exists('is_taxable', $item) ? (bool) $item['is_taxable'] : true;
                 if ($isTaxable) {
                     $taxableNet = max(0, $subTotal - $disc);
                     $taxAmount += $taxableNet > 0 ? round($taxableNet * $taxRate) : 0;
@@ -1351,7 +1419,7 @@ class AdminPosReportController extends Controller
 
         // Convert to array and sort by cashier name
         $cashierArray = array_values($cashierData);
-        usort($cashierArray, fn ($a, $b) => strcmp($a['name'], $b['name']));
+        usort($cashierArray, fn($a, $b) => strcmp($a['name'], $b['name']));
 
         return Inertia::render('App/Admin/Reports/DailySalesListCashierWise', [
             'cashierData' => $cashierArray,
@@ -1440,13 +1508,16 @@ class AdminPosReportController extends Controller
         if ($customerSearch) {
             $ordersQuery->where(function ($q) use ($customerSearch) {
                 $q->whereHas('member', function ($mq) use ($customerSearch) {
-                    $mq->where('full_name', 'like', "%{$customerSearch}%")
+                    $mq
+                        ->where('full_name', 'like', "%{$customerSearch}%")
                         ->orWhere('membership_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('customer', function ($cq) use ($customerSearch) {
-                    $cq->where('name', 'like', "%{$customerSearch}%")
+                    $cq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('customer_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('employee', function ($eq) use ($customerSearch) {
-                    $eq->where('name', 'like', "%{$customerSearch}%")
+                    $eq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('employee_id', 'like', "%{$customerSearch}%");
                 });
             });
@@ -1547,7 +1618,7 @@ class AdminPosReportController extends Controller
                     $disc = $subTotal;
                 }
                 $discountAmount += $disc;
-                $isTaxable = (bool) ($item['is_taxable'] ?? false);
+                $isTaxable = array_key_exists('is_taxable', $item) ? (bool) $item['is_taxable'] : true;
                 if ($isTaxable) {
                     $taxableNet = max(0, $subTotal - $disc);
                     $taxAmount += $taxableNet > 0 ? round($taxableNet * $taxRate) : 0;
@@ -1576,7 +1647,7 @@ class AdminPosReportController extends Controller
         }
 
         $cashierArray = array_values($cashierData);
-        usort($cashierArray, fn ($a, $b) => strcmp($a['name'], $b['name']));
+        usort($cashierArray, fn($a, $b) => strcmp($a['name'], $b['name']));
 
         return Inertia::render('App/Admin/Reports/DailySalesListCashierWisePrint', [
             'cashierData' => $cashierArray,
@@ -1658,7 +1729,8 @@ class AdminPosReportController extends Controller
             if (!empty($cashierIds) && !in_array((int) ($order->cashier_id ?? 0), $cashierIds, true)) {
                 continue;
             }
-            if (!empty($cancelledByIds) && !in_array((int) ($order->updated_by ?? 0), $cancelledByIds, true)) {
+            $cancelledByUserId = (int) ($orderItem->cancelled_by ?? ($order->updated_by ?? 0));
+            if (!empty($cancelledByIds) && !in_array($cancelledByUserId, $cancelledByIds, true)) {
                 continue;
             }
             if (!empty($tableNos)) {
@@ -1669,9 +1741,12 @@ class AdminPosReportController extends Controller
             }
             if (!empty($customerTypes)) {
                 $ok = false;
-                if (in_array('member', $customerTypes, true) && $order->member_id) $ok = true;
-                if ((in_array('guest', $customerTypes, true) || in_array('customer', $customerTypes, true)) && $order->customer_id) $ok = true;
-                if (in_array('employee', $customerTypes, true) && $order->employee_id) $ok = true;
+                if (in_array('member', $customerTypes, true) && $order->member_id)
+                    $ok = true;
+                if ((in_array('guest', $customerTypes, true) || in_array('customer', $customerTypes, true)) && $order->customer_id)
+                    $ok = true;
+                if (in_array('employee', $customerTypes, true) && $order->employee_id)
+                    $ok = true;
                 if (!$ok) {
                     continue;
                 }
@@ -1680,9 +1755,9 @@ class AdminPosReportController extends Controller
                 $hay = strtolower(
                     trim(
                         (string) (
-                            ($order->member?->full_name ?? '') . ' ' . ($order->member?->membership_no ?? '') . ' ' .
-                            ($order->customer?->name ?? '') . ' ' . ($order->customer?->customer_no ?? '') . ' ' .
-                            ($order->employee?->name ?? '') . ' ' . ($order->employee?->employee_id ?? '')
+                            ($order->member?->full_name ?? '') . ' ' . ($order->member?->membership_no ?? '') . ' '
+                            . ($order->customer?->name ?? '') . ' ' . ($order->customer?->customer_no ?? '') . ' '
+                            . ($order->employee?->name ?? '') . ' ' . ($order->employee?->employee_id ?? '')
                         )
                     )
                 );
@@ -1691,13 +1766,16 @@ class AdminPosReportController extends Controller
                 }
             }
             if (!empty($paymentStatuses)) {
-                $statusValues = array_map(fn ($s) => strtolower(trim((string) $s)), $paymentStatuses);
+                $statusValues = array_map(fn($s) => strtolower(trim((string) $s)), $paymentStatuses);
                 $paymentStatus = strtolower((string) ($order->payment_status ?? ''));
                 $isAdvance = (float) ($order->down_payment ?? 0) > 0;
                 $matches = false;
-                if (in_array('paid', $statusValues, true) && $paymentStatus === 'paid') $matches = true;
-                if (in_array('unpaid', $statusValues, true) && $paymentStatus !== 'paid') $matches = true;
-                if (in_array('advance', $statusValues, true) && $isAdvance) $matches = true;
+                if (in_array('paid', $statusValues, true) && $paymentStatus === 'paid')
+                    $matches = true;
+                if (in_array('unpaid', $statusValues, true) && $paymentStatus !== 'paid')
+                    $matches = true;
+                if (in_array('advance', $statusValues, true) && $isAdvance)
+                    $matches = true;
                 if (!$matches) {
                     continue;
                 }
@@ -1751,7 +1829,7 @@ class AdminPosReportController extends Controller
                     if ($taxRate > 1) {
                         $taxRate = $taxRate / 100;
                     }
-                    $isTaxable = (bool) ($item['is_taxable'] ?? false);
+                    $isTaxable = array_key_exists('is_taxable', $item) ? (bool) $item['is_taxable'] : true;
                     $taxableNet = $isTaxable ? max(0, $subTotal - $disc) : 0;
                     $taxAmount = $taxableNet > 0 ? round($taxableNet * $taxRate) : 0;
                     if ($taxedOnly && $taxAmount <= 0) {
@@ -1779,11 +1857,11 @@ class AdminPosReportController extends Controller
                         'qty' => $quantity,
                         'status' => ucfirst($orderItem->status ?? 'Cancelled'),
                         'instructions' => $orderItem->instructions ?? 'N/A',
-                        'reason' => $orderItem->remark ?? 'N/A',
-                        'remarks' => $this->getCancelReason($orderItem->cancelType ?? ''),
+                        'reason' => $this->getCancelReason($orderItem->cancelType ?? ''),
+                        'remarks' => $orderItem->remark ?? 'N/A',
                         'sale_price' => $salePrice,
                         'food_value' => $foodValue,
-                        'cancelled_by' => User::find($order->updated_by ?: ($order->created_by ?: 0))->name ?? 'N/A'
+                        'cancelled_by' => User::find((int) ($orderItem->cancelled_by ?? ($order->updated_by ?: ($order->created_by ?: 0))))->name ?? 'N/A'
                     ];
 
                     $totalQuantity += $quantity;
@@ -1797,8 +1875,27 @@ class AdminPosReportController extends Controller
             'dumpItemsData' => $dumpItemsData,
             'tenants' => Tenant::select('id', 'name')->orderBy('name')->get(),
             'waiters' => Employee::select('id', 'name')->orderBy('name')->get(),
-            'cashiers' => User::select('id', 'name')->orderBy('name')->get(),
-            'cancelledByUsers' => User::select('id', 'name')->orderBy('name')->get(),
+            'cashiers' => User::select('id', 'name')
+                ->whereIn('id', Order::whereBetween('start_date', [$startDate, $endDate])
+                    ->whereNotNull('cashier_id')
+                    ->when(!empty($tenantIds), fn($q) => $q->whereIn('tenant_id', $tenantIds))
+                    ->distinct()
+                    ->pluck('cashier_id')
+                    ->filter()
+                    ->values())
+                ->orderBy('name')
+                ->get(),
+            'cancelledByUsers' => User::select('id', 'name')
+                ->whereIn('id', OrderItem::whereDate('created_at', '>=', $startDate)
+                    ->whereDate('created_at', '<=', $endDate)
+                    ->where('status', 'cancelled')
+                    ->whereNotNull('cancelled_by')
+                    ->distinct()
+                    ->pluck('cancelled_by')
+                    ->filter()
+                    ->values())
+                ->orderBy('name')
+                ->get(),
             'startDate' => $startDate,
             'endDate' => $endDate,
             'totalQuantity' => $totalQuantity,
@@ -1886,11 +1983,11 @@ class AdminPosReportController extends Controller
                         'qty' => $quantity,
                         'status' => ucfirst($orderItem->status ?? 'Cancelled'),
                         'instructions' => $orderItem->instructions ?? 'N/A',
-                        'reason' => $orderItem->remark ?? 'N/A',
-                        'remarks' => $this->getCancelReason($orderItem->cancelType ?? ''),
+                        'reason' => $this->getCancelReason($orderItem->cancelType ?? ''),
+                        'remarks' => $orderItem->remark ?? 'N/A',
                         'sale_price' => $salePrice,
                         'food_value' => $foodValue,
-                        'cancelled_by' => User::find($order->updated_by ?: ($order->created_by ?: 0))->name ?? 'N/A'
+                        'cancelled_by' => User::find((int) ($orderItem->cancelled_by ?? ($order->updated_by ?: ($order->created_by ?: 0))))->name ?? 'N/A'
                     ];
 
                     $totalQuantity += $quantity;
@@ -2082,20 +2179,23 @@ class AdminPosReportController extends Controller
         if ($customerSearch) {
             $ordersQuery->where(function ($q) use ($customerSearch) {
                 $q->whereHas('member', function ($mq) use ($customerSearch) {
-                    $mq->where('full_name', 'like', "%{$customerSearch}%")
+                    $mq
+                        ->where('full_name', 'like', "%{$customerSearch}%")
                         ->orWhere('membership_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('customer', function ($cq) use ($customerSearch) {
-                    $cq->where('name', 'like', "%{$customerSearch}%")
+                    $cq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('customer_no', 'like', "%{$customerSearch}%");
                 })->orWhereHas('employee', function ($eq) use ($customerSearch) {
-                    $eq->where('name', 'like', "%{$customerSearch}%")
+                    $eq
+                        ->where('name', 'like', "%{$customerSearch}%")
                         ->orWhere('employee_id', 'like', "%{$customerSearch}%");
                 });
             });
         }
         if (!empty($paymentStatuses)) {
             $ordersQuery->where(function ($q) use ($paymentStatuses) {
-                $statusValues = array_map(fn ($s) => strtolower(trim((string) $s)), $paymentStatuses);
+                $statusValues = array_map(fn($s) => strtolower(trim((string) $s)), $paymentStatuses);
                 if (in_array('paid', $statusValues, true)) {
                     $q->orWhereRaw('LOWER(COALESCE(payment_status, "")) = "paid"');
                 }
@@ -2219,7 +2319,7 @@ class AdminPosReportController extends Controller
         if ($taxRate > 1) {
             $taxRate = $taxRate / 100;
         }
-        $isTaxable = (bool) ($item['is_taxable'] ?? false);
+        $isTaxable = array_key_exists('is_taxable', $item) ? (bool) $item['is_taxable'] : true;
         $taxableNet = $isTaxable ? max(0, $subTotal - $itemDiscount) : 0;
         $itemTax = $taxableNet > 0 ? round($taxableNet * $taxRate) : 0;
 
@@ -2352,7 +2452,7 @@ class AdminPosReportController extends Controller
                     $discount = $subTotal;
                 }
 
-                $isTaxable = (bool) ($item['is_taxable'] ?? false);
+                $isTaxable = array_key_exists('is_taxable', $item) ? (bool) $item['is_taxable'] : true;
                 $taxableNet = $isTaxable ? max(0, $subTotal - $discount) : 0;
                 $tax = $taxableNet > 0 ? round($taxableNet * $taxRate) : 0;
 
@@ -2392,11 +2492,11 @@ class AdminPosReportController extends Controller
         if (is_array($value)) {
             return array_values(array_filter(array_map(function ($v) {
                 return is_string($v) ? trim($v) : (is_numeric($v) ? (string) $v : '');
-            }, $value), fn ($v) => $v !== ''));
+            }, $value), fn($v) => $v !== ''));
         }
         if (is_string($value)) {
             $parts = array_map('trim', explode(',', $value));
-            return array_values(array_filter($parts, fn ($v) => $v !== ''));
+            return array_values(array_filter($parts, fn($v) => $v !== ''));
         }
         return [];
     }
@@ -2410,6 +2510,6 @@ class AdminPosReportController extends Controller
                 $ints[] = (int) $v;
             }
         }
-        return array_values(array_filter($ints, fn ($v) => $v > 0));
+        return array_values(array_filter($ints, fn($v) => $v > 0));
     }
 }

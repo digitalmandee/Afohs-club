@@ -1397,7 +1397,7 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
 
     // Admin POS Reports Routes
     Route::prefix('admin/reports')->middleware('super.admin:reports.pos.view')->group(function () {
-        Route::get('pos/all', [AdminPosReportController::class, 'index'])->name('admin.reports.pos.all');
+        Route::get('pos', [AdminPosReportController::class, 'index'])->name('admin.reports.pos.index');
         Route::get('pos/restaurant-wise', [AdminPosReportController::class, 'restaurantWise'])->name('admin.reports.pos.restaurant-wise')->middleware('super.admin:reports.pos.restaurant-wise');
         Route::get('pos/restaurant-wise/print', [AdminPosReportController::class, 'restaurantWisePrint'])->name('admin.reports.pos.restaurant-wise.print')->middleware('super.admin:reports.pos.restaurant-wise');
         Route::get('pos/running-sales-orders', [AdminPosReportController::class, 'runningSalesOrders'])->name('admin.reports.pos.running-sales-orders')->middleware('super.admin:reports.pos.running-sales');

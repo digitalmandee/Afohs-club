@@ -69,7 +69,7 @@ export default function AllPosReports({ startDate, endDate, filters }) {
     };
 
     const applyFilters = () => {
-        router.get(route('admin.reports.pos.all'), dateFilters, { preserveState: true });
+        router.get(route('admin.reports.pos.index'), dateFilters, { preserveState: true });
     };
 
     const openReport = (routeName) => {

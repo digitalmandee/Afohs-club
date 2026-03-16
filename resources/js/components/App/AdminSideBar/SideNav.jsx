@@ -537,7 +537,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'POS Reports',
-                    path: route('admin.reports.pos.all'),
+                    path: route('admin.reports.pos.index'),
                     permission: 'reports.pos.view',
                 },
             ],
