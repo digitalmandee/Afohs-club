@@ -80,7 +80,7 @@ const MemberWiseReport = ({ bookings = {}, filters = {} }) => {
                     </Box>
                 </Box>
 
-                <RoomBookingFilter routeName="rooms.reports.member-wise" showStatus={true} showRoomType={true} showDates={{ booking: false, checkIn: true, checkOut: false }} dateLabels={{ checkIn: 'Check-In Date' }} />
+                <RoomBookingFilter routeName="rooms.reports.member-wise" showStatus={true} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} dateLabels={{ booking: 'Booking Date', checkIn: 'Check-In Date', checkOut: 'Check-Out Date' }} />
 
                 <Box sx={{ mb: 2 }}>
                     <Chip label={`Total Records: ${bookings.total || 0}`} color="primary" variant="outlined" />
@@ -92,18 +92,20 @@ const MemberWiseReport = ({ bookings = {}, filters = {} }) => {
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Member / Guest</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Check In</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Checkout</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Charges</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Advance/Security</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {bookingList.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                                             <Typography color="textSecondary">No data found. Try searching for a member.</Typography>
                                         </TableCell>
                                     </TableRow>
@@ -111,6 +113,7 @@ const MemberWiseReport = ({ bookings = {}, filters = {} }) => {
                                     bookingList.map((booking) => (
                                         <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                             <TableCell sx={{ fontWeight: 500 }}>{booking.booking_no || booking.booking_number}</TableCell>
+                                            <TableCell>{booking.booking_date || '-'}</TableCell>
                                             <TableCell>
                                                 <Typography variant="body2" fontWeight={500}>
                                                     {getGuestName(booking)}
@@ -122,9 +125,9 @@ const MemberWiseReport = ({ bookings = {}, filters = {} }) => {
                                             <TableCell>{booking.check_in_date}</TableCell>
                                             <TableCell>{booking.check_out_date}</TableCell>
                                             <TableCell>
-                                                {booking.room?.roomBooking_number} <br />
+                                                {booking.room?.name || '-'} <br />
                                                 <Typography variant="caption" color="text.secondary">
-                                                    {booking.room?.name} ({booking.room?.roomType?.name})
+                                                    {booking.room?.roomType?.name || '-'}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell>
@@ -140,6 +143,7 @@ const MemberWiseReport = ({ bookings = {}, filters = {} }) => {
                                                     </Typography>
                                                 </Box>
                                             </TableCell>
+                                            <TableCell>{Number(booking.security_deposit || 0) + Number(booking.advance_amount || 0)}</TableCell>
                                             <TableCell>
                                                 <Chip label={booking.status} size="small" color={getStatusColor(booking.status)} />
                                             </TableCell>

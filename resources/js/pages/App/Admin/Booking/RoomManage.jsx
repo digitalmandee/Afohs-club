@@ -276,6 +276,8 @@ const RoomScreen = ({ bookings }) => {
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Advance Paid</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Payment Account</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Mini Bar</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Other Charges</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Total Amount</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
@@ -318,6 +320,8 @@ const RoomScreen = ({ bookings }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{Math.round(booking.advance_amount)}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice?.payment_account || booking.invoice?.data?.payment_account || '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{Math.round(parseFloat(booking.mini_bar_items_sum_amount || 0))}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{Math.round(parseFloat(booking.other_charges_sum_amount || 0))}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{Math.round(booking.grand_total)}</TableCell>
                                                 {/* <TableCell>
                                                     <Badge
@@ -398,7 +402,7 @@ const RoomScreen = ({ bookings }) => {
                                     })
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={11} align="center">
+                                        <TableCell colSpan={20} align="center">
                                             No bookings found.
                                         </TableCell>
                                     </TableRow>

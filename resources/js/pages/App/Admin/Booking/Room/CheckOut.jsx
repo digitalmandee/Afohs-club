@@ -139,6 +139,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Nights</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Room Charges</TableCell>
 
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Mini Bar</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Other Charges</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Food Bill</TableCell>
 
@@ -157,7 +158,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                     {bookings.data && bookings.data.length > 0 ? (
                                         bookings.data.map((booking) => {
                                             const roomCharge = parseFloat(booking.room_charge || 0);
-                                            const otherCharges = parseFloat(booking.other_charges_sum_amount || 0) + parseFloat(booking.mini_bar_items_sum_amount || 0);
+                                            const miniBar = parseFloat(booking.mini_bar_items_sum_amount || 0);
+                                            const otherCharges = parseFloat(booking.other_charges_sum_amount || 0);
                                             const foodBill = (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
                                             const advance = parseFloat(booking.advance_amount || 0);
                                             const discount = parseFloat(booking.discount_value || 0);
@@ -168,15 +170,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                             const balance = Math.max(0, invoiceTotal - paid);
 
                                             const memberType = booking.member ? 'Member' : booking.corporateMember || booking.corporate_member ? 'Corporate' : booking.customer ? 'Guest' : booking.employee ? 'Employee' : 'Unknown';
-                                            const membershipNo = booking.member
-                                                ? booking.member.membership_no
-                                                : booking.corporateMember || booking.corporate_member
-                                                  ? (booking.corporateMember || booking.corporate_member).membership_no
-                                                  : booking.customer
-                                                    ? booking.customer.customer_no
-                                                    : booking.employee
-                                                      ? booking.employee.employee_id || booking.employee.employee_no || booking.employee.id
-                                                      : '-';
+                                            const membershipNo = booking.member ? booking.member.membership_no : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).membership_no : booking.customer ? booking.customer.customer_no : booking.employee ? booking.employee.employee_id || booking.employee.employee_no || booking.employee.id : '-';
 
                                             return (
                                                 <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
@@ -208,7 +202,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.nights || 1}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(roomCharge)}</TableCell>
 
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(booking.total_other_charges)}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(miniBar)}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(otherCharges)}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(foodBill)}</TableCell>
 
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(advance)}</TableCell>
@@ -240,7 +235,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         })
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={18} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
+                                            <TableCell colSpan={19} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
                                                 No bookings found
                                             </TableCell>
                                         </TableRow>
@@ -255,8 +250,10 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + (b.nights || 1), 0))}</TableCell>
                                         {/* Room Charges Total */}
                                         <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.room_charge || 0), 0))}</TableCell>
+                                        {/* Mini Bar Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.mini_bar_items_sum_amount || 0), 0))}</TableCell>
                                         {/* Other Charges Total */}
-                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + (parseFloat(b.other_charges_sum_amount || 0) + parseFloat(b.mini_bar_items_sum_amount || 0)), 0))}</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.other_charges_sum_amount || 0), 0))}</TableCell>
                                         {/* Food Bill Total */}
                                         <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + (b.orders || []).reduce((s, o) => s + parseFloat(o.total_price || 0), 0), 0))}</TableCell>
                                         {/* Advance Total */}

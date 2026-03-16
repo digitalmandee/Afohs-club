@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FinancialReceipt;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\RoomBookingMiniBarItem;
 use App\Models\RoomBookingOtherCharge;
 use App\Models\RoomType;
-use App\Models\FinancialReceipt;
+use App\Models\TransactionRelation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -37,15 +38,6 @@ class RoomReportController extends Controller
                 'color' => '#063455',
                 'route' => 'rooms.reports.payment-history',
                 'stats' => 'Payments'
-            ],
-            [
-                'id' => 3,
-                'title' => 'Booking Report',
-                'description' => 'Comprehensive list of all room bookings',
-                'icon' => 'BookOnline',
-                'color' => '#063455',
-                'route' => 'rooms.reports.booking',
-                'stats' => 'All Bookings'
             ],
             [
                 'id' => 4,
@@ -126,17 +118,53 @@ class RoomReportController extends Controller
     {
         $filters = $request->all();
 
-        if (empty($filters['check_in_from']) && empty($filters['check_in_to']) && empty($filters['date_from'])) {
-            $filters['check_in_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
-            $filters['check_in_to'] = Carbon::now()->format('Y-m-d');
+        if (
+            empty($filters['booking_date_from']) &&
+            empty($filters['booking_date_to']) &&
+            empty($filters['check_in_from']) &&
+            empty($filters['check_in_to']) &&
+            empty($filters['check_out_from']) &&
+            empty($filters['check_out_to'])
+        ) {
+            $filters['booking_date_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $filters['booking_date_to'] = Carbon::now()->format('Y-m-d');
         }
 
-        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember'])
+        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember', 'invoice', 'orders'])
             ->orderBy('check_in_date', 'desc');
 
         $query = $this->applyFilters($query, $filters);
 
         $bookings = $query->paginate(30)->appends($request->query());
+
+        $bookings->getCollection()->transform(function ($booking) {
+            $roomTotal = (float) ($booking->grand_total ?? 0);
+            $invoiceTotal = (float) ($booking->invoice?->total_price ?? 0);
+
+            $ordersTotal = collect($booking->orders ?? [])->sum(function ($o) {
+                return (float) ($o->total_price ?? $o->total ?? $o->grand_total ?? 0);
+            });
+            $paidOrders = collect($booking->orders ?? [])->filter(function ($o) {
+                return strtolower((string) ($o->payment_status ?? '')) === 'paid';
+            })->sum(function ($o) {
+                return (float) ($o->total_price ?? $o->total ?? $o->grand_total ?? 0);
+            });
+
+            $invoiceCoversOrders = $invoiceTotal > $roomTotal + 0.01;
+            $totalPayable = $invoiceCoversOrders ? $invoiceTotal : ($roomTotal + $ordersTotal);
+
+            $advanceSecurity = (float) ($booking->advance_amount ?? 0) + (float) ($booking->security_deposit ?? 0);
+            $invoicePaidTotal = (float) ($booking->invoice?->paid_amount ?? 0) + (float) ($booking->invoice?->advance_payment ?? 0);
+            $paidAfterAdvance = max(0, $invoicePaidTotal - (float) ($booking->advance_amount ?? 0));
+            $paidTotal = $paidAfterAdvance + ($invoiceCoversOrders ? 0 : $paidOrders);
+
+            $booking->computed_total = round($totalPayable);
+            $booking->computed_advance_security = round($advanceSecurity);
+            $booking->computed_paid_total = round($paidTotal);
+            $booking->computed_balance = round(max(0, $totalPayable - $advanceSecurity - $paidTotal));
+
+            return $booking;
+        });
 
         return Inertia::render('App/Admin/Rooms/Reports/DayWise', [
             'bookings' => $bookings,
@@ -149,97 +177,72 @@ class RoomReportController extends Controller
     public function dayWiseExport(Request $request)
     {
         $filters = $request->all();
-        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember'])->orderBy('check_in_date', 'desc');
+        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember', 'invoice', 'orders'])->orderBy('check_in_date', 'desc');
         $query = $this->applyFilters($query, $filters);
 
         return $this->streamCsv($query, function ($row) {
+            $roomTotal = (float) ($row->grand_total ?? 0);
+            $invoiceTotal = (float) ($row->invoice?->total_price ?? 0);
+            $ordersTotal = collect($row->orders ?? [])->sum(fn($o) => (float) ($o->total_price ?? $o->total ?? $o->grand_total ?? 0));
+            $paidOrders = collect($row->orders ?? [])->filter(fn($o) => strtolower((string) ($o->payment_status ?? '')) === 'paid')->sum(fn($o) => (float) ($o->total_price ?? $o->total ?? $o->grand_total ?? 0));
+
+            $invoiceCoversOrders = $invoiceTotal > $roomTotal + 0.01;
+            $totalPayable = $invoiceCoversOrders ? $invoiceTotal : ($roomTotal + $ordersTotal);
+
+            $advanceSecurity = (float) ($row->advance_amount ?? 0) + (float) ($row->security_deposit ?? 0);
+            $invoicePaidTotal = (float) ($row->invoice?->paid_amount ?? 0) + (float) ($row->invoice?->advance_payment ?? 0);
+            $paidAfterAdvance = max(0, $invoicePaidTotal - (float) ($row->advance_amount ?? 0));
+            $paidTotal = $paidAfterAdvance + ($invoiceCoversOrders ? 0 : $paidOrders);
+            $balance = max(0, $totalPayable - $advanceSecurity - $paidTotal);
+
             return [
                 $row->booking_no,
                 $this->getGuestName($row),
                 $row->room->name ?? 'N/A',
                 $row->room->roomType->name ?? 'N/A',
+                $row->booking_date,
                 $row->check_in_date,
                 $row->check_out_date,
                 $row->status,
-                $row->grand_total,
-                $row->paid_amount ?? 0,
-                $row->due_amount ?? 0
+                round($totalPayable),
+                round($advanceSecurity),
+                round($paidTotal),
+                round($balance),
             ];
-        }, ['Booking No', 'Guest', 'Room', 'Room Type', 'Check In', 'Check Out', 'Status', 'Total', 'Paid', 'Due'], 'day-wise-report.csv');
+        }, ['Booking No', 'Guest', 'Room', 'Room Type', 'Booking Date', 'Check In', 'Check Out', 'Status', 'Total', 'Advance/Security', 'Paid Total', 'Balance'], 'day-wise-report.csv');
     }
 
     public function dayWisePrint(Request $request)
     {
         $filters = $request->all();
-        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember'])->orderBy('check_in_date', 'desc');
+        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember', 'invoice', 'orders'])->orderBy('check_in_date', 'desc');
         $query = $this->applyFilters($query, $filters);
         $bookings = $query->get();
+
+        $bookings->transform(function ($booking) {
+            $roomTotal = (float) ($booking->grand_total ?? 0);
+            $invoiceTotal = (float) ($booking->invoice?->total_price ?? 0);
+
+            $ordersTotal = collect($booking->orders ?? [])->sum(fn($o) => (float) ($o->total_price ?? $o->total ?? $o->grand_total ?? 0));
+            $paidOrders = collect($booking->orders ?? [])->filter(fn($o) => strtolower((string) ($o->payment_status ?? '')) === 'paid')->sum(fn($o) => (float) ($o->total_price ?? $o->total ?? $o->grand_total ?? 0));
+
+            $invoiceCoversOrders = $invoiceTotal > $roomTotal + 0.01;
+            $totalPayable = $invoiceCoversOrders ? $invoiceTotal : ($roomTotal + $ordersTotal);
+
+            $advanceSecurity = (float) ($booking->advance_amount ?? 0) + (float) ($booking->security_deposit ?? 0);
+            $invoicePaidTotal = (float) ($booking->invoice?->paid_amount ?? 0) + (float) ($booking->invoice?->advance_payment ?? 0);
+            $paidAfterAdvance = max(0, $invoicePaidTotal - (float) ($booking->advance_amount ?? 0));
+            $paidTotal = $paidAfterAdvance + ($invoiceCoversOrders ? 0 : $paidOrders);
+
+            $booking->computed_total = round($totalPayable);
+            $booking->computed_advance_security = round($advanceSecurity);
+            $booking->computed_paid_total = round($paidTotal);
+            $booking->computed_balance = round(max(0, $totalPayable - $advanceSecurity - $paidTotal));
+
+            return $booking;
+        });
 
         return Inertia::render('App/Admin/Rooms/Reports/DayWisePrint', [
-            'bookings' => $bookings,
-            'filters' => $filters,
-            'generatedAt' => now()->format('d M Y, h:i A')
-        ]);
-    }
-
-    /**
-     * Booking Report
-     */
-    public function booking(Request $request)
-    {
-        $filters = $request->all();
-
-        if (empty($filters['check_in_from']) && empty($filters['check_in_to']) && empty($filters['booking_date_from'])) {
-            // If searching specifically, dates might be optional, but setting default avoids huge load
-            $filters['check_in_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
-            $filters['check_in_to'] = Carbon::now()->format('Y-m-d');
-        }
-
-        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember', 'invoice'])
-            ->orderBy('check_in_date', 'desc');
-
-        $query = $this->applyFilters($query, $filters);
-
-        $bookings = $query->paginate(30)->appends($request->query());
-
-        return Inertia::render('App/Admin/Rooms/Reports/Booking', [
-            'bookings' => $bookings,
-            'filters' => $filters,
-            'roomTypes' => RoomType::select('id', 'name')->get(),
-            'rooms' => Room::select('id', 'name')->get(),
-        ]);
-    }
-
-    public function bookingExport(Request $request)
-    {
-        $filters = $request->all();
-        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember', 'invoice'])->orderBy('check_in_date', 'desc');
-        $query = $this->applyFilters($query, $filters);
-
-        return $this->streamCsv($query, function ($row) {
-            return [
-                $row->booking_no,
-                $row->created_at->format('Y-m-d H:i'),
-                $this->getGuestName($row),
-                $row->room->name ?? 'N/A',
-                $row->check_in_date,
-                $row->check_out_date,
-                $row->status,
-                $row->grand_total,
-                $row->invoice->paid_amount ?? 0,
-                ($row->grand_total - ($row->invoice->paid_amount ?? 0))
-            ];
-        }, ['Booking No', 'Booking Date', 'Guest', 'Room', 'Check In', 'Check Out', 'Status', 'Total', 'Paid', 'Due'], 'booking-report.csv');
-    }
-
-    public function bookingPrint(Request $request)
-    {
-        $filters = $request->all();
-        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember', 'invoice'])->orderBy('check_in_date', 'desc');
-        $query = $this->applyFilters($query, $filters);
-        $bookings = $query->get();
-
-        return Inertia::render('App/Admin/Rooms/Reports/BookingPrint', [
             'bookings' => $bookings,
             'filters' => $filters,
             'generatedAt' => now()->format('d M Y, h:i A')
@@ -253,28 +256,17 @@ class RoomReportController extends Controller
     {
         $filters = $request->all();
 
-        if (empty($filters['booking_date_from']) && empty($filters['booking_date_to'])) {
+        if (empty($filters['booking_date_from']) && empty($filters['booking_date_to']) && empty($filters['check_in_from']) && empty($filters['check_in_to']) && empty($filters['check_out_from']) && empty($filters['check_out_to'])) {
             $filters['booking_date_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
             $filters['booking_date_to'] = Carbon::now()->format('Y-m-d');
         }
 
         $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember', 'invoice'])
             ->whereIn('status', ['cancelled', 'refunded'])
-            ->orderBy('updated_at', 'desc');
+            ->orderByDesc('booking_date')
+            ->orderByDesc('id');
 
-        // Apply filters specifically for cancelled report
-        if (!empty($filters['booking_date_from'])) {
-            $query->whereDate('updated_at', '>=', $filters['booking_date_from']);
-        }
-        if (!empty($filters['booking_date_to'])) {
-            $query->whereDate('updated_at', '<=', $filters['booking_date_to']);
-        }
-
-        $filtersForApply = $filters;
-        unset($filtersForApply['booking_date_from']);
-        unset($filtersForApply['booking_date_to']);
-
-        $query = $this->applyFilters($query, $filtersForApply);
+        $query = $this->applyFilters($query, $filters);
 
         $bookings = $query->paginate(30)->appends($request->query());
 
@@ -291,33 +283,26 @@ class RoomReportController extends Controller
         $filters = $request->all();
         $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember', 'invoice'])
             ->whereIn('status', ['cancelled', 'refunded'])
-            ->orderBy('updated_at', 'desc');
+            ->orderByDesc('booking_date')
+            ->orderByDesc('id');
 
-        if (!empty($filters['booking_date_from'])) {
-            $query->whereDate('updated_at', '>=', $filters['booking_date_from']);
-        }
-        if (!empty($filters['booking_date_to'])) {
-            $query->whereDate('updated_at', '<=', $filters['booking_date_to']);
-        }
-
-        $filtersForApply = $filters;
-        unset($filtersForApply['booking_date_from']);
-        unset($filtersForApply['booking_date_to']);
-
-        $query = $this->applyFilters($query, $filtersForApply);
+        $query = $this->applyFilters($query, $filters);
 
         return $this->streamCsv($query, function ($row) {
             return [
                 $row->booking_no,
                 $this->getGuestName($row),
                 $row->room->name ?? 'N/A',
-                $row->updated_at->format('Y-m-d'),  // Cancelled Date
-                $row->status,
+                $row->room->roomType->name ?? 'N/A',
+                $row->booking_date,
+                $row->check_in_date,
+                $row->check_out_date,
+                $row->cancellation_reason ?? '',
                 $row->grand_total,
                 $row->security_deposit ?? 0,
                 $row->advance_amount ?? 0
             ];
-        }, ['Booking No', 'Guest', 'Room', 'Cancelled Date', 'Status', 'Total', 'Security', 'Advance'], 'cancelled-report.csv');
+        }, ['Booking No', 'Guest', 'Room', 'Room Type', 'Booking Date', 'Check In', 'Check Out', 'Cancellation Reason', 'Total', 'Security', 'Advance'], 'cancelled-report.csv');
     }
 
     public function cancelledPrint(Request $request)
@@ -325,18 +310,10 @@ class RoomReportController extends Controller
         $filters = $request->all();
         $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember', 'invoice'])
             ->whereIn('status', ['cancelled', 'refunded'])
-            ->orderBy('updated_at', 'desc');
+            ->orderByDesc('booking_date')
+            ->orderByDesc('id');
 
-        if (!empty($filters['booking_date_from'])) {
-            $query->whereDate('updated_at', '>=', $filters['booking_date_from']);
-        }
-        if (!empty($filters['booking_date_to'])) {
-            $query->whereDate('updated_at', '<=', $filters['booking_date_to']);
-        }
-        $filtersForApply = $filters;
-        unset($filtersForApply['booking_date_from']);
-        unset($filtersForApply['booking_date_to']);
-        $query = $this->applyFilters($query, $filtersForApply);
+        $query = $this->applyFilters($query, $filters);
 
         $bookings = $query->get();
 
@@ -541,24 +518,93 @@ class RoomReportController extends Controller
     public function paymentHistory(Request $request)
     {
         $filters = $request->all();
-        if (empty($filters['check_in_from']) && empty($filters['check_in_to'])) {
-            $filters['check_in_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
-            $filters['check_in_to'] = Carbon::now()->format('Y-m-d');
+
+        if (empty($filters['booking_date_from']) && empty($filters['booking_date_to'])) {
+            $today = Carbon::today()->format('Y-m-d');
+            $filters['booking_date_from'] = $today;
+            $filters['booking_date_to'] = $today;
         }
 
-        $query = RoomBooking::has('invoice')
-            ->with(['room.roomType', 'member', 'customer', 'corporateMember', 'invoice.transactions'])
-            ->whereHas('invoice', function ($q) {
-                $q->where('status', 'paid')->orWhere('paid_amount', '>', 0);
-            })
-            ->orderBy('check_in_date', 'desc');
+        $cutoff = $filters['booking_date_to'] ?? $filters['booking_date_from'] ?? Carbon::today()->format('Y-m-d');
+        $filtersForBookings = $filters;
+        unset($filtersForBookings['booking_date_from'], $filtersForBookings['booking_date_to']);
 
-        $query = $this->applyFilters($query, $filters);
-        $bookings = $query->paginate(30)->appends($request->query());
+        $query = RoomBooking::query()
+            ->with([
+                'room:id,name,room_type_id',
+                'room.roomType:id,name',
+                'invoice:id,invoiceable_id,invoiceable_type,invoice_no,status,paid_amount,total_price,advance_payment',
+            ])
+            ->whereIn('status', ['checked_out', 'completed'])
+            ->where('advance_amount', '>', 0)
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', 'paid');
+            })
+            ->orderBy('room_id')
+            ->orderBy('check_out_date', 'desc')
+            ->orderBy('check_out_time', 'desc');
+
+        $query = $this->applyFilters($query, $filtersForBookings);
+
+        $bookings = $query->get();
+
+        $rows = $bookings
+            ->groupBy(function ($b) {
+                return $b->room?->name ?? 'N/A';
+            })
+            ->map(function ($group, $roomName) use ($cutoff) {
+                $roomType = $group->first()?->room?->roomType?->name ?? '-';
+
+                $items = $group->map(function ($booking) use ($cutoff) {
+                    $invoice = $booking->invoice;
+                    $invoiceTotal = (float) ($invoice?->total_price ?? 0);
+
+                    $paidTillDate = 0;
+                    if ($invoice) {
+                        $paidTillDate = (float) TransactionRelation::query()
+                            ->where('invoice_id', $invoice->id)
+                            ->whereHas('receipt', function ($q) use ($cutoff) {
+                                $q->whereDate('receipt_date', '<=', $cutoff);
+                            })
+                            ->sum('amount');
+                    }
+
+                    $advanceSecurity = (float) ($booking->advance_amount ?? 0) + (float) ($booking->security_deposit ?? 0);
+                    $paidExAdvance = max(0, $paidTillDate - (float) ($booking->advance_amount ?? 0));
+                    $balance = max(0, $invoiceTotal - $advanceSecurity - $paidExAdvance);
+
+                    return [
+                        'booking_id' => $booking->id,
+                        'booking_no' => $booking->booking_no,
+                        'check_in_date' => $booking->check_in_date,
+                        'check_out_date' => $booking->check_out_date,
+                        'advance_security' => round($advanceSecurity),
+                        'total' => round($invoiceTotal),
+                        'paid' => round($paidExAdvance),
+                        'balance' => round($balance),
+                    ];
+                })->values();
+
+                $totals = [
+                    'advance_security' => (int) $items->sum('advance_security'),
+                    'total' => (int) $items->sum('total'),
+                    'paid' => (int) $items->sum('paid'),
+                    'balance' => (int) $items->sum('balance'),
+                ];
+
+                return [
+                    'room_name' => $roomName,
+                    'room_type' => $roomType,
+                    'items' => $items,
+                    'totals' => $totals,
+                ];
+            })
+            ->values();
 
         return Inertia::render('App/Admin/Rooms/Reports/PaymentHistory', [
-            'bookings' => $bookings,
+            'rows' => $rows,
             'filters' => $filters,
+            'cutoff' => $cutoff,
             'roomTypes' => RoomType::select('id', 'name')->get(),
             'rooms' => Room::select('id', 'name')->get(),
         ]);
@@ -567,44 +613,150 @@ class RoomReportController extends Controller
     public function paymentHistoryExport(Request $request)
     {
         $filters = $request->all();
-        $query = RoomBooking::has('invoice')
-            ->with(['room.roomType', 'member', 'customer', 'corporateMember', 'invoice.transactions'])
-            ->whereHas('invoice', function ($q) {
-                $q->where('status', 'paid')->orWhere('paid_amount', '>', 0);
-            })
-            ->orderBy('check_in_date', 'desc');
-        $query = $this->applyFilters($query, $filters);
 
-        return $this->streamCsv($query, function ($row) {
+        if (empty($filters['booking_date_from']) && empty($filters['booking_date_to'])) {
+            $today = Carbon::today()->format('Y-m-d');
+            $filters['booking_date_from'] = $today;
+            $filters['booking_date_to'] = $today;
+        }
+
+        $cutoff = $filters['booking_date_to'] ?? $filters['booking_date_from'] ?? Carbon::today()->format('Y-m-d');
+        $filtersForBookings = $filters;
+        unset($filtersForBookings['booking_date_from'], $filtersForBookings['booking_date_to']);
+
+        $query = RoomBooking::query()
+            ->with([
+                'room:id,name,room_type_id',
+                'room.roomType:id,name',
+                'invoice:id,invoiceable_id,invoiceable_type,invoice_no,status,paid_amount,total_price,advance_payment',
+            ])
+            ->whereIn('status', ['checked_out', 'completed'])
+            ->where('advance_amount', '>', 0)
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', 'paid');
+            })
+            ->orderBy('room_id')
+            ->orderBy('check_out_date', 'desc');
+
+        $query = $this->applyFilters($query, $filtersForBookings);
+
+        return $this->streamCsv($query, function ($row) use ($cutoff) {
+            $invoiceTotal = (float) ($row->invoice?->total_price ?? 0);
+            $paidTillDate = 0;
+            if ($row->invoice) {
+                $paidTillDate = (float) TransactionRelation::query()
+                    ->where('invoice_id', $row->invoice->id)
+                    ->whereHas('receipt', function ($q) use ($cutoff) {
+                        $q->whereDate('receipt_date', '<=', $cutoff);
+                    })
+                    ->sum('amount');
+            }
+
+            $advanceSecurity = (float) ($row->advance_amount ?? 0) + (float) ($row->security_deposit ?? 0);
+            $paidExAdvance = max(0, $paidTillDate - (float) ($row->advance_amount ?? 0));
+            $balance = max(0, $invoiceTotal - $advanceSecurity - $paidExAdvance);
+
             return [
-                $row->booking_no,
-                $this->getGuestName($row),
                 $row->room->name ?? 'N/A',
+                $row->room->roomType->name ?? 'N/A',
+                $row->booking_no,
                 $row->check_in_date,
-                $row->invoice->invoice_no ?? 'N/A',
-                $row->grand_total,
-                $row->invoice->paid_amount ?? 0,
-                ($row->grand_total - ($row->invoice->paid_amount ?? 0))
+                $row->check_out_date,
+                round($invoiceTotal),
+                round($advanceSecurity),
+                round($paidExAdvance),
+                round($balance),
             ];
-        }, ['Booking No', 'Guest', 'Room', 'Check In', 'Invoice No', 'Total', 'Paid', 'Due'], 'payment-history-report.csv');
+        }, ['Room', 'Room Type', 'Booking No', 'Check In', 'Check Out', 'Total', 'Advance/Security', 'Paid', 'Balance'], 'payment-history-report.csv');
     }
 
     public function paymentHistoryPrint(Request $request)
     {
         $filters = $request->all();
-        $query = RoomBooking::has('invoice')
-            ->with(['room.roomType', 'member', 'customer', 'corporateMember', 'invoice.transactions'])
-            ->whereHas('invoice', function ($q) {
-                $q->where('status', 'paid')->orWhere('paid_amount', '>', 0);
-            })
-            ->orderBy('check_in_date', 'desc');
 
-        $query = $this->applyFilters($query, $filters);
+        if (empty($filters['booking_date_from']) && empty($filters['booking_date_to'])) {
+            $today = Carbon::today()->format('Y-m-d');
+            $filters['booking_date_from'] = $today;
+            $filters['booking_date_to'] = $today;
+        }
+
+        $cutoff = $filters['booking_date_to'] ?? $filters['booking_date_from'] ?? Carbon::today()->format('Y-m-d');
+        $filtersForBookings = $filters;
+        unset($filtersForBookings['booking_date_from'], $filtersForBookings['booking_date_to']);
+
+        $query = RoomBooking::query()
+            ->with([
+                'room:id,name,room_type_id',
+                'room.roomType:id,name',
+                'invoice:id,invoiceable_id,invoiceable_type,invoice_no,status,paid_amount,total_price,advance_payment',
+            ])
+            ->whereIn('status', ['checked_out', 'completed'])
+            ->where('advance_amount', '>', 0)
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', 'paid');
+            })
+            ->orderBy('room_id')
+            ->orderBy('check_out_date', 'desc');
+
+        $query = $this->applyFilters($query, $filtersForBookings);
+
         $bookings = $query->get();
 
+        $rows = $bookings
+            ->groupBy(function ($b) {
+                return $b->room?->name ?? 'N/A';
+            })
+            ->map(function ($group, $roomName) use ($cutoff) {
+                $roomType = $group->first()?->room?->roomType?->name ?? '-';
+
+                $items = $group->map(function ($booking) use ($cutoff) {
+                    $invoiceTotal = (float) ($booking->invoice?->total_price ?? 0);
+                    $paidTillDate = 0;
+                    if ($booking->invoice) {
+                        $paidTillDate = (float) TransactionRelation::query()
+                            ->where('invoice_id', $booking->invoice->id)
+                            ->whereHas('receipt', function ($q) use ($cutoff) {
+                                $q->whereDate('receipt_date', '<=', $cutoff);
+                            })
+                            ->sum('amount');
+                    }
+
+                    $advanceSecurity = (float) ($booking->advance_amount ?? 0) + (float) ($booking->security_deposit ?? 0);
+                    $paidExAdvance = max(0, $paidTillDate - (float) ($booking->advance_amount ?? 0));
+                    $balance = max(0, $invoiceTotal - $advanceSecurity - $paidExAdvance);
+
+                    return [
+                        'booking_id' => $booking->id,
+                        'booking_no' => $booking->booking_no,
+                        'check_in_date' => $booking->check_in_date,
+                        'check_out_date' => $booking->check_out_date,
+                        'advance_security' => round($advanceSecurity),
+                        'total' => round($invoiceTotal),
+                        'paid' => round($paidExAdvance),
+                        'balance' => round($balance),
+                    ];
+                })->values();
+
+                $totals = [
+                    'advance_security' => (int) $items->sum('advance_security'),
+                    'total' => (int) $items->sum('total'),
+                    'paid' => (int) $items->sum('paid'),
+                    'balance' => (int) $items->sum('balance'),
+                ];
+
+                return [
+                    'room_name' => $roomName,
+                    'room_type' => $roomType,
+                    'items' => $items,
+                    'totals' => $totals,
+                ];
+            })
+            ->values();
+
         return Inertia::render('App/Admin/Rooms/Reports/PaymentHistoryPrint', [
-            'bookings' => $bookings,
+            'rows' => $rows,
             'filters' => $filters,
+            'cutoff' => $cutoff,
             'generatedAt' => now()->format('d M Y, h:i A')
         ]);
     }
@@ -634,10 +786,12 @@ class RoomReportController extends Controller
             ->when(!empty($filters['search']), function ($q) use ($filters) {
                 $search = $filters['search'];
                 $q->where(function ($inner) use ($search) {
-                    $inner->where('receipt_no', 'like', "%{$search}%")
+                    $inner
+                        ->where('receipt_no', 'like', "%{$search}%")
                         ->orWhere('remarks', 'like', "%{$search}%")
                         ->orWhereHas('links.invoice.invoiceable', function ($invoiceableQ) use ($search) {
-                            $invoiceableQ->where('booking_no', 'like', "%{$search}%")
+                            $invoiceableQ
+                                ->where('booking_no', 'like', "%{$search}%")
                                 ->orWhere('guest_first_name', 'like', "%{$search}%")
                                 ->orWhere('guest_last_name', 'like', "%{$search}%");
                         });
@@ -718,89 +872,69 @@ class RoomReportController extends Controller
     public function miniBar(Request $request)
     {
         $filters = $request->all();
-        $dateFrom = $request->date_from ?? $request->booking_date_from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
-        $dateTo = $request->date_to ?? $request->booking_date_to ?? Carbon::now()->format('Y-m-d');
+        if (empty($filters['booking_date_from']) && empty($filters['booking_date_to']) && empty($filters['check_in_from']) && empty($filters['check_in_to']) && empty($filters['check_out_from']) && empty($filters['check_out_to'])) {
+            $filters['booking_date_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $filters['booking_date_to'] = Carbon::now()->format('Y-m-d');
+        }
 
-        $query = RoomBookingMiniBarItem::with(['roomBooking.room', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
-            ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
+        $query = RoomBookingMiniBarItem::with(['roomBooking.room.roomType', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
             ->orderBy('created_at', 'desc');
 
-        // Apply implicit booking filters
-        if (!empty($filters['room_type']) || !empty($filters['status']) || !empty($filters['search'])) {
-            $filtersForBooking = $filters;
-            // Unset date filters so we don't filter booking creation date
-            unset($filtersForBooking['booking_date_from'], $filtersForBooking['booking_date_to']);
-
-            $query->whereHas('roomBooking', function ($q) use ($filtersForBooking) {
-                $this->applyFilters($q, $filtersForBooking);
-            });
-        }
+        $query->whereHas('roomBooking', function ($q) use ($filters) {
+            $this->applyFilters($q, $filters);
+        });
 
         $items = $query->paginate(30)->appends($request->query());
 
         return Inertia::render('App/Admin/Rooms/Reports/MiniBar', [
             'items' => $items,
-            'filters' => compact('dateFrom', 'dateTo')
+            'filters' => $filters
         ]);
     }
 
     public function miniBarExport(Request $request)
     {
         $filters = $request->all();
-        $dateFrom = $request->date_from ?? $request->booking_date_from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
-        $dateTo = $request->date_to ?? $request->booking_date_to ?? Carbon::now()->format('Y-m-d');
-
-        $query = RoomBookingMiniBarItem::with(['roomBooking.room', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
-            ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
+        $query = RoomBookingMiniBarItem::with(['roomBooking.room.roomType', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
             ->orderBy('created_at', 'desc');
 
-        if (!empty($filters['room_type']) || !empty($filters['status']) || !empty($filters['search'])) {
-            $filtersForBooking = $filters;
-            unset($filtersForBooking['booking_date_from'], $filtersForBooking['booking_date_to']);
-
-            $query->whereHas('roomBooking', function ($q) use ($filtersForBooking) {
-                $this->applyFilters($q, $filtersForBooking);
-            });
-        }
+        $query->whereHas('roomBooking', function ($q) use ($filters) {
+            $this->applyFilters($q, $filters);
+        });
 
         return $this->streamCsv($query, function ($row) {
             return [
                 $row->roomBooking->booking_no ?? 'N/A',
                 $this->getGuestName($row->roomBooking),
                 $row->roomBooking->room->name ?? 'N/A',
+                $row->roomBooking->room->roomType->name ?? 'N/A',
+                $row->roomBooking->booking_date ?? null,
+                $row->roomBooking->check_in_date ?? null,
+                $row->roomBooking->check_out_date ?? null,
                 $row->item,
                 $row->qty,
                 $row->amount,
                 $row->total,
                 $row->created_at->format('Y-m-d')
             ];
-        }, ['Booking No', 'Guest', 'Room', 'Item', 'Qty', 'Price', 'Total', 'Date'], 'mini-bar-report.csv');
+        }, ['Booking No', 'Guest', 'Room', 'Room Type', 'Booking Date', 'Check In', 'Check Out', 'Item', 'Qty', 'Price', 'Total', 'Item Date'], 'mini-bar-report.csv');
     }
 
     public function miniBarPrint(Request $request)
     {
         $filters = $request->all();
-        $dateFrom = $request->date_from ?? $request->booking_date_from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
-        $dateTo = $request->date_to ?? $request->booking_date_to ?? Carbon::now()->format('Y-m-d');
-
-        $query = RoomBookingMiniBarItem::with(['roomBooking.room', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
-            ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
+        $query = RoomBookingMiniBarItem::with(['roomBooking.room.roomType', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
             ->orderBy('created_at', 'desc');
 
-        if (!empty($filters['room_type']) || !empty($filters['status']) || !empty($filters['search'])) {
-            $filtersForBooking = $filters;
-            unset($filtersForBooking['booking_date_from'], $filtersForBooking['booking_date_to']);
-
-            $query->whereHas('roomBooking', function ($q) use ($filtersForBooking) {
-                $this->applyFilters($q, $filtersForBooking);
-            });
-        }
+        $query->whereHas('roomBooking', function ($q) use ($filters) {
+            $this->applyFilters($q, $filters);
+        });
 
         $items = $query->get();
 
         return Inertia::render('App/Admin/Rooms/Reports/MiniBarPrint', [
             'items' => $items,
-            'filters' => compact('dateFrom', 'dateTo'),
+            'filters' => $filters,
             'generatedAt' => now()->format('d M Y, h:i A')
         ]);
     }
@@ -811,88 +945,70 @@ class RoomReportController extends Controller
     public function complementary(Request $request)
     {
         $filters = $request->all();
-        $dateFrom = $request->date_from ?? $request->booking_date_from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
-        $dateTo = $request->date_to ?? $request->booking_date_to ?? Carbon::now()->format('Y-m-d');
+        if (empty($filters['booking_date_from']) && empty($filters['booking_date_to']) && empty($filters['check_in_from']) && empty($filters['check_in_to']) && empty($filters['check_out_from']) && empty($filters['check_out_to'])) {
+            $filters['booking_date_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $filters['booking_date_to'] = Carbon::now()->format('Y-m-d');
+        }
 
-        $query = RoomBookingOtherCharge::with(['roomBooking.room', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
+        $query = RoomBookingOtherCharge::with(['roomBooking.room.roomType', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
             ->where('is_complementary', true)
-            ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
             ->orderBy('created_at', 'desc');
 
-        if (!empty($filters['room_type']) || !empty($filters['status']) || !empty($filters['search'])) {
-            $filtersForBooking = $filters;
-            unset($filtersForBooking['booking_date_from'], $filtersForBooking['booking_date_to']);
-
-            $query->whereHas('roomBooking', function ($q) use ($filtersForBooking) {
-                $this->applyFilters($q, $filtersForBooking);
-            });
-        }
+        $query->whereHas('roomBooking', function ($q) use ($filters) {
+            $this->applyFilters($q, $filters);
+        });
 
         $items = $query->paginate(30)->appends($request->query());
 
         return Inertia::render('App/Admin/Rooms/Reports/Complementary', [
             'items' => $items,
-            'filters' => compact('dateFrom', 'dateTo')
+            'filters' => $filters
         ]);
     }
 
     public function complementaryExport(Request $request)
     {
         $filters = $request->all();
-        $dateFrom = $request->date_from ?? $request->booking_date_from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
-        $dateTo = $request->date_to ?? $request->booking_date_to ?? Carbon::now()->format('Y-m-d');
-
-        $query = RoomBookingOtherCharge::with(['roomBooking.room', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
+        $query = RoomBookingOtherCharge::with(['roomBooking.room.roomType', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
             ->where('is_complementary', true)
-            ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
             ->orderBy('created_at', 'desc');
 
-        if (!empty($filters['room_type']) || !empty($filters['status']) || !empty($filters['search'])) {
-            $filtersForBooking = $filters;
-            unset($filtersForBooking['booking_date_from'], $filtersForBooking['booking_date_to']);
-
-            $query->whereHas('roomBooking', function ($q) use ($filtersForBooking) {
-                $this->applyFilters($q, $filtersForBooking);
-            });
-        }
+        $query->whereHas('roomBooking', function ($q) use ($filters) {
+            $this->applyFilters($q, $filters);
+        });
 
         return $this->streamCsv($query, function ($row) {
+            $booking = $row->roomBooking;
             return [
-                $row->roomBooking->booking_no ?? 'N/A',
-                $this->getGuestName($row->roomBooking),
-                $row->roomBooking->room->name ?? 'N/A',
+                $booking?->booking_date,
+                $booking?->room?->roomType?->name ?? 'N/A',
+                $booking?->room?->name ?? 'N/A',
+                $this->getGuestName($booking),
+                $row->type,
                 $row->details,
                 $row->amount,
-                $row->created_at->format('Y-m-d')
+                $booking?->booked_by ?? '',
+                $booking?->status ?? '',
             ];
-        }, ['Booking No', 'Guest', 'Room', 'Description', 'Amount', 'Date'], 'complementary-report.csv');
+        }, ['Booking Date', 'Room Type', 'Room', 'Guest', 'Charges Type', 'Description', 'Amount', 'Booked By', 'Status'], 'complementary-report.csv');
     }
 
     public function complementaryPrint(Request $request)
     {
         $filters = $request->all();
-        $dateFrom = $request->date_from ?? $request->booking_date_from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
-        $dateTo = $request->date_to ?? $request->booking_date_to ?? Carbon::now()->format('Y-m-d');
-
-        $query = RoomBookingOtherCharge::with(['roomBooking.room', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
+        $query = RoomBookingOtherCharge::with(['roomBooking.room.roomType', 'roomBooking.member', 'roomBooking.customer', 'roomBooking.corporateMember'])
             ->where('is_complementary', true)
-            ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
             ->orderBy('created_at', 'desc');
 
-        if (!empty($filters['room_type']) || !empty($filters['status']) || !empty($filters['search'])) {
-            $filtersForBooking = $filters;
-            unset($filtersForBooking['booking_date_from'], $filtersForBooking['booking_date_to']);
-
-            $query->whereHas('roomBooking', function ($q) use ($filtersForBooking) {
-                $this->applyFilters($q, $filtersForBooking);
-            });
-        }
+        $query->whereHas('roomBooking', function ($q) use ($filters) {
+            $this->applyFilters($q, $filters);
+        });
 
         $items = $query->get();
 
         return Inertia::render('App/Admin/Rooms/Reports/ComplementaryPrint', [
             'items' => $items,
-            'filters' => compact('dateFrom', 'dateTo'),
+            'filters' => $filters,
             'generatedAt' => now()->format('d M Y, h:i A')
         ]);
     }
@@ -1015,12 +1131,12 @@ class RoomReportController extends Controller
             $query->whereIn('room_id', $roomIds);
         }
 
-        // Booking Date (Created At)
+        // Booking Date
         if (!empty($filters['booking_date_from'])) {
-            $query->whereDate('created_at', '>=', $filters['booking_date_from']);
+            $query->whereDate('booking_date', '>=', $filters['booking_date_from']);
         }
         if (!empty($filters['booking_date_to'])) {
-            $query->whereDate('created_at', '<=', $filters['booking_date_to']);
+            $query->whereDate('booking_date', '<=', $filters['booking_date_to']);
         }
 
         // Check In Date
@@ -1040,13 +1156,46 @@ class RoomReportController extends Controller
         }
 
         // Status Filter
+        $rawStatuses = null;
         if (!empty($filters['booking_status'])) {
-            $statuses = explode(',', $filters['booking_status']);
-            $query->whereIn('status', $statuses);
-        } else if (!empty($filters['status'])) {
-            // Some filters might send 'status' key
-            $statuses = explode(',', $filters['status']);
-            $query->whereIn('status', $statuses);
+            $rawStatuses = $filters['booking_status'];
+        } elseif (!empty($filters['status'])) {
+            $rawStatuses = $filters['status'];
+        }
+
+        if (!empty($rawStatuses)) {
+            $statuses = collect(explode(',', (string) $rawStatuses))
+                ->map(fn($s) => strtolower(trim($s)))
+                ->filter()
+                ->values();
+
+            $bookingStatuses = $statuses->filter(function ($s) {
+                return in_array($s, ['pending', 'confirmed', 'checked_in', 'checked_out', 'completed', 'cancelled', 'refunded', 'no_show'], true);
+            })->values();
+
+            $paymentStatuses = $statuses->filter(function ($s) {
+                return in_array($s, ['paid', 'unpaid', 'advance_paid'], true);
+            })->values();
+
+            if ($bookingStatuses->isNotEmpty()) {
+                $query->whereIn('status', $bookingStatuses->all());
+            }
+
+            if ($paymentStatuses->isNotEmpty()) {
+                $query->whereHas('invoice', function ($q) use ($paymentStatuses) {
+                    $q->where(function ($inner) use ($paymentStatuses) {
+                        if ($paymentStatuses->contains('paid')) {
+                            $inner->orWhere('status', 'paid');
+                        }
+                        if ($paymentStatuses->contains('unpaid')) {
+                            $inner->orWhere('status', 'unpaid');
+                        }
+                        if ($paymentStatuses->contains('advance_paid')) {
+                            $inner->orWhere('paid_amount', '>', 0);
+                        }
+                    });
+                });
+            }
         }
 
         return $query;

@@ -665,11 +665,6 @@ Route::middleware(['auth:web', 'verified', 'permission:admin.access'])->group(fu
                 // Receivables
                 Route::get('receivables', [\App\Http\Controllers\RoomReportController::class, 'receivables'])->name('rooms.reports.receivables');
 
-                // Booking
-                Route::get('booking', [\App\Http\Controllers\RoomReportController::class, 'booking'])->name('rooms.reports.booking')->middleware('super.admin:rooms.reports.booking');
-                Route::get('booking/print', [\App\Http\Controllers\RoomReportController::class, 'bookingPrint'])->name('rooms.reports.booking.print')->middleware('super.admin:rooms.reports.booking');
-                Route::get('booking/export', [\App\Http\Controllers\RoomReportController::class, 'bookingExport'])->name('rooms.reports.booking.export')->middleware('permission:rooms.reports.booking');
-
                 // Cancelled
                 Route::get('cancelled', [\App\Http\Controllers\RoomReportController::class, 'cancelled'])->name('rooms.reports.cancelled')->middleware('super.admin:rooms.reports.cancelled');
                 Route::get('cancelled/print', [\App\Http\Controllers\RoomReportController::class, 'cancelledPrint'])->name('rooms.reports.cancelled.print')->middleware('super.admin:rooms.reports.cancelled');

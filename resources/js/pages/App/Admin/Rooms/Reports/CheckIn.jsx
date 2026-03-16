@@ -23,14 +23,6 @@ const CheckInReport = ({ bookings = {}, filters = {} }) => {
         window.location.href = exportUrl;
     };
 
-    const getStatusColor = (status) => {
-        const colors = {
-            checked_in: 'success',
-            completed: 'default',
-        };
-        return colors[status] || 'default';
-    };
-
     const getGuestName = (booking) => {
         if (booking.customer) return booking.customer.name;
         if (booking.member) return booking.member.full_name;
@@ -64,29 +56,19 @@ const CheckInReport = ({ bookings = {}, filters = {} }) => {
                         <IconButton onClick={() => router.visit(route('rooms.reports'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
-                            Check-in Report
-                        </Typography>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Check-in Report</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<FileDownloadIcon />}
-                            onClick={handleExport}
-                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Export
                         </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<PrintIcon />}
-                            onClick={handlePrint}
-                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Print
                         </Button>
                     </Box>
                 </Box>
 
-                <RoomBookingFilter routeName="rooms.reports.check-in" showStatus={false} showRoomType={true} showDates={{ booking: false, checkIn: true, checkOut: false }} dateLabels={{ checkIn: 'Check-In Date' }} />
+                <RoomBookingFilter routeName="rooms.reports.check-in" showStatus={false} showRoomType={true} showDates={{ booking: false, checkIn: true, checkOut: true }} dateLabels={{ checkIn: 'Check-In Date', checkOut: 'Check-Out Date' }} dateMode={{ checkIn: 'single', checkOut: 'single' }} />
 
                 <Box sx={{ mb: 2 }}>
                     <Chip label={`Total Records: ${bookings.total || 0}`} color="primary" variant="outlined" />
@@ -98,19 +80,21 @@ const CheckInReport = ({ bookings = {}, filters = {} }) => {
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking No</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Member / Guest</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Membership No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Member Type</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Check In Date</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Check In Time</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Check Out Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Nights</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booked By</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Advance/Security</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {bookingList.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                                             <Typography color="textSecondary">No data found</Typography>
                                         </TableCell>
                                     </TableRow>
@@ -118,20 +102,15 @@ const CheckInReport = ({ bookings = {}, filters = {} }) => {
                                     bookingList.map((booking) => (
                                         <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                             <TableCell>{booking.booking_no || booking.booking_number || booking.id}</TableCell>
-                                            <TableCell>
-                                                {booking.room?.name || '-'} <br />
-                                                <Typography variant="caption" color="textSecondary">
-                                                    {booking.room?.roomType?.name || booking.room?.room_type?.name}
-                                                </Typography>
-                                            </TableCell>
                                             <TableCell>{getGuestName(booking)}</TableCell>
                                             <TableCell>{getMembershipNo(booking)}</TableCell>
                                             <TableCell>{getMemberType(booking)}</TableCell>
                                             <TableCell>{booking.check_in_date}</TableCell>
-                                            <TableCell>{booking.check_in_time || '-'}</TableCell>
-                                            <TableCell>
-                                                <Chip label={booking.status} size="small" color={getStatusColor(booking.status)} />
-                                            </TableCell>
+                                            <TableCell>{booking.check_out_date || '-'}</TableCell>
+                                            <TableCell>{booking.nights || 1}</TableCell>
+                                            <TableCell>{booking.booked_by || '-'}</TableCell>
+                                            <TableCell>{booking.grand_total || 0}</TableCell>
+                                            <TableCell>{Number(booking.security_deposit || 0) + Number(booking.advance_amount || 0)}</TableCell>
                                         </TableRow>
                                     ))
                                 )}

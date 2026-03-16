@@ -442,7 +442,14 @@ class BookingController extends Controller
 
             DB::commit();
 
-            return response()->json(['success' => true, 'message' => 'Payment successful']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment successful',
+                'invoice_id' => $invoice->id,
+                'invoice_no' => $invoice->invoice_no,
+                'invoice_type' => $invoice->invoice_type,
+                'booking_id' => ($invoice->invoice_type === 'room_booking' && $invoice->invoiceable_id) ? (int) $invoice->invoiceable_id : null,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

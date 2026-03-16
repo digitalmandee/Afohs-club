@@ -91,7 +91,7 @@ const MiniBarReport = ({ items = {}, filters = {} }) => {
                     $dateFrom = $request->date_from ?? $request->booking_date_from ?? ...
                 */}
 
-                <RoomBookingFilter routeName="rooms.reports.mini-bar" showStatus={true} showRoomType={true} showDates={{ booking: true, checkIn: false, checkOut: false }} dateLabels={{ booking: 'Date Range' }} />
+                <RoomBookingFilter routeName="rooms.reports.mini-bar" showStatus={true} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} dateLabels={{ booking: 'Booking Date', checkIn: 'Check-In Date', checkOut: 'Check-Out Date' }} />
 
                 {/* Results Summary */}
                 <Box sx={{ mb: 2 }}>
@@ -104,7 +104,7 @@ const MiniBarReport = ({ items = {}, filters = {} }) => {
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Guest</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Item</TableCell>
@@ -123,9 +123,9 @@ const MiniBarReport = ({ items = {}, filters = {} }) => {
                                 ) : (
                                     itemList.map((item) => (
                                         <TableRow key={item.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                                            <TableCell>{item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</TableCell>
+                                            <TableCell>{item.room_booking?.booking_date || '-'}</TableCell>
                                             <TableCell>
-                                                {item.room_booking?.room?.name} ({item.room_booking?.room?.room_type?.name})
+                                                {item.room_booking?.room?.name} ({item.room_booking?.room?.roomType?.name || item.room_booking?.room?.room_type?.name || '-'})
                                             </TableCell>
                                             <TableCell>{getGuestName(item.room_booking)}</TableCell>
                                             <TableCell>{item.item}</TableCell>

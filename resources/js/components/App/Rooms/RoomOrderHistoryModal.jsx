@@ -94,6 +94,9 @@ const RoomOrderHistoryModal = ({ open, onClose, bookingId }) => {
                                     <TableCell>
                                         <strong>Payment Status</strong>
                                     </TableCell>
+                                    <TableCell>
+                                        <strong>Invoice</strong>
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -116,11 +119,25 @@ const RoomOrderHistoryModal = ({ open, onClose, bookingId }) => {
                                             <TableCell>
                                                 <Chip label={(order.payment_status || 'unpaid').toUpperCase()} color={getStatusColor(order.payment_status || 'unpaid')} size="small" variant="outlined" />
                                             </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    sx={{ textTransform: 'none', color: '#063455', borderColor: '#063455' }}
+                                                    disabled={!order?.invoice?.id && !order?.invoice_id}
+                                                    onClick={() => {
+                                                        const url = route('order.history', { open_order_id: order.id });
+                                                        window.open(url, '_blank');
+                                                    }}
+                                                >
+                                                    View
+                                                </Button>
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={5} align="center">
+                                        <TableCell colSpan={6} align="center">
                                             No orders found for this booking.
                                         </TableCell>
                                     </TableRow>

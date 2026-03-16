@@ -803,8 +803,7 @@ const RoomBookingFilter = ({
                                         },
                                     }}
                                 >
-                                    {/* 'checked_in', 'checked_out',  */}
-                                    {['confirmed', 'completed', 'cancelled', 'paid', 'unpaid'].map((status) => (
+                                     {['confirmed', 'checked_in', 'completed', 'cancelled', 'paid', 'unpaid', 'advance_paid'].map((status) => (
                                         <MenuItem key={status} value={status}>
                                             {status.replace('_', ' ')}
                                         </MenuItem>

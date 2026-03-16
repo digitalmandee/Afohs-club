@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import { generateInvoiceContent } from '@/helpers/generateTemplate';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -195,6 +196,30 @@ const BookingPayment = ({ invoice, roomOrders }) => {
             if (response.status === 200) {
                 setError('');
                 enqueueSnackbar('Payment successful', { variant: 'success' });
+                const bookingId = response.data?.booking_id ?? invoice?.invoiceable_id ?? null;
+
+                if (invoice?.invoice_type === 'room_booking' && bookingId) {
+                    try {
+                        const printWindow = window.open('', '_blank');
+                        const bookingRes = await axios.get(route('rooms.invoice', { id: bookingId }));
+                        const booking = bookingRes?.data?.booking;
+
+                        if (printWindow && booking) {
+                            const status = String(booking?.status || '').toLowerCase();
+                            const printType = status === 'checked_out' ? 'CHECK_OUT' : status === 'checked_in' ? 'CHECK_IN' : 'ROOM_BOOKING';
+                            printWindow.document.write(generateInvoiceContent(booking, printType));
+                            printWindow.document.close();
+                            printWindow.focus();
+                            setTimeout(() => {
+                                printWindow.print();
+                                printWindow.close();
+                            }, 250);
+                        }
+                    } catch (e) {
+                        enqueueSnackbar('Payment done, but failed to open invoice print.', { variant: 'warning' });
+                    }
+                }
+
                 router.visit(route(invoice.invoice_type === 'event_booking' ? 'events.dashboard' : 'rooms.dashboard'));
             } else {
                 setError('Payment failed: ' + (response.data?.message || 'Please check the form data.'));
@@ -331,25 +356,16 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                             <Card className="mb-4">
                                 <Card.Body>
                                     <h6 style={{ color: '#063455', fontWeight: 600, marginBottom: '15px' }}>Unpaid Room Orders</h6>
-                                    {roomOrders.map((order) => (
-                                        <div key={order.id} className="d-flex justify-content-between border-bottom py-2">
-                                            <div>
-                                                <strong>Order #{order.id}</strong>
-                                                <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                                                    {order.order_items &&
-                                                        order.order_items.map((d) => (
-                                                            <span key={d.id} className="me-2">
-                                                                {d.order_item?.name} (x{d.order_item?.quantity})
-                                                            </span>
-                                                        ))}
-                                                </div>
-                                            </div>
-                                            <span style={{ fontWeight: 500 }}>Rs {parseFloat(order.total_price).toFixed(2)}</span>
+                                    <div className="d-flex justify-content-between border-bottom py-2">
+                                        <div>
+                                            <strong>Food Bills Total</strong>
+                                            <div style={{ fontSize: '0.85rem', color: '#666' }}>{roomOrders.length} orders</div>
                                         </div>
-                                    ))}
+                                        <span style={{ fontWeight: 600, color: '#d32f2f' }}>Rs {Number(ordersTotal || 0).toFixed(2)}</span>
+                                    </div>
                                     <div className="d-flex justify-content-between mt-3 pt-2 border-top">
                                         <strong>Total Unpaid Orders:</strong>
-                                        <strong style={{ color: '#d32f2f' }}>Rs {parseFloat(roomOrders.reduce((sum, o) => sum + parseFloat(o.total_price), 0)).toFixed(2)}</strong>
+                                        <strong style={{ color: '#d32f2f' }}>Rs {Number(ordersTotal || 0).toFixed(2)}</strong>
                                     </div>
 
                                     <Form.Group className="mt-3">

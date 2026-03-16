@@ -1,18 +1,10 @@
 import { useEffect } from 'react';
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip } from '@mui/material';
 
-const PaymentHistoryPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
+const PaymentHistoryPrint = ({ rows = [], filters = {}, cutoff, generatedAt = '' }) => {
     useEffect(() => {
         setTimeout(() => window.print(), 500);
     }, []);
-
-    const getStatusColor = (status) => {
-        const colors = {
-            paid: 'success',
-            unpaid: 'error',
-        };
-        return colors[status] || 'default';
-    };
 
     return (
         <Box sx={{ p: 3, backgroundColor: '#fff' }}>
@@ -23,7 +15,7 @@ const PaymentHistoryPrint = ({ bookings = [], filters = {}, generatedAt = '' }) 
                     Room-wise Payment History
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                    {filters.dateFrom} to {filters.dateTo}
+                    Date: {cutoff || '-'} | Check-In: {filters.check_in_from || '-'} to {filters.check_in_to || '-'} | Check-Out: {filters.check_out_from || '-'} to {filters.check_out_to || '-'}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                     Generated: {generatedAt}
@@ -34,46 +26,62 @@ const PaymentHistoryPrint = ({ bookings = [], filters = {}, generatedAt = '' }) 
                 <Table size="small">
                     <TableHead>
                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                            <TableCell sx={{ fontWeight: 600 }}>Invoice No</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Booking Ref</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Guest</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Total Amount</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Paid Amount</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Room Type</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Room No</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Booking No</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Check In</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Check Out</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Total</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Advance/Security</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Paid</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Balance</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Payment Status</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {bookings.map((booking) => {
-                            const invoice = booking.invoice;
-                            const total = invoice ? parseFloat(invoice.total_amount) : 0;
-                            const paid = invoice ? parseFloat(invoice.paid_amount) : 0;
-                            const balance = total - paid;
-                            const status = balance <= 0 ? (total > 0 ? 'paid' : 'unpaid') : 'unpaid';
-
-                            return (
-                                <TableRow key={booking.id}>
-                                    <TableCell>{invoice ? invoice.invoice_no : '-'}</TableCell>
-                                    <TableCell>{booking.booking_number}</TableCell>
-                                    <TableCell>{booking.room?.room_number}</TableCell>
-                                    <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporate_member ? booking.corporate_member.name : '-'}</TableCell>
-                                    <TableCell>{total.toFixed(2)}</TableCell>
-                                    <TableCell>{paid.toFixed(2)}</TableCell>
-                                    <TableCell>{balance.toFixed(2)}</TableCell>
-                                    <TableCell>
-                                        <Chip label={status.toUpperCase()} size="small" color={getStatusColor(status)} variant="outlined" />
+                        {rows.flatMap((group) => {
+                            const out = [];
+                            out.push(
+                                <TableRow key={`room-${group.room_name}`} sx={{ backgroundColor: '#f5f5f5' }}>
+                                    <TableCell colSpan={9} sx={{ fontWeight: 700 }}>
+                                        {group.room_name} ({group.room_type})
                                     </TableCell>
-                                </TableRow>
+                                </TableRow>,
                             );
+                            group.items.forEach((row) => {
+                                out.push(
+                                    <TableRow key={`booking-${row.booking_id}`}>
+                                        <TableCell>{group.room_type}</TableCell>
+                                        <TableCell>{group.room_name}</TableCell>
+                                        <TableCell>{row.booking_no}</TableCell>
+                                        <TableCell>{row.check_in_date || '-'}</TableCell>
+                                        <TableCell>{row.check_out_date || '-'}</TableCell>
+                                        <TableCell>{row.total}</TableCell>
+                                        <TableCell>{row.advance_security}</TableCell>
+                                        <TableCell>{row.paid}</TableCell>
+                                        <TableCell>{row.balance}</TableCell>
+                                    </TableRow>,
+                                );
+                            });
+                            out.push(
+                                <TableRow key={`room-total-${group.room_name}`} sx={{ backgroundColor: '#fafafa' }}>
+                                    <TableCell colSpan={5} sx={{ fontWeight: 700 }}>
+                                        Room Total
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>{group.totals.total}</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>{group.totals.advance_security}</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>{group.totals.paid}</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>{group.totals.balance}</TableCell>
+                                </TableRow>,
+                            );
+                            return out;
                         })}
-                    </TableBody>
-                </Table>
             </TableContainer>
 
             <Box sx={{ mt: 3, textAlign: 'right' }}>
+
+            <Box sx={{ mt: 3, textAlign: 'right' }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                    Total Records: {bookings.length}
+                    Total Rooms: {rows.length}
                 </Typography>
             </Box>
         </Box>

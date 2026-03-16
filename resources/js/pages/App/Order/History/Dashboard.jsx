@@ -108,6 +108,23 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
         }
     }, [searchName, orderType]);
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const openOrderId = params.get('open_order_id');
+        if (!openOrderId) return;
+
+        setLoadingOrderDetails(true);
+        axios
+            .get(route(routeNameForContext('order.details'), { id: openOrderId }))
+            .then((response) => {
+                if (response?.data) {
+                    setSelectedOrder(response.data);
+                    setViewModalOpen(true);
+                }
+            })
+            .finally(() => setLoadingOrderDetails(false));
+    }, []);
+
     const handleApply = () => {
         setIsLoading(true);
         const startDateYmd = toYMD(startDate);
@@ -141,7 +158,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [], 
             return;
         }
         try {
-            const res = await axios.get(route(routeNameForContext('transaction.invoice'), { invoiceId: order.id }));
+            const res = await axios.get(route(routeNameForContext('transaction.invoice'), { invoiceId: order.invoice_id }));
             setSelectedInvoice(res.data);
             setPaymentModalOpen(true);
         } catch (e) {

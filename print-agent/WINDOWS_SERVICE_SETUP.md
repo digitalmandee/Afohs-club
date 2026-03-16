@@ -80,6 +80,33 @@ sc.exe query "POS Print Agent"
 3. Check POS → Print Jobs:
    - status should move pending → printing → printed
 
+## Troubleshooting
+
+### Check agent log file
+
+The agent writes a local log file in the same folder as the EXE:
+
+`C:\POS-PrintAgent\agent.log`
+
+This shows pulled job ids, print success/failure, and ack failures.
+
+### If jobs stay on "printing"
+
+This usually means the agent pulled the job but got stuck (printer driver/spooler) or couldn't ack.
+
+Steps:
+1. Restart Windows service: `services.msc` → POS Print Agent → Restart
+2. Restart Print Spooler service: `services.msc` → Print Spooler → Restart
+3. Clear the printer queue and try again
+4. Open `agent.log` and check the latest error message
+
+### If printing works in Notepad but service printing fails
+
+Change the service account to a real Windows user:
+1. `services.msc` → POS Print Agent → Properties → Log On tab
+2. Select "This account" and choose your Windows user
+3. Restart POS Print Agent service
+
 ## 7) Uninstall service
 
 Open PowerShell **as Administrator**:
@@ -88,4 +115,3 @@ Open PowerShell **as Administrator**:
 sc.exe stop "POS Print Agent"
 sc.exe delete "POS Print Agent"
 ```
-

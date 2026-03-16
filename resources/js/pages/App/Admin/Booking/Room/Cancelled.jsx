@@ -153,6 +153,8 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                     <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Account</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Mini Bar</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Other Charges</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 600 }}>Status</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 600 }}>Actions</TableCell>
                                 </TableRow>
@@ -174,6 +176,8 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.advance_payment || booking.invoice.paid_amount : '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{Math.round(parseFloat(booking.mini_bar_items_sum_amount || 0))}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{Math.round(parseFloat(booking.other_charges_sum_amount || 0))}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                 {booking.status.replace(/_/g, ' ')}
                                                 {booking.status === 'refunded' &&
@@ -202,7 +206,7 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={10} align="center">
+                                        <TableCell colSpan={17} align="center">
                                             No cancelled bookings found
                                         </TableCell>
                                     </TableRow>

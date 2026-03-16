@@ -1,17 +1,12 @@
-import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Print as PrintIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
-import Pagination from '@/components/Pagination';
 
 import RoomBookingFilter from '../../Booking/BookingFilter';
 
-const PaymentHistoryReport = ({ bookings = {}, filters = {} }) => {
-    // bookings is paginated
-    const bookingList = bookings.data || [];
-
+const PaymentHistoryReport = ({ rows = [], filters = {}, cutoff }) => {
     const handlePrint = () => {
         const params = new URLSearchParams(window.location.search);
         const printUrl = route('rooms.reports.payment-history.print', Object.fromEntries(params));
@@ -24,21 +19,6 @@ const PaymentHistoryReport = ({ bookings = {}, filters = {} }) => {
         window.location.href = exportUrl;
     };
 
-    const getStatusColor = (status) => {
-        const colors = {
-            paid: 'success',
-            unpaid: 'error',
-        };
-        return colors[status] || 'default';
-    };
-
-    const getGuestName = (booking) => {
-        if (booking.customer) return booking.customer.name;
-        if (booking.member) return booking.member.full_name;
-        if (booking.corporateMember) return booking.corporateMember.full_name;
-        return 'Unknown';
-    };
-
     return (
         <AdminLayout>
             <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
@@ -48,33 +28,23 @@ const PaymentHistoryReport = ({ bookings = {}, filters = {} }) => {
                         <IconButton onClick={() => router.visit(route('rooms.reports'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
-                            Room-wise Payment History
-                        </Typography>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Room-wise Payment History</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<FileDownloadIcon />}
-                            onClick={handleExport}
-                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Export
                         </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<PrintIcon />}
-                            onClick={handlePrint}
-                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Print
                         </Button>
                     </Box>
                 </Box>
 
-                <RoomBookingFilter routeName="rooms.reports.payment-history" showStatus={true} showRoomType={true} showDates={{ booking: false, checkIn: true, checkOut: false }} dateLabels={{ checkIn: 'Check-In Date' }} />
+                <RoomBookingFilter routeName="rooms.reports.payment-history" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} dateLabels={{ booking: 'Date', checkIn: 'Check-In Date', checkOut: 'Check-Out Date' }} dateMode={{ checkIn: 'single', checkOut: 'single' }} />
 
                 {/* Results Summary */}
                 <Box sx={{ mb: 2 }}>
-                    <Chip label={`Total Records: ${bookings.total || 0}`} color="primary" variant="outlined" />
+                    <Chip label={`Date: ${cutoff || '-'}`} color="primary" variant="outlined" />
                 </Box>
 
                 {/* Table */}
@@ -83,54 +53,67 @@ const PaymentHistoryReport = ({ bookings = {}, filters = {} }) => {
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Invoice No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking No</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Guest</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total Amount</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid Amount</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Check In</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Check Out</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Advance/Security</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Payment Status</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {bookingList.length === 0 ? (
+                                {rows.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                                             <Typography color="textSecondary">No data found</Typography>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    bookingList.map((booking) => {
-                                        const invoice = booking.invoice;
-                                        // Use grand_total from booking if invoice total is not reliable, or use invoice total
-                                        const total = parseFloat(booking.grand_total || 0);
-                                        const paid = parseFloat(invoice ? invoice.paid_amount : 0);
-                                        const balance = total - paid;
-                                        const status = balance <= 0 ? (total > 0 ? 'paid' : 'unpaid') : 'unpaid';
-
-                                        return (
-                                            <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                                                <TableCell>{invoice ? invoice.invoice_no : '-'}</TableCell>
-                                                <TableCell>{booking.booking_no || booking.booking_number}</TableCell>
-                                                <TableCell>{booking.room?.name}</TableCell>
-                                                <TableCell>{getGuestName(booking)}</TableCell>
-                                                <TableCell>{total.toFixed(2)}</TableCell>
-                                                <TableCell sx={{ color: 'success.main' }}>{paid.toFixed(2)}</TableCell>
-                                                <TableCell sx={{ color: 'error.main' }}>{balance.toFixed(2)}</TableCell>
-                                                <TableCell>
-                                                    <Chip label={status.toUpperCase()} size="small" color={getStatusColor(status)} />
+                                    rows.flatMap((group) => {
+                                        const out = [];
+                                        out.push(
+                                            <TableRow key={`room-${group.room_name}`} sx={{ backgroundColor: '#f5f5f5' }}>
+                                                <TableCell colSpan={9} sx={{ fontWeight: 700 }}>
+                                                    {group.room_name} ({group.room_type})
                                                 </TableCell>
-                                            </TableRow>
+                                            </TableRow>,
                                         );
+                                        group.items.forEach((row) => {
+                                            out.push(
+                                                <TableRow key={`booking-${row.booking_id}`}>
+                                                    <TableCell>{group.room_type}</TableCell>
+                                                    <TableCell>{group.room_name}</TableCell>
+                                                    <TableCell>{row.booking_no}</TableCell>
+                                                    <TableCell>{row.check_in_date || '-'}</TableCell>
+                                                    <TableCell>{row.check_out_date || '-'}</TableCell>
+                                                    <TableCell>{row.total}</TableCell>
+                                                    <TableCell>{row.advance_security}</TableCell>
+                                                    <TableCell>{row.paid}</TableCell>
+                                                    <TableCell>{row.balance}</TableCell>
+                                                </TableRow>,
+                                            );
+                                        });
+                                        out.push(
+                                            <TableRow key={`room-total-${group.room_name}`} sx={{ backgroundColor: '#fafafa' }}>
+                                                <TableCell colSpan={5} sx={{ fontWeight: 700 }}>
+                                                    Room Total
+                                                </TableCell>
+                                                <TableCell sx={{ fontWeight: 700 }}>{group.totals.total}</TableCell>
+                                                <TableCell sx={{ fontWeight: 700 }}>{group.totals.advance_security}</TableCell>
+                                                <TableCell sx={{ fontWeight: 700 }}>{group.totals.paid}</TableCell>
+                                                <TableCell sx={{ fontWeight: 700 }}>{group.totals.balance}</TableCell>
+                                            </TableRow>,
+                                        );
+                                        return out;
                                     })
                                 )}
                             </TableBody>
                         </Table>
                     </TableContainer>
                 </Card>
-
-                <Pagination data={bookings} />
             </Box>
         </AdminLayout>
     );

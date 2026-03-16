@@ -73,6 +73,8 @@ class RoomBookingController extends Controller
             'member:id,membership_no,full_name',
             'corporateMember:id,membership_no,full_name'
         ])
+            ->withSum('miniBarItems', 'amount')
+            ->withSum('otherCharges', 'amount')
             ->latest()
             ->whereNotIn('status', ['checked_in', 'checked_out', 'cancelled', 'refunded']);
 
@@ -141,6 +143,8 @@ class RoomBookingController extends Controller
             'corporateMember:id,membership_no,full_name',
             'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data'
         ])
+            ->withSum('miniBarItems', 'amount')
+            ->withSum('otherCharges', 'amount')
             ->where('status', 'checked_in');
 
         $this->applyFilters($query, $filters);
@@ -1341,7 +1345,14 @@ class RoomBookingController extends Controller
     public function getOrders($id)
     {
         $booking = RoomBooking::findOrFail($id);
-        $orders = $booking->orders()->with('orderItems')->latest()->get();
+        $orders = $booking
+            ->orders()
+            ->with([
+                'orderItems',
+                'invoice:id,invoice_no,invoiceable_id,invoiceable_type,status',
+            ])
+            ->latest()
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -1359,7 +1370,10 @@ class RoomBookingController extends Controller
             'corporateMember:id,membership_no,full_name,personal_email',
             'room:id,name,room_type_id',
             'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data'
-        ])->whereIn('status', ['cancelled', 'refunded']);
+        ])
+            ->withSum('miniBarItems', 'amount')
+            ->withSum('otherCharges', 'amount')
+            ->whereIn('status', ['cancelled', 'refunded']);
 
         // Apply shared filters
         $this->applyFilters($query, $filters);
@@ -1761,6 +1775,8 @@ class RoomBookingController extends Controller
         if ($request->has('cancellation_reason')) {
             $booking->cancellation_reason = $request->cancellation_reason;
         }
+
+        $booking->save();
 
         return response()->json([
             'message' => 'Booking status updated successfully',

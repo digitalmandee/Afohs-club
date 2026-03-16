@@ -185,7 +185,6 @@ class PermissionsSeeder extends Seeder
             'rooms.reports.view',  // Dashboard
             'rooms.reports.day-wise',
             'rooms.reports.payment-history',
-            'rooms.reports.booking',
             'rooms.reports.cancelled',
             'rooms.reports.check-in',
             'rooms.reports.check-out',

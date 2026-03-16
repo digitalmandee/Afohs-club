@@ -86,8 +86,8 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                     routeName="rooms.reports.check-out"
                     showStatus={false}
                     showRoomType={true}
-                    showDates={{ booking: false, checkIn: true, checkOut: true }}
-                    dateLabels={{ checkIn: 'Check-In Date', checkOut: 'Check-Out Date' }}
+                    showDates={{ booking: true, checkIn: true, checkOut: true }}
+                    dateLabels={{ booking: 'Booking Date', checkIn: 'Check-In Date', checkOut: 'Check-Out Date' }}
                     dateMode={{ checkIn: 'single', checkOut: 'single' }}
                 />
 
@@ -101,9 +101,11 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>ID</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-In Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-Out Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Booked By</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Type</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Room</TableCell>
@@ -123,7 +125,7 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                             <TableBody>
                                 {bookingList.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={18} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={20} align="center" sx={{ py: 4 }}>
                                             <Typography color="textSecondary">No data found</Typography>
                                         </TableCell>
                                     </TableRow>
@@ -144,6 +146,7 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                                         return (
                                             <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                                 <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -151,6 +154,7 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                                                         <span>{guestName}</span>
                                                     </Tooltip>
                                                 </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{booking.booked_by || '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{getMembershipNo(booking)}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{getMemberType(booking)}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', whiteSpace: 'nowrap' }}>{booking.room?.name}</TableCell>
@@ -184,7 +188,7 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                             {bookingList.length > 0 && (
                                 <TableFooter>
                                     <TableRow sx={{ backgroundColor: '#f0f0f0' }}>
-                                        <TableCell colSpan={8} sx={{ fontWeight: 'bold' }}>
+                                        <TableCell colSpan={10} sx={{ fontWeight: 'bold' }}>
                                             Grand Total
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookingList.reduce((sum, b) => sum + (b.nights || 1), 0))}</TableCell>
@@ -237,7 +241,7 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                     setSelectedBookingId(null);
                 }}
                 bookingId={selectedBookingId}
-                type="ROOM_BOOKING"
+                type="CHECK_OUT"
             />
         </AdminLayout>
     );

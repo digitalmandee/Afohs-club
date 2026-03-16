@@ -25,9 +25,9 @@ const ComplementaryReport = ({ items = {}, filters = {} }) => {
 
     const getGuestName = (booking) => {
         if (!booking) return '-';
-        if (booking.customer) return booking.customer.name;
-        if (booking.member) return booking.member.full_name;
-        if (booking.corporateMember) return booking.corporateMember.full_name;
+        if (booking.customer) return `${booking.customer.name || '-'} (${booking.customer.customer_no || 'Guest'})`;
+        if (booking.member) return `${booking.member.full_name || '-'} (${booking.member.membership_no || '-'})`;
+        if (booking.corporateMember) return `${booking.corporateMember.full_name || '-'} (${booking.corporateMember.membership_no || '-'})`;
         return 'Unknown';
     };
 
@@ -61,7 +61,7 @@ const ComplementaryReport = ({ items = {}, filters = {} }) => {
                     </Box>
                 </Box>
 
-                <RoomBookingFilter routeName="rooms.reports.complementary" showStatus={true} showRoomType={true} showDates={{ booking: true, checkIn: false, checkOut: false }} dateLabels={{ booking: 'Date Range' }} />
+                <RoomBookingFilter routeName="rooms.reports.complementary" showStatus={true} showRoomType={true} showDates={{ booking: true, checkIn: false, checkOut: false }} dateLabels={{ booking: 'Booking Date' }} />
 
                 <Box sx={{ mb: 2 }}>
                     <Chip label={`Total Records: ${items.total || 0}`} color="primary" variant="outlined" />
@@ -72,30 +72,36 @@ const ComplementaryReport = ({ items = {}, filters = {} }) => {
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Guest</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booked By</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Charges Type</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Description</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Amount</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {itemList.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                                             <Typography color="textSecondary">No data found</Typography>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     itemList.map((item) => (
                                         <TableRow key={item.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                                            <TableCell>{item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</TableCell>
+                                            <TableCell>{item.room_booking?.booking_date || '-'}</TableCell>
                                             <TableCell>
-                                                {item.room_booking?.room?.name} ({item.room_booking?.room?.room_type?.name})
+                                                {item.room_booking?.room?.name} ({item.room_booking?.room?.roomType?.name || item.room_booking?.room?.room_type?.name || '-'})
                                             </TableCell>
                                             <TableCell>{getGuestName(item.room_booking)}</TableCell>
+                                            <TableCell>{item.room_booking?.booked_by || '-'}</TableCell>
+                                            <TableCell>{item.type || '-'}</TableCell>
                                             <TableCell>{item.details}</TableCell>
                                             <TableCell>{item.amount}</TableCell>
+                                            <TableCell>{item.room_booking?.status || '-'}</TableCell>
                                         </TableRow>
                                     ))
                                 )}

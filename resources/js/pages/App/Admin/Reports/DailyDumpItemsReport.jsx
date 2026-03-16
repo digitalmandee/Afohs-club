@@ -1,34 +1,15 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import {
-    Box,
-    Paper,
-    Typography,
-    Button,
-    Checkbox,
-    TextField,
-    Grid,
-    Divider,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Card,
-    CardContent,
-    Stack,
-    FormControlLabel,
-    Autocomplete
-} from '@mui/material';
+import { Box, Paper, Typography, Button, Checkbox, TextField, Grid, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Card, CardContent, Stack, FormControlLabel, Autocomplete } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import PrintIcon from '@mui/icons-material/Print';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { format } from 'date-fns';
 import { Search } from '@mui/icons-material';
-import dayjs from "dayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, cashiers, cancelledByUsers, startDate, endDate, totalQuantity, totalSalePrice, totalFoodValue, filters }) {
     const toArray = (v) => {
@@ -63,9 +44,9 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
     });
 
     const handleFilterChange = (field, value) => {
-        setDateFilters(prev => ({
+        setDateFilters((prev) => ({
             ...prev,
-            [field]: value
+            [field]: value,
         }));
     };
 
@@ -90,7 +71,7 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
         return new Intl.NumberFormat('en-US', {
             style: 'decimal',
             minimumFractionDigits: 0,
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(amount);
     };
 
@@ -103,7 +84,7 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                 style={{
                     minHeight: '100vh',
                     backgroundColor: '#f5f5f5',
-                    overflowX: 'hidden'
+                    overflowX: 'hidden',
                 }}
             >
                 <Box sx={{ p: 2 }}>
@@ -111,9 +92,7 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                     <Box sx={{ mb: 2 }}>
                         <Grid container justifyContent="space-between" alignItems="center">
                             <Grid item>
-                                <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
-                                    Daily Dump Items Report
-                                </Typography>
+                                <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>Daily Dump Items Report</Typography>
                             </Grid>
                             <Grid item>
                                 <Button
@@ -125,16 +104,14 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                         color: 'white',
                                         borderRadius: '16px',
                                         textTransform: 'none',
-                                        '&:hover': { backgroundColor: '#063455' }
+                                        '&:hover': { backgroundColor: '#063455' },
                                     }}
                                 >
                                     Print
                                 </Button>
                             </Grid>
                         </Grid>
-                        <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>
-                            Cancelled and dumped items tracking report
-                        </Typography>
+                        <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>Cancelled and dumped items tracking report</Typography>
                     </Box>
 
                     {/* Filters */}
@@ -154,25 +131,16 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                 <DatePicker
                                     label="Start Date"
                                     format="DD/MM/YYYY"
-                                    value={
-                                        dateFilters.start_date
-                                            ? dayjs(dateFilters.start_date)
-                                            : null
-                                    }
-                                    onChange={(newValue) =>
-                                        handleFilterChange(
-                                            "start_date",
-                                            newValue ? newValue.format("YYYY-MM-DD") : ""
-                                        )
-                                    }
+                                    value={dateFilters.start_date ? dayjs(dateFilters.start_date) : null}
+                                    onChange={(newValue) => handleFilterChange('start_date', newValue ? newValue.format('YYYY-MM-DD') : '')}
                                     slotProps={{
                                         textField: {
-                                            size: "small",
+                                            size: 'small',
                                             InputProps: {
                                                 sx: {
-                                                    borderRadius: "16px",
-                                                    "& fieldset": {
-                                                        borderRadius: "16px",
+                                                    borderRadius: '16px',
+                                                    '& fieldset': {
+                                                        borderRadius: '16px',
                                                     },
                                                 },
                                             },
@@ -192,25 +160,16 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                 <DatePicker
                                     label="End Date"
                                     format="DD/MM/YYYY"
-                                    value={
-                                        dateFilters.end_date
-                                            ? dayjs(dateFilters.end_date)
-                                            : null
-                                    }
-                                    onChange={(newValue) =>
-                                        handleFilterChange(
-                                            "end_date",
-                                            newValue ? newValue.format("YYYY-MM-DD") : ""
-                                        )
-                                    }
+                                    value={dateFilters.end_date ? dayjs(dateFilters.end_date) : null}
+                                    onChange={(newValue) => handleFilterChange('end_date', newValue ? newValue.format('YYYY-MM-DD') : '')}
                                     slotProps={{
                                         textField: {
-                                            size: "small",
+                                            size: 'small',
                                             InputProps: {
                                                 sx: {
-                                                    borderRadius: "16px",
-                                                    "& fieldset": {
-                                                        borderRadius: "16px",
+                                                    borderRadius: '16px',
+                                                    '& fieldset': {
+                                                        borderRadius: '16px',
                                                     },
                                                 },
                                             },
@@ -224,27 +183,28 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                 options={tenants || []}
                                 getOptionLabel={(opt) => opt?.name || ''}
                                 value={(tenants || []).filter((t) => dateFilters.tenant_ids.includes(t.id))}
-                                onChange={(_, value) => handleFilterChange('tenant_ids', value.map((v) => v.id))}
+                                onChange={(_, value) =>
+                                    handleFilterChange(
+                                        'tenant_ids',
+                                        value.map((v) => v.id),
+                                    )
+                                }
                                 renderInput={(params) => <TextField {...params} label="Restaurant" />}
                                 sx={{ minWidth: 220 }}
                             />
-                            <Autocomplete
-                                multiple
-                                freeSolo
-                                size="small"
-                                options={[]}
-                                value={dateFilters.table_nos}
-                                onChange={(_, value) => handleFilterChange('table_nos', value)}
-                                renderInput={(params) => <TextField {...params} label="Table #" />}
-                                sx={{ minWidth: 140 }}
-                            />
+                            <Autocomplete multiple freeSolo size="small" options={[]} value={dateFilters.table_nos} onChange={(_, value) => handleFilterChange('table_nos', value)} renderInput={(params) => <TextField {...params} label="Table #" />} sx={{ minWidth: 140 }} />
                             <Autocomplete
                                 multiple
                                 size="small"
                                 options={waiters || []}
                                 getOptionLabel={(opt) => opt?.name || ''}
                                 value={(waiters || []).filter((w) => dateFilters.waiter_ids.includes(w.id))}
-                                onChange={(_, value) => handleFilterChange('waiter_ids', value.map((v) => v.id))}
+                                onChange={(_, value) =>
+                                    handleFilterChange(
+                                        'waiter_ids',
+                                        value.map((v) => v.id),
+                                    )
+                                }
                                 renderInput={(params) => <TextField {...params} label="Waiter" />}
                                 sx={{ minWidth: 180 }}
                             />
@@ -254,7 +214,12 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                 options={cashiers || []}
                                 getOptionLabel={(opt) => opt?.name || ''}
                                 value={(cashiers || []).filter((c) => dateFilters.cashier_ids.includes(c.id))}
-                                onChange={(_, value) => handleFilterChange('cashier_ids', value.map((v) => v.id))}
+                                onChange={(_, value) =>
+                                    handleFilterChange(
+                                        'cashier_ids',
+                                        value.map((v) => v.id),
+                                    )
+                                }
                                 renderInput={(params) => <TextField {...params} label="Cashier" />}
                                 sx={{ minWidth: 180 }}
                             />
@@ -264,7 +229,12 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                 options={cancelledByUsers || []}
                                 getOptionLabel={(opt) => opt?.name || ''}
                                 value={(cancelledByUsers || []).filter((u) => dateFilters.cancelled_by_ids.includes(u.id))}
-                                onChange={(_, value) => handleFilterChange('cancelled_by_ids', value.map((v) => v.id))}
+                                onChange={(_, value) =>
+                                    handleFilterChange(
+                                        'cancelled_by_ids',
+                                        value.map((v) => v.id),
+                                    )
+                                }
                                 renderInput={(params) => <TextField {...params} label="Cancelled By" />}
                                 sx={{ minWidth: 200 }}
                             />
@@ -282,34 +252,18 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                     { label: 'Guest', value: 'guest' },
                                     { label: 'Employee', value: 'employee' },
                                 ].filter((o) => dateFilters.customer_types.includes(o.value))}
-                                onChange={(_, value) => handleFilterChange('customer_types', value.map((v) => v.value))}
+                                onChange={(_, value) =>
+                                    handleFilterChange(
+                                        'customer_types',
+                                        value.map((v) => v.value),
+                                    )
+                                }
                                 renderInput={(params) => <TextField {...params} label="Customer Type" />}
                                 sx={{ minWidth: 220 }}
                             />
-                            <TextField
-                                size="small"
-                                label="Customer Name/No"
-                                value={dateFilters.customer_search}
-                                onChange={(e) => handleFilterChange('customer_search', e.target.value)}
-                                sx={{ minWidth: 220 }}
-                            />
-                            <Autocomplete
-                                multiple
-                                freeSolo
-                                size="small"
-                                options={[]}
-                                value={dateFilters.category_names}
-                                onChange={(_, value) => handleFilterChange('category_names', value)}
-                                renderInput={(params) => <TextField {...params} label="Category" />}
-                                sx={{ minWidth: 220 }}
-                            />
-                            <TextField
-                                size="small"
-                                label="Item Code/Name"
-                                value={dateFilters.item_search}
-                                onChange={(e) => handleFilterChange('item_search', e.target.value)}
-                                sx={{ minWidth: 200 }}
-                            />
+                            <TextField size="small" label="Customer Name/No" value={dateFilters.customer_search} onChange={(e) => handleFilterChange('customer_search', e.target.value)} sx={{ minWidth: 220 }} />
+                            <Autocomplete multiple freeSolo size="small" options={[]} value={dateFilters.category_names} onChange={(_, value) => handleFilterChange('category_names', value)} renderInput={(params) => <TextField {...params} label="Category" />} sx={{ minWidth: 220 }} />
+                            <TextField size="small" label="Item Code/Name" value={dateFilters.item_search} onChange={(e) => handleFilterChange('item_search', e.target.value)} sx={{ minWidth: 200 }} />
                             <Autocomplete
                                 multiple
                                 size="small"
@@ -324,30 +278,17 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                     { label: 'Paid', value: 'paid' },
                                     { label: 'Unpaid', value: 'unpaid' },
                                 ].filter((o) => dateFilters.payment_statuses.includes(o.value))}
-                                onChange={(_, value) => handleFilterChange('payment_statuses', value.map((v) => v.value))}
+                                onChange={(_, value) =>
+                                    handleFilterChange(
+                                        'payment_statuses',
+                                        value.map((v) => v.value),
+                                    )
+                                }
                                 renderInput={(params) => <TextField {...params} label="Status" />}
                                 sx={{ minWidth: 180 }}
                             />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={dateFilters.discounted_only}
-                                        onChange={(e) => handleFilterChange('discounted_only', e.target.checked)}
-                                        size="small"
-                                    />
-                                }
-                                label="Discounted"
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={dateFilters.taxed_only}
-                                        onChange={(e) => handleFilterChange('taxed_only', e.target.checked)}
-                                        size="small"
-                                    />
-                                }
-                                label="Taxed"
-                            />
+                            <FormControlLabel control={<Checkbox checked={dateFilters.discounted_only} onChange={(e) => handleFilterChange('discounted_only', e.target.checked)} size="small" />} label="Discounted" />
+                            <FormControlLabel control={<Checkbox checked={dateFilters.taxed_only} onChange={(e) => handleFilterChange('taxed_only', e.target.checked)} size="small" />} label="Taxed" />
                             <Button
                                 variant="contained"
                                 startIcon={<Search />}
@@ -357,7 +298,7 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                     color: 'white',
                                     borderRadius: '16px',
                                     textTransform: 'none',
-                                    '&:hover': { backgroundColor: '#063455' }
+                                    '&:hover': { backgroundColor: '#063455' },
                                 }}
                             >
                                 Search
@@ -370,36 +311,24 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                         <Grid item xs={12} md={4}>
                             <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
-                                        Dumped Items
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
-                                        {dumpItemsData?.length || 0}
-                                    </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>Dumped Items</Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>{dumpItemsData?.length || 0}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={4}>
                             <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
-                                        Total Quantity
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
-                                        {formatCurrency(totalQuantity)}
-                                    </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>Total Quantity</Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>{formatCurrency(totalQuantity)}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={4}>
                             <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
-                                        Total Food Value
-                                    </Typography>
-                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
-                                        {formatCurrency(totalFoodValue)}
-                                    </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>Total Food Value</Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>{formatCurrency(totalFoodValue)}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
@@ -418,45 +347,19 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                 <Table size="small">
                                     <TableHead>
                                         <TableRow sx={{ backgroundColor: '#063455' }}>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Order #
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Table
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Date
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Item Code
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Item Name
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Quantity
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Status
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Instructions
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Reason
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Remarks
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Sale Price
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Food Value
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
-                                                Cancelled By
-                                            </TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Order #</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Table</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Date</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Item Code</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Item Name</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Quantity</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Instructions</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Reason</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Remarks</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Sale Price</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Food Value</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Cancelled By</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -465,80 +368,52 @@ export default function DailyDumpItemsReport({ dumpItemsData, tenants, waiters, 
                                                 key={index}
                                                 sx={{
                                                     '&:nth-of-type(odd)': {
-                                                        backgroundColor: '#fafafa'
+                                                        backgroundColor: '#fafafa',
                                                     },
                                                     '&:hover': {
-                                                        backgroundColor: '#ffebee'
-                                                    }
+                                                        backgroundColor: '#ffebee',
+                                                    },
                                                 }}
                                             >
-                                                <TableCell sx={{ fontSize: '0.7rem', borderRight: '1px solid #ddd' }}>
-                                                    {item.invoice_kot}
-                                                </TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', borderRight: '1px solid #ddd' }}>{item.invoice_kot}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>{item.table_no}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>{item.date}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>{item.item_code}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', borderRight: '1px solid #ddd' }}>{item.item_name}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>{item.qty}</TableCell>
                                                 <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    {item.table_no}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    {item.date}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    {item.item_code}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', borderRight: '1px solid #ddd' }}>
-                                                    {item.item_name}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    {item.qty}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    <Typography variant="caption" sx={{
-                                                        backgroundColor: '#ffcdd2',
-                                                        color: '#c62828',
-                                                        px: 1,
-                                                        py: 0.5,
-                                                        borderRadius: 1,
-                                                        fontWeight: 'bold'
-                                                    }}>
+                                                    <Typography
+                                                        variant="caption"
+                                                        sx={{
+                                                            backgroundColor: '#ffcdd2',
+                                                            color: '#c62828',
+                                                            px: 1,
+                                                            py: 0.5,
+                                                            borderRadius: 1,
+                                                            fontWeight: 'bold',
+                                                        }}
+                                                    >
                                                         {item.status}
                                                     </Typography>
                                                 </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    {item.instructions}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    {item.reason}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    {item.remarks}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    {formatCurrency(item.sale_price)}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    {formatCurrency(item.food_value)}
-                                                </TableCell>
-                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center' }}>
-                                                    {item.cancelled_by}
-                                                </TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>{item.instructions}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>{item.reason}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>{item.remarks}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>{formatCurrency(item.sale_price)}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>{formatCurrency(item.food_value)}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center' }}>{item.cancelled_by}</TableCell>
                                             </TableRow>
                                         ))}
 
                                         {/* Grand Total Row */}
                                         <TableRow sx={{ backgroundColor: '#063455', color: 'white' }}>
-                                            <TableCell colSpan={5} sx={{ fontWeight: '600',color: 'white'}}>
+                                            <TableCell colSpan={5} sx={{ fontWeight: '600', color: 'white' }}>
                                                 GRAND TOTAL:
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: 'white', }}>
-                                                {formatCurrency(totalQuantity)}
-                                            </TableCell>
-                                            <TableCell colSpan={5} sx={{ fontWeight: '600', color: 'white'}}>
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color:'white'}}>
-                                                {formatCurrency(totalSalePrice)}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
-                                                {formatCurrency(totalFoodValue)}
-                                            </TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>{formatCurrency(totalQuantity)}</TableCell>
+                                            <TableCell colSpan={5} sx={{ fontWeight: '600', color: 'white' }}></TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>{formatCurrency(totalSalePrice)}</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>{formatCurrency(totalFoodValue)}</TableCell>
                                         </TableRow>
                                     </TableBody>
                                 </Table>

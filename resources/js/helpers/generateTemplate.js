@@ -973,7 +973,14 @@ export const generateInvoiceContent = (booking, type) => {
             <tr>
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">TOTAL PAYABLE AMOUNT</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
-                    ${Math.round((parseFloat(booking.grand_total || 0) + (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0)))}
+                    ${(() => {
+                    const roomTotal = parseFloat(booking.grand_total || 0);
+                    const ordersTotal = (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
+                    const invoiceTotal = parseFloat(booking.invoice?.total_price || 0);
+                    const invoiceCoversOrders = invoiceTotal > roomTotal + 0.01;
+                    const totalPayable = invoiceCoversOrders ? invoiceTotal : roomTotal + ordersTotal;
+                    return Math.round(totalPayable || 0);
+                })()}
                 </td>
             </tr>
 
@@ -981,10 +988,9 @@ export const generateInvoiceContent = (booking, type) => {
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">ADVANCE</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
                     ${(() => {
-                    const invoiceAdvance = parseFloat(booking.invoice?.advance_payment || 0);
-                    const invoicePaid = parseFloat(booking.invoice?.paid_amount || 0);
-                    const advance = invoiceAdvance > 0 ? invoiceAdvance : invoicePaid;
-                    return Math.round(advance || 0);
+                    const advanceAmount = parseFloat(booking.advance_amount || 0);
+                    const securityDeposit = parseFloat(booking.security_deposit || 0);
+                    return Math.round(advanceAmount + securityDeposit);
                 })()}
                 </td>
             </tr>
@@ -993,14 +999,21 @@ export const generateInvoiceContent = (booking, type) => {
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">TOTAL PAID AMOUNT</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
                     ${(() => {
-                    const invoiceAdvance = parseFloat(booking.invoice?.advance_payment || 0);
-                    const paidAmountRaw = parseFloat(booking.invoice?.paid_amount || 0);
-                    const advance = invoiceAdvance > 0 ? invoiceAdvance : 0;
-                    const paidAmount = advance > 0 && paidAmountRaw >= advance ? (paidAmountRaw - advance) : paidAmountRaw;
-                    const paidOrders = (booking.orders || [])
-                        .filter(o => o.payment_status === 'paid')
-                        .reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
-                    return Math.round(paidAmount + paidOrders);
+                    const roomTotal = parseFloat(booking.grand_total || 0);
+                    const invoiceTotal = parseFloat(booking.invoice?.total_price || 0);
+                    const invoiceCoversOrders = invoiceTotal > roomTotal + 0.01;
+
+                    const advanceAmount = parseFloat(booking.advance_amount || 0);
+                    const invoicePaidTotal = parseFloat(booking.invoice?.paid_amount || 0) + parseFloat(booking.invoice?.advance_payment || 0);
+                    const paidAfterAdvance = Math.max(0, invoicePaidTotal - advanceAmount);
+
+                    const paidOrders = invoiceCoversOrders
+                        ? 0
+                        : (booking.orders || [])
+                              .filter((o) => String(o.payment_status || '').toLowerCase() === 'paid')
+                              .reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
+
+                    return Math.round(paidAfterAdvance + paidOrders);
                 })()}
                 </td>
             </tr>
@@ -1009,17 +1022,31 @@ export const generateInvoiceContent = (booking, type) => {
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">REMAINING BALANCE</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
                     ${(() => {
-                    const total = parseFloat(booking.grand_total || 0);
-                    const orders = (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
-                    const invoiceAdvance = parseFloat(booking.invoice?.advance_payment || 0);
-                    const paidAmountRaw = parseFloat(booking.invoice?.paid_amount || 0);
-                    const advance = invoiceAdvance > 0 ? invoiceAdvance : 0;
-                    const paidAmount = advance > 0 && paidAmountRaw >= advance ? (paidAmountRaw - advance) : paidAmountRaw;
-                    const paidOrders = (booking.orders || [])
-                        .filter(o => o.payment_status === 'paid')
-                        .reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
-                    const remaining = Math.max(0, (total + orders) - (advance + paidAmount + paidOrders));
-                    return ['cancelled', 'refunded'].includes(booking.status) ? 0 : Math.round(remaining);
+                    const status = String(booking.status || '').toLowerCase();
+                    if (['cancelled', 'refunded'].includes(status)) return 0;
+
+                    const roomTotal = parseFloat(booking.grand_total || 0);
+                    const ordersTotal = (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
+                    const invoiceTotal = parseFloat(booking.invoice?.total_price || 0);
+                    const invoiceCoversOrders = invoiceTotal > roomTotal + 0.01;
+
+                    const totalPayable = invoiceCoversOrders ? invoiceTotal : roomTotal + ordersTotal;
+
+                    const advanceAmount = parseFloat(booking.advance_amount || 0);
+                    const securityDeposit = parseFloat(booking.security_deposit || 0);
+                    const advanceSecurity = advanceAmount + securityDeposit;
+
+                    const invoicePaidTotal = parseFloat(booking.invoice?.paid_amount || 0) + parseFloat(booking.invoice?.advance_payment || 0);
+                    const paidAfterAdvance = Math.max(0, invoicePaidTotal - advanceAmount);
+
+                    const paidOrders = invoiceCoversOrders
+                        ? 0
+                        : (booking.orders || [])
+                              .filter((o) => String(o.payment_status || '').toLowerCase() === 'paid')
+                              .reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
+
+                    const remaining = Math.max(0, totalPayable - advanceSecurity - (paidAfterAdvance + paidOrders));
+                    return Math.round(remaining);
                 })()}
                 </td>
             </tr>
