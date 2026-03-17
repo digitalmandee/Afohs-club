@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { FilterAlt, Search, Visibility, Cancel, Edit } from '@mui/icons-material';
-import { Box, Button, Paper, InputAdornment, Table, TableBody, TextField, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, Tooltip } from '@mui/material';
+import { Box, Button, Paper, InputAdornment, Table, TableBody, TextField, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, Tooltip, TableFooter } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge, Col, Container, Form, Modal, Row } from 'react-bootstrap';
@@ -387,10 +387,7 @@ const RoomScreen = ({ bookings }) => {
                                                                 <Cancel fontSize="small" />
                                                             </Button>
                                                         )}
-                                                        {booking.status === 'cancelled' &&
-                                                            Number(booking.invoice?.advance_payment || booking.invoice?.paid_amount || 0) > 0 &&
-                                                            (booking.booking_date || booking.created_at) &&
-                                                            dayjs().diff(dayjs(booking.booking_date || booking.created_at), 'day') <= 2 && (
+                                                        {booking.status === 'cancelled' && Number(booking.invoice?.advance_payment || booking.invoice?.paid_amount || 0) > 0 && (booking.booking_date || booking.created_at) && dayjs().diff(dayjs(booking.booking_date || booking.created_at), 'day') <= 2 && (
                                                             <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Return Advance" sx={{ textTransform: 'none' }}>
                                                                 Return Advance
                                                             </Button>
@@ -408,6 +405,18 @@ const RoomScreen = ({ bookings }) => {
                                     </TableRow>
                                 )}
                             </TableBody>
+                            <TableFooter>
+                                <TableRow style={{ backgroundColor: '#f0f0f0' }}>
+                                    <TableCell colSpan={15} sx={{ fontWeight: 'bold' }}>
+                                        Grand Total
+                                    </TableCell>
+                                    {/* Mini Bar Total */}
+                                    <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.mini_bar_items_sum_amount || 0), 0))}</TableCell>
+                                    {/* Other Charges Total */}
+                                    <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.other_charges_sum_amount || 0), 0))}</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.grand_total || 0), 0))}</TableCell>
+                                </TableRow>
+                            </TableFooter>
                         </Table>
                     </TableContainer>
 

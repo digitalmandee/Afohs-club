@@ -5,7 +5,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { usePage, router } from '@inertiajs/react';
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment, Tooltip, createTheme, ThemeProvider } from '@mui/material';
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment, Tooltip, createTheme, ThemeProvider, TableFooter } from '@mui/material';
 import { Search, Visibility, Edit } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { styled } from '@mui/material/styles';
@@ -222,6 +222,17 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                         </TableRow>
                                     )}
                                 </TableBody>
+                                <TableFooter>
+                                    <TableRow style={{ backgroundColor: '#f0f0f0' }}>
+                                        <TableCell colSpan={15} sx={{ fontWeight: 'bold' }}>
+                                            Grand Total
+                                        </TableCell>
+                                        {/* Mini Bar Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.mini_bar_items_sum_amount || 0), 0))}</TableCell>
+                                        {/* Other Charges Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.other_charges_sum_amount || 0), 0))}</TableCell>
+                                    </TableRow>
+                                </TableFooter>
                             </Table>
                         </TableContainer>
 

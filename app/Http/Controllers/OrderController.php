@@ -1249,14 +1249,13 @@ class OrderController extends Controller
             // Fallback: if no existing order (new creation), it's not "previously saved", so we don't wipe (nothing to wipe)
             // Check if we found an existing order that was saved
             if ($wasSaved) {
-                Log::info('Wiping items for previously saved order #' . $existingOrder->id);
                 foreach ($existingOrder->orderItems as $existingItem) {
                     $itemData = $existingItem->order_item;
                     $qty = $itemData['quantity'] ?? 1;
                     $prodId = $itemData['id'] ?? null;
 
                     if ($prodId) {
-                        $prod = \App\Models\Product::find($prodId);
+                        $prod = Product::find($prodId);
                         if ($prod && $prod->manage_stock) {
                             $prod->increment('current_stock', $qty);
 
@@ -1264,7 +1263,7 @@ class OrderController extends Controller
                                 foreach ($itemData['variants'] as $variant) {
                                     $vId = $variant['id'] ?? null;
                                     if ($vId) {
-                                        \App\Models\ProductVariantValue::where('id', $vId)->increment('stock', 1);
+                                        ProductVariantValue::where('id', $vId)->increment('stock', 1);
                                     }
                                 }
                             }

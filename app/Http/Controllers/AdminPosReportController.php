@@ -2220,8 +2220,11 @@ class AdminPosReportController extends Controller
 
         // Group items by category - only include products that belong to this tenant
         foreach ($orders as $order) {
+            $products = Product::whereIn('id', $order->orderItems->pluck('id'))
+                ->pluck('menu_code', 'id');
             foreach ($order->orderItems as $orderItem) {
                 $item = $orderItem->order_item;
+                $item['menu_code'] = $products[$orderItem->id] ?? null;
                 $this->processFinancialItem(
                     $item,
                     $reportData,
