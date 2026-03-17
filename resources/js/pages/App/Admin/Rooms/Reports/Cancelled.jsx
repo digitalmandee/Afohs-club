@@ -88,7 +88,7 @@ const CancelledReport = ({ bookings = {}, filters = {} }) => {
                                     bookingList.map((booking) => (
                                         <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                             <TableCell>{booking.booking_no || booking.id}</TableCell>
-                                            <TableCell>{booking.room?.roomType?.name || '-'}</TableCell>
+                                            <TableCell>{booking.room?.room_type?.name || '-'}</TableCell>
                                             <TableCell>{booking.room?.name}</TableCell>
                                             <TableCell>{getGuestName(booking)}</TableCell>
                                             <TableCell>{booking.booking_date || '-'}</TableCell>

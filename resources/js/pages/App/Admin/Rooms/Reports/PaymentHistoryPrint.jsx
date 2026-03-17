@@ -22,7 +22,7 @@ const PaymentHistoryPrint = ({ rows = [], filters = {}, cutoff, generatedAt = ''
                 </Typography>
             </Box>
 
-            <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #ddd' }}>
+            <TableContainer component={Paper} sx={{ overflow: 'visible', boxShadow: 'none', border: '1px solid #ddd' }}>
                 <Table size="small">
                     <TableHead>
                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
@@ -75,14 +75,23 @@ const PaymentHistoryPrint = ({ rows = [], filters = {}, cutoff, generatedAt = ''
                             );
                             return out;
                         })}
+                        {rows.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={9} sx={{ textAlign: 'center' }}>
+                                    No data available
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
             </TableContainer>
 
             <Box sx={{ mt: 3, textAlign: 'right' }}>
-
-            <Box sx={{ mt: 3, textAlign: 'right' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                    Total Rooms: {rows.length}
-                </Typography>
+                <Box sx={{ mt: 3, textAlign: 'right' }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        Total Rooms: {rows.length}
+                    </Typography>
+                </Box>
             </Box>
         </Box>
     );

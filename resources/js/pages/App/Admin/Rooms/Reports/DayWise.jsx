@@ -107,7 +107,7 @@ const DayWiseReport = ({ bookings = {}, filters = {} }) => {
                                                 <TableCell>{booking.booking_no || booking.id}</TableCell>
                                                 <TableCell>{booking.booking_date || '-'}</TableCell>
                                                 <TableCell>{getGuestName(booking)}</TableCell>
-                                                <TableCell>{booking.room?.roomType?.name || '-'}</TableCell>
+                                                <TableCell>{booking.room?.room_type?.name || '-'}</TableCell>
                                                 <TableCell>{booking.room?.name || '-'}</TableCell>
                                                 <TableCell>{booking.check_in_date || '-'}</TableCell>
                                                 <TableCell>{booking.check_out_date || '-'}</TableCell>

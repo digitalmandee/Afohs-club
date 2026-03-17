@@ -40,23 +40,13 @@ const MiniBarReport = ({ items = {}, filters = {} }) => {
                         <IconButton onClick={() => router.visit(route('rooms.reports'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
-                            Mini-bar Usage Report
-                        </Typography>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Mini-bar Usage Report</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<FileDownloadIcon />}
-                            onClick={handleExport}
-                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Export
                         </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<PrintIcon />}
-                            onClick={handlePrint}
-                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Print
                         </Button>
                     </Box>
@@ -104,6 +94,7 @@ const MiniBarReport = ({ items = {}, filters = {} }) => {
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Guest</TableCell>
@@ -123,6 +114,7 @@ const MiniBarReport = ({ items = {}, filters = {} }) => {
                                 ) : (
                                     itemList.map((item) => (
                                         <TableRow key={item.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
+                                            <TableCell>#{item.room_booking?.booking_no || '-'}</TableCell>
                                             <TableCell>{item.room_booking?.booking_date || '-'}</TableCell>
                                             <TableCell>
                                                 {item.room_booking?.room?.name} ({item.room_booking?.room?.roomType?.name || item.room_booking?.room?.room_type?.name || '-'})
@@ -135,6 +127,13 @@ const MiniBarReport = ({ items = {}, filters = {} }) => {
                                         </TableRow>
                                     ))
                                 )}
+                                {/* Footer */}
+                                <TableRow>
+                                    <TableCell colSpan={6} align="right" sx={{ fontWeight: 600 }}>
+                                        Total:
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>{items.data?.reduce((acc, item) => Number(acc) + Number(item.total), 0)}</TableCell>
+                                </TableRow>
                             </TableBody>
                         </Table>
                     </TableContainer>

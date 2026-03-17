@@ -564,7 +564,7 @@ export const generateInvoiceContent = (booking, type) => {
             return `<!doctype html>
       <html>
           <head>
-              <title>Booking Invoice</title>
+              <title>${type === 'CHECK_OUT' ? 'Checkout Invoice' : 'Booking Invoice'}</title>
               <style>
                   body {
                       font-family: Arial, sans-serif;
@@ -683,7 +683,7 @@ export const generateInvoiceContent = (booking, type) => {
                           <div class="grid-item-right">
                               <div style="color: #333; margin-top: 10px; font-weight:600;">
                             <!-- ${getBookingTypeLabel(booking.booking_type)} -->
-                            GUEST ROOMS INVOICE
+                            ${type === 'CHECK_OUT' ? 'CHECKOUT INVOICE' : 'GUEST ROOMS INVOICE'}
                               </div>
                               <div style="
                                   margin-top: 4px;

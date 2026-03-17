@@ -26,6 +26,7 @@ const MiniBarPrint = ({ items = [], filters = {}, generatedAt = '' }) => {
                 <Table size="small">
                     <TableHead>
                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                            <TableCell sx={{ fontWeight: 600 }}>Booking No</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Guest</TableCell>
@@ -38,6 +39,7 @@ const MiniBarPrint = ({ items = [], filters = {}, generatedAt = '' }) => {
                     <TableBody>
                         {items.map((item) => (
                             <TableRow key={item.id}>
+                                <TableCell>#{item.room_booking?.booking_no || '-'}</TableCell>
                                 <TableCell>{item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</TableCell>
                                 <TableCell>{item.room_booking?.room?.room_number}</TableCell>
                                 <TableCell>{item.room_booking?.customer ? item.room_booking.customer.name : item.room_booking?.member ? item.room_booking.member.full_name : item.room_booking?.corporate_member ? item.room_booking.corporate_member.name : '-'}</TableCell>
@@ -47,6 +49,13 @@ const MiniBarPrint = ({ items = [], filters = {}, generatedAt = '' }) => {
                                 <TableCell>{item.total}</TableCell>
                             </TableRow>
                         ))}
+                        {/* Footer */}
+                        <TableRow>
+                            <TableCell colSpan={6} align="right" sx={{ fontWeight: 600 }}>
+                                Total:
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>{items.reduce((acc, item) => Number(acc) + Number(item.total), 0)}</TableCell>
+                        </TableRow>
                     </TableBody>
                 </Table>
             </TableContainer>

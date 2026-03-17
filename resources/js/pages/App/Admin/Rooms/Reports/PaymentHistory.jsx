@@ -40,7 +40,7 @@ const PaymentHistoryReport = ({ rows = [], filters = {}, cutoff }) => {
                     </Box>
                 </Box>
 
-                <RoomBookingFilter routeName="rooms.reports.payment-history" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} dateLabels={{ booking: 'Date', checkIn: 'Check-In Date', checkOut: 'Check-Out Date' }} dateMode={{ checkIn: 'single', checkOut: 'single' }} />
+                <RoomBookingFilter routeName="rooms.reports.payment-history" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} dateLabels={{ booking: 'Date', checkIn: 'Check-In Dates', checkOut: 'Check-Out Dates' }} dateMode={{ booking: 'single', checkIn: 'range', checkOut: 'range' }} />
 
                 {/* Results Summary */}
                 <Box sx={{ mb: 2 }}>

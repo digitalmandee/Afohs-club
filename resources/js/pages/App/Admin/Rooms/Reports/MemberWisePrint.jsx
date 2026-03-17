@@ -19,9 +19,6 @@ const MemberWisePrint = ({ bookings = [], member = null, generatedAt = '' }) => 
         return colors[status] || 'default';
     };
 
-    if (!member) {
-        return <Typography>No Member Selected</Typography>;
-    }
 
     return (
         <Box sx={{ p: 3, backgroundColor: '#fff' }}>
@@ -31,9 +28,11 @@ const MemberWisePrint = ({ bookings = [], member = null, generatedAt = '' }) => 
                 <Typography variant="h5" sx={{ fontWeight: 700 }}>
                     Member History Report
                 </Typography>
-                <Typography variant="h6" sx={{ mt: 1 }}>
-                    {member.full_name} ({member.membership_no})
-                </Typography>
+                {member && (
+                    <Typography variant="h6" sx={{ mt: 1 }}>
+                        {member.full_name} ({member.membership_no})
+                    </Typography>
+                )}
                 <Typography variant="body2" color="textSecondary">
                     Generated: {generatedAt}
                 </Typography>
@@ -43,27 +42,44 @@ const MemberWisePrint = ({ bookings = [], member = null, generatedAt = '' }) => 
                 <Table size="small">
                     <TableHead>
                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                            <TableCell sx={{ fontWeight: 600 }}>Booking ID</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Booking No</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Booking Date</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Member / Guest</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Check In</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Check Out</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Advance/Security</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Total</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Paid</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Due</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Total Amount</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {bookings.map((booking) => (
-                            <TableRow key={booking.id}>
-                                <TableCell>{booking.booking_number || booking.id}</TableCell>
-                                <TableCell>{booking.room?.room_number}</TableCell>
-                                <TableCell>{booking.check_in_date}</TableCell>
-                                <TableCell>{booking.check_out_date}</TableCell>
-                                <TableCell>
-                                    <Chip label={booking.status} size="small" color={getStatusColor(booking.status)} variant="outlined" />
-                                </TableCell>
-                                <TableCell>{booking.total_amount}</TableCell>
-                            </TableRow>
-                        ))}
+                        {bookings.map((booking) => {
+                            const guestName = booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember ? booking.corporateMember.full_name : 'Unknown';
+                            const advanceSecurity = Number(booking.security_deposit || 0) + Number(booking.advance_amount || 0);
+                            const total = Number(booking.grand_total || 0);
+                            const paid = Number(booking.invoice?.paid_amount || 0);
+                            const due = total - paid;
+                            return (
+                                <TableRow key={booking.id}>
+                                    <TableCell>{booking.booking_no || booking.booking_number}</TableCell>
+                                    <TableCell>{booking.booking_date || '-'}</TableCell>
+                                    <TableCell>{guestName}</TableCell>
+                                    <TableCell>{booking.check_in_date}</TableCell>
+                                    <TableCell>{booking.check_out_date}</TableCell>
+                                    <TableCell>{booking.room?.name || '-'}</TableCell>
+                                    <TableCell>{advanceSecurity.toFixed(2)}</TableCell>
+                                    <TableCell>{total.toFixed(2)}</TableCell>
+                                    <TableCell>{paid.toFixed(2)}</TableCell>
+                                    <TableCell>{due.toFixed(2)}</TableCell>
+                                    <TableCell>
+                                        <Chip label={booking.status} size="small" color={getStatusColor(booking.status)} variant="outlined" />
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </TableContainer>

@@ -17,16 +17,7 @@ const RoundedTextField = styled(TextField)({
     },
 });
 
-const RoomBookingFilter = ({
-    routeName = 'rooms.manage',
-    showStatus = true,
-    showRoomType = true,
-    showVenues = false,
-    venues = [],
-    showDates = { booking: true, checkIn: true, checkOut: true },
-    dateLabels = { booking: 'Booking Date', checkIn: 'Check-In', checkOut: 'Check-Out' },
-    dateMode = { booking: 'range', checkIn: 'range', checkOut: 'range' },
-}) => {
+const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, showRoomType = true, showVenues = false, venues = [], showDates = { booking: true, checkIn: true, checkOut: true }, dateLabels = { booking: 'Booking Date', checkIn: 'Check-In', checkOut: 'Check-Out' }, dateMode = { booking: 'range', checkIn: 'range', checkOut: 'range' } }) => {
     const { props } = usePage();
     const { filters, roomTypes = [], rooms = [] } = props; // Receive rooms prop
 
@@ -37,8 +28,8 @@ const RoomBookingFilter = ({
     const [customerType, setCustomerType] = useState(filters.customer_type || 'all');
     const [guestTypes, setGuestTypes] = useState([]);
 
-    const [bookingDateFrom, setBookingDateFrom] = useState(filters.booking_date_from ? dayjs(filters.booking_date_from) : null);
-    const [bookingDateTo, setBookingDateTo] = useState(filters.booking_date_to ? dayjs(filters.booking_date_to) : null);
+    const [bookingDateFrom, setBookingDateFrom] = useState(filters.booking_date_from || '');
+    const [bookingDateTo, setBookingDateTo] = useState(filters.booking_date_to || '');
 
     const [checkInFrom, setCheckInFrom] = useState(filters.check_in_from || filters.event_date_from || '');
     const [checkInTo, setCheckInTo] = useState(filters.check_in_to || filters.event_date_to || '');
@@ -49,7 +40,12 @@ const RoomBookingFilter = ({
     const [selectedRoomTypes, setSelectedRoomTypes] = useState(filters.room_type ? filters.room_type.split(',') : []);
     const [selectedRooms, setSelectedRooms] = useState(filters.room_ids ? filters.room_ids.split(',') : []);
     const [selectedVenues, setSelectedVenues] = useState(filters.venues || []); // For Events
-    const [selectedStatus, setSelectedStatus] = useState(filters.booking_status ? filters.booking_status.split(',') : filters.status || []);
+    const [selectedStatus, setSelectedStatus] = useState(() => {
+        const raw = filters.booking_status ?? filters.status ?? [];
+        if (Array.isArray(raw)) return raw;
+        if (typeof raw === 'string') return raw.split(',').filter(Boolean);
+        return [];
+    });
 
     // Suggestions State
     const [suggestions, setSuggestions] = useState([]);
@@ -135,8 +131,10 @@ const RoomBookingFilter = ({
         if (membershipNo) filterParams.membership_no = membershipNo;
         if (customerType && customerType !== 'all') filterParams.customer_type = customerType;
 
-        if (bookingDateFrom) filterParams.booking_date_from = bookingDateFrom.format('YYYY-MM-DD');
-        if (bookingDateTo) filterParams.booking_date_to = bookingDateTo.format('YYYY-MM-DD');
+        if (bookingDateFrom) filterParams.booking_date_from = bookingDateFrom;
+        if (bookingDateTo) filterParams.booking_date_to = bookingDateTo;
+        if (dateMode.booking === 'single' && bookingDateFrom && !bookingDateTo) filterParams.booking_date_to = bookingDateFrom;
+        if (dateMode.booking === 'single' && bookingDateTo && !bookingDateFrom) filterParams.booking_date_from = bookingDateTo;
 
         // Allow adapting parameter names based on whether it's for events or rooms
         // We know 'events' routes might use event_date_from/to instead of check_in_from/to
@@ -347,59 +345,94 @@ const RoomBookingFilter = ({
                     {/* Booking Date Range */}
                     {showDates.booking && (
                         <>
-                            <Grid item xs={12} md={3}>
-                                <DatePicker
-                                    label={`${dateLabels.booking} From`}
-                                    format="DD-MM-YYYY"
-                                    value={bookingDateFrom ? dayjs(bookingDateFrom) : null}
-                                    onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    enableAccessibleFieldDOMStructure={false}
-                                    slots={{ textField: RoundedTextField }}
-                                    slotProps={{
-                                        textField: {
-                                            size: 'small',
-                                            fullWidth: true,
-                                            sx: { minWidth: '150px' },
-                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                        },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                        popper: {
-                                            sx: {
-                                                mt: 1, // Top spacing
-                                                // mb: 2,
-                                                '& .MuiPaper-root': {
-                                                    borderRadius: '16px', // ✅ Rounded corners
-                                                    boxShadow: 'none',
+                            {dateMode.booking === 'single' ? (
+                                <Grid item xs={12} md={3}>
+                                    <DatePicker
+                                        label={dateLabels.booking}
+                                        format="DD-MM-YYYY"
+                                        value={bookingDateFrom ? dayjs(bookingDateFrom) : null}
+                                        onChange={(newValue) => {
+                                            const v = newValue ? newValue.format('YYYY-MM-DD') : '';
+                                            setBookingDateFrom(v);
+                                            setBookingDateTo(v);
+                                        }}
+                                        enableAccessibleFieldDOMStructure={false}
+                                        slots={{ textField: RoundedTextField }}
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                fullWidth: true,
+                                                sx: { minWidth: '150px' },
+                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                            },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                            popper: {
+                                                sx: {
+                                                    mt: 1,
+                                                    '& .MuiPaper-root': {
+                                                        borderRadius: '16px',
+                                                        boxShadow: 'none',
+                                                    },
                                                 },
                                             },
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <DatePicker
-                                    label={`${dateLabels.booking} To`}
-                                    format="DD-MM-YYYY"
-                                    value={bookingDateTo ? dayjs(bookingDateTo) : null}
-                                    onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    enableAccessibleFieldDOMStructure={false}
-                                    slots={{ textField: RoundedTextField }}
-                                    slotProps={{
-                                        textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                        popper: {
-                                            sx: {
-                                                mt: 1, // Top spacing
-                                                // mb: 2,
-                                                '& .MuiPaper-root': {
-                                                    borderRadius: '16px', // ✅ Rounded corners
-                                                    boxShadow: 'none',
+                                        }}
+                                    />
+                                </Grid>
+                            ) : (
+                                <>
+                                    <Grid item xs={12} md={3}>
+                                        <DatePicker
+                                            label={`${dateLabels.booking} From`}
+                                            format="DD-MM-YYYY"
+                                            value={bookingDateFrom ? dayjs(bookingDateFrom) : null}
+                                            onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            enableAccessibleFieldDOMStructure={false}
+                                            slots={{ textField: RoundedTextField }}
+                                            slotProps={{
+                                                textField: {
+                                                    size: 'small',
+                                                    fullWidth: true,
+                                                    sx: { minWidth: '150px' },
+                                                    onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
                                                 },
-                                            },
-                                        },
-                                    }}
-                                />
-                            </Grid>
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                                popper: {
+                                                    sx: {
+                                                        mt: 1,
+                                                        '& .MuiPaper-root': {
+                                                            borderRadius: '16px',
+                                                            boxShadow: 'none',
+                                                        },
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <DatePicker
+                                            label={`${dateLabels.booking} To`}
+                                            format="DD-MM-YYYY"
+                                            value={bookingDateTo ? dayjs(bookingDateTo) : null}
+                                            onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            enableAccessibleFieldDOMStructure={false}
+                                            slots={{ textField: RoundedTextField }}
+                                            slotProps={{
+                                                textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                                popper: {
+                                                    sx: {
+                                                        mt: 1,
+                                                        '& .MuiPaper-root': {
+                                                            borderRadius: '16px',
+                                                            boxShadow: 'none',
+                                                        },
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                    </Grid>
+                                </>
+                            )}
                         </>
                     )}
 
@@ -803,7 +836,7 @@ const RoomBookingFilter = ({
                                         },
                                     }}
                                 >
-                                     {['confirmed', 'checked_in', 'completed', 'cancelled', 'paid', 'unpaid', 'advance_paid'].map((status) => (
+                                    {['confirmed', 'checked_in', 'checked_out', 'cancelled', 'paid', 'unpaid', 'advance_paid'].map((status) => (
                                         <MenuItem key={status} value={status}>
                                             {status.replace('_', ' ')}
                                         </MenuItem>

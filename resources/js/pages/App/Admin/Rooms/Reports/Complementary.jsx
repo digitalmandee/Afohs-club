@@ -39,23 +39,13 @@ const ComplementaryReport = ({ items = {}, filters = {} }) => {
                         <IconButton onClick={() => router.visit(route('rooms.reports'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
-                            Complementary Items Report
-                        </Typography>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Complementary Items Report</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<FileDownloadIcon />}
-                            onClick={handleExport}
-                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Export
                         </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<PrintIcon />}
-                            onClick={handlePrint}
-                            sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ bgcolor: '#063455', color: '#fff', borderRadius: '16px', textTransform: 'none' }}>
                             Print
                         </Button>
                     </Box>
@@ -75,7 +65,7 @@ const ComplementaryReport = ({ items = {}, filters = {} }) => {
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Guest</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booked By</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Occupied By</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Charges Type</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Description</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Amount</TableCell>
@@ -97,7 +87,8 @@ const ComplementaryReport = ({ items = {}, filters = {} }) => {
                                                 {item.room_booking?.room?.name} ({item.room_booking?.room?.roomType?.name || item.room_booking?.room?.room_type?.name || '-'})
                                             </TableCell>
                                             <TableCell>{getGuestName(item.room_booking)}</TableCell>
-                                            <TableCell>{item.room_booking?.booked_by || '-'}</TableCell>
+
+                                            <TableCell>{`${item.room_booking.guest_first_name || ''} ${item.room_booking.guest_last_name || ''}`.trim() || '-'}</TableCell>
                                             <TableCell>{item.type || '-'}</TableCell>
                                             <TableCell>{item.details}</TableCell>
                                             <TableCell>{item.amount}</TableCell>

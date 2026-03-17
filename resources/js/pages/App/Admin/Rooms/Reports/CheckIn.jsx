@@ -34,7 +34,7 @@ const CheckInReport = ({ bookings = {}, filters = {} }) => {
     const getMemberType = (booking) => {
         if (booking.member) return 'Member';
         if (booking.corporateMember || booking.corporate_member) return 'Corporate';
-        if (booking.customer) return 'Guest';
+        if (booking.customer) return booking.customer?.guest_type?.name || 'Guest';
         if (booking.employee) return 'Employee';
         return 'Unknown';
     };
@@ -86,7 +86,7 @@ const CheckInReport = ({ bookings = {}, filters = {} }) => {
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Check In Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Check Out Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Nights</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booked By</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Occupied By</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Advance/Security</TableCell>
                                 </TableRow>
@@ -108,7 +108,7 @@ const CheckInReport = ({ bookings = {}, filters = {} }) => {
                                             <TableCell>{booking.check_in_date}</TableCell>
                                             <TableCell>{booking.check_out_date || '-'}</TableCell>
                                             <TableCell>{booking.nights || 1}</TableCell>
-                                            <TableCell>{booking.booked_by || '-'}</TableCell>
+                                            <TableCell>{`${booking.guest_first_name || ''} ${booking.guest_last_name || ''}`.trim() || '-'}</TableCell>
                                             <TableCell>{booking.grand_total || 0}</TableCell>
                                             <TableCell>{Number(booking.security_deposit || 0) + Number(booking.advance_amount || 0)}</TableCell>
                                         </TableRow>
