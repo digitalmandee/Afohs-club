@@ -409,6 +409,93 @@ class UserController extends Controller
                     'address' => $customer->address,
                 ];
             });
+        } elseif ($bookingType === 'combined') {
+            // Search both regular members and corporate members for kinship selection
+            $kinshipColumns = [
+                'members.id',
+                'members.full_name',
+                'members.membership_no',
+                'members.cnic_no',
+                'members.current_address',
+                'members.personal_email',
+                'members.mobile_number_a',
+                'members.status',
+                'member_categories.name as category_name',
+                DB::raw("'member' as member_type"),
+                DB::raw('(SELECT COUNT(*) FROM members AS km WHERE km.kinship = members.id) as total_kinships'),
+            ];
+
+            $regularMembers = Member::select($kinshipColumns)
+                ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
+                ->whereNull('members.parent_id')
+                ->where(function ($q) use ($query) {
+                    $q->where('members.full_name', 'like', "%{$query}%")
+                      ->orWhere('members.membership_no', 'like', "%{$query}%");
+                })
+                ->limit(20)
+                ->get();
+
+            $corporateColumns = [
+                'corporate_members.id',
+                'corporate_members.full_name',
+                'corporate_members.membership_no',
+                'corporate_members.cnic_no',
+                'corporate_members.current_address',
+                'corporate_members.personal_email',
+                'corporate_members.mobile_number_a',
+                'corporate_members.status',
+                'member_categories.name as category_name',
+                DB::raw("'corporate' as member_type"),
+                DB::raw('(SELECT COUNT(*) FROM corporate_members AS kcm WHERE kcm.kinship = corporate_members.id) as total_kinships'),
+            ];
+
+            $corporateMembers = \App\Models\CorporateMember::select($corporateColumns)
+                ->leftJoin('member_categories', 'corporate_members.member_category_id', '=', 'member_categories.id')
+                ->whereNull('corporate_members.parent_id')
+                ->where(function ($q) use ($query) {
+                    $q->where('corporate_members.full_name', 'like', "%{$query}%")
+                      ->orWhere('corporate_members.membership_no', 'like', "%{$query}%");
+                })
+                ->limit(20)
+                ->get();
+
+            $results = collect();
+
+            $results = $results->merge($regularMembers->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'booking_type' => 'member',
+                    'is_corporate' => false,
+                    'name' => $user->full_name,
+                    'label' => "{$user->full_name} ({$user->membership_no})",
+                    'membership_no' => $user->membership_no,
+                    'email' => $user->personal_email,
+                    'cnic' => $user->cnic_no,
+                    'phone' => $user->mobile_number_a,
+                    'address' => $user->current_address,
+                    'status' => $user->status ?? 'active',
+                    'total_kinships' => $user->total_kinships ?? 0,
+                    'category_name' => $user->category_name,
+                ];
+            }));
+
+            $results = $results->merge($corporateMembers->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'booking_type' => 'corporate',
+                    'is_corporate' => true,
+                    'name' => $user->full_name,
+                    'label' => "{$user->full_name} ({$user->membership_no}) [Corp]",
+                    'membership_no' => $user->membership_no,
+                    'email' => $user->personal_email,
+                    'cnic' => $user->cnic_no,
+                    'phone' => $user->mobile_number_a,
+                    'address' => $user->current_address,
+                    'status' => $user->status ?? 'active',
+                    'total_kinships' => $user->total_kinships ?? 0,
+                    'category_name' => $user->category_name,
+                ];
+            }))->values();
         } else {
             return response()->json(['success' => false, 'message' => 'Invalid booking type'], 400);
         }

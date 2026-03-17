@@ -1192,31 +1192,31 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                 const prefix = selectedCategory?.name || '';
 
                                                 if (kinshipUser && kinshipUser.membership_no) {
-                                                    const kinshipParts = kinshipUser.membership_no.split(' ');
-                                                    const kinshipNum = kinshipParts[1];
+                                                    // Robustly extract the base number from the kinship's membership_no
+                                                    // E.g. "CE 123" => "123", "CE 123-2" => "123" (strip any dash-suffix)
+                                                    const parts = kinshipUser.membership_no.trim().split(' ');
+                                                    const rawNum = parts.length >= 2 ? parts[parts.length - 1] : parts[0];
+                                                    // Strip any existing kinship suffix (e.g. "123-2" => "123")
+                                                    const baseNum = rawNum ? rawNum.split('-')[0] : null;
 
-                                                    const existingMembers = [];
-                                                    let suffix = kinshipUser.total_kinships + 1;
-                                                    while (existingMembers.includes(`${prefix} ${kinshipNum}-${suffix}`)) {
-                                                        suffix++;
+                                                    if (baseNum && !isNaN(Number(baseNum))) {
+                                                        const totalKinships = Number(kinshipUser.total_kinships) || 0;
+                                                        const suffix = totalKinships + 1;
+                                                        const newMembershipNo = `${prefix} ${baseNum}-${suffix}`;
+
+                                                        handleChange({
+                                                            target: {
+                                                                name: 'membership_no',
+                                                                value: newMembershipNo,
+                                                            },
+                                                        });
                                                     }
-
-                                                    const newMembershipNo = `${prefix} ${kinshipNum}-${suffix}`;
-
-                                                    handleChange({
-                                                        target: {
-                                                            name: 'membership_no',
-                                                            value: newMembershipNo,
-                                                        },
-                                                    });
                                                 }
                                             }}
                                             endpoint="admin.api.search-users"
-                                            placeholder="Search Kinship..."
+                                            params={{ type: 'combined' }}
+                                            placeholder="Search member or corporate..."
                                             disabled={!data.membership_category}
-                                            // textFieldProps={{
-                                            //     sx: { '& .MuiInputBase-root': { height: 40, alignItems: 'center' } }
-                                            // }}
                                         />
                                     </Box>
                                 </Grid>
