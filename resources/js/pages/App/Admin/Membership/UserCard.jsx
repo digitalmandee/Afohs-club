@@ -285,11 +285,7 @@ export const handlePrintMembershipCard = (member) => {
         </div>
 
         <div class="footer ${member?.parent_id ? 'supplementary' : ''}">
-    ${member?.parent_id
-            ? 'Supplementary Member'
-            : member?.corporate_company_id || member?.is_corporate
-                ? 'Corporate Member'
-                : 'Primary Member'}
+    ${member?.parent_id ? 'Supplementary Member' : member?.corporate_company_id || member?.is_corporate ? 'Corporate Member' : 'Primary Member'}
 </div>
     </div>
 </body>
@@ -349,9 +345,7 @@ export const MembershipCardContent = ({ member, id }) => {
                             <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
                                 <img src="/assets/Logo.png" alt="AFOHS CLUB" style={{ height: 150 }} />
                             </Box>
-                            <Typography sx={{ fontSize: '16px', fontWeight: 600, pt: 5, pl: 2, whiteSpace: 'nowrap', color: '#000' }}>
-                                Membership No
-                            </Typography>
+                            <Typography sx={{ fontSize: '16px', fontWeight: 600, pt: 5, pl: 2, whiteSpace: 'nowrap', color: '#000' }}>Membership No</Typography>
                             <Typography variant="subtitle1" fontWeight="bold" color="#000" sx={{ ml: 3 }}>
                                 {member?.membership_no || 'N/A'}
                             </Typography>
@@ -369,11 +363,9 @@ export const MembershipCardContent = ({ member, id }) => {
                                     bgcolor: '#fff',
                                 }}
                             >
-                                <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: "100%", height: "100%" }} />
+                                <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: '100%', height: '100%' }} />
                             </Box>
-                            <Typography sx={{ fontSize: '10px', fontWeight: 'bold', color: '#000', pt: 1 }}>
-                                MONTH/YEAR
-                            </Typography>
+                            <Typography sx={{ fontSize: '10px', fontWeight: 'bold', color: '#000', pt: 1 }}>MONTH/YEAR</Typography>
                             <Box sx={{ display: 'flex', gap: 2 }}>
                                 <Typography
                                     sx={{
@@ -384,12 +376,11 @@ export const MembershipCardContent = ({ member, id }) => {
                                         lineHeight: 1.2,
                                     }}
                                 >
-                                    VALID<br />
+                                    VALID
+                                    <br />
                                     UNTIL
                                 </Typography>
-                                <Typography sx={{fontWeight:800, fontSize:'16px', color:'#000', marginTop:1}}>
-                                    {formatExpiryDate(member?.card_expiry_date)}
-                                </Typography>
+                                <Typography sx={{ fontWeight: 800, fontSize: '16px', color: '#000', marginTop: 1 }}>{formatExpiryDate(member?.card_expiry_date)}</Typography>
                             </Box>
                         </Box>
                     </Grid>
@@ -420,16 +411,8 @@ export const MembershipCardContent = ({ member, id }) => {
                         color: member?.parent_id ? 'black' : 'white',
                     }}
                 >
-                    <Typography
-                        variant="h6"
-                        fontWeight="small"
-                        sx={{ textTransform: 'uppercase' }}
-                    >
-                        {member?.parent_id
-                            ? 'Supplementary Member'
-                            : member?.corporate_company_id || member?.is_corporate
-                                ? 'Corporate Member'
-                                : 'Primary Member'}
+                    <Typography variant="h6" fontWeight="small" sx={{ textTransform: 'uppercase' }}>
+                        {member?.parent_id ? 'Supplementary Member' : member?.corporate_company_id || member?.is_corporate ? 'Corporate Member' : 'Primary Member'}
                     </Typography>
                 </MembershipFooter>
             </>

@@ -6,6 +6,17 @@ import axios from 'axios';
 import { toWords } from 'number-to-words';
 import dayjs from 'dayjs';
 
+const formatDate = (dateString) => {
+    if (!dateString) return '-'; // Handle empty dates
+    const date = new Date(dateString);
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`;
+};
+
 const handlePrintReceipt = (invoice) => {
     if (!invoice) return;
 
@@ -99,16 +110,7 @@ const handlePrintReceipt = (invoice) => {
 
     // Map data to invoiceData for consistency with JSX
     const guestTypeName = invoice.customer?.guest_type?.name || invoice.customer?.guestType?.name || invoice.customer?.guest_type_name || null;
-    const billToCategory =
-        invoice.customer
-            ? guestTypeName || 'Guest'
-            : invoice.invoice_type === 'applied_member'
-              ? 'Applied Member'
-              : invoice.member
-                ? invoice.member?.member_type?.name || invoice.member?.memberType?.name || 'Member'
-                : invoice.corporate_member
-                  ? invoice.corporate_member?.member_type?.name || invoice.corporate_member?.memberType?.name || 'Corporate Member'
-                  : invoice.data?.member_category || invoice.data?.category || 'Member';
+    const billToCategory = invoice.customer ? guestTypeName || 'Guest' : invoice.invoice_type === 'applied_member' ? 'Applied Member' : invoice.member ? invoice.member?.member_type?.name || invoice.member?.memberType?.name || 'Member' : invoice.corporate_member ? invoice.corporate_member?.member_type?.name || invoice.corporate_member?.memberType?.name || 'Corporate Member' : invoice.data?.member_category || invoice.data?.category || 'Member';
 
     const billToIdLabel = invoice.customer ? 'Guest #' : 'Membership #';
 
@@ -348,6 +350,7 @@ const handlePrintReceipt = (invoice) => {
                   <tr>
                     <th>SR #</th>
                     <th>Description</th>
+                    ${invoice.fee_type === 'maintenance_fee' ? `<th>Start Date</th><th>End Date</th>` : ''}
                     ${invoice.fee_type === 'subscription_fee' ? `<th>Type</th><th>Category</th><th>Fee</th><th>Disc</th>` : ''}
                     ${showItemDiscount ? `<th>Disc</th>` : ''}
                     ${showItemAdditional ? `<th>Add. Chrgs</th>` : ''}
@@ -365,6 +368,7 @@ const handlePrintReceipt = (invoice) => {
                     <tr>
                       <td>${item.srNo}</td>
                       <td>${item.description}</td>
+                      ${invoice.fee_type === 'maintenance_fee' ? `<td>${formatDate(item.startDate)}</td><td>${formatDate(item.endDate)}</td>` : ''}
                        ${invoice.fee_type === 'subscription_fee' ? `<td>${item.subscriptionType}</td><td>${item.subscriptionCategory}</td><td>${item.originalAmount}</td><td>${item.discount}</td>` : ''}
                       ${showItemDiscount ? `<td>${num(item.discount) > 0 ? `Rs ${item.discount}` : ''}</td>` : ''}
                       ${showItemAdditional ? `<td>${num(item.additionalCharges) > 0 ? `Rs ${item.additionalCharges}` : ''}</td>` : ''}
@@ -599,16 +603,7 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
     const showRowAdditional = itemsList.some((it) => num(it.additional_charges) > 0);
 
     const guestTypeName = invoice?.customer?.guest_type?.name || invoice?.customer?.guestType?.name || invoice?.customer?.guest_type_name || null;
-    const billToCategory =
-        invoice?.customer
-            ? guestTypeName || 'Guest'
-            : invoice?.invoice_type === 'applied_member'
-              ? 'Applied Member'
-              : invoice?.member
-                ? invoice.member?.member_type?.name || invoice.member?.memberType?.name || 'Member'
-                : invoice?.corporate_member
-                  ? invoice.corporate_member?.member_type?.name || invoice.corporate_member?.memberType?.name || 'Corporate Member'
-                  : invoice?.data?.member_category || invoice?.data?.category || 'Member';
+    const billToCategory = invoice?.customer ? guestTypeName || 'Guest' : invoice?.invoice_type === 'applied_member' ? 'Applied Member' : invoice?.member ? invoice.member?.member_type?.name || invoice.member?.memberType?.name || 'Member' : invoice?.corporate_member ? invoice.corporate_member?.member_type?.name || invoice.corporate_member?.memberType?.name || 'Corporate Member' : invoice?.data?.member_category || invoice?.data?.category || 'Member';
 
     const billToIdLabel = invoice?.customer ? 'Guest #' : 'Membership #';
 
@@ -792,6 +787,12 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                         <TableRow sx={{ backgroundColor: '#f9f9f9' }}>
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>SR #</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Description</TableCell>
+                                            {invoice.fee_type === 'maintenance_fee' && (
+                                                <>
+                                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Start Date</TableCell>
+                                                    <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>End Date</TableCell>
+                                                </>
+                                            )}
                                             {invoice.fee_type === 'subscription_fee' && (
                                                 <>
                                                     <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Type</TableCell>
@@ -870,6 +871,13 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                                 <TableRow key={item.id || index}>
                                                     <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{index + 1}</TableCell>
                                                     <TableCell sx={{ fontSize: '13px', py: 1.5, textTransform: 'capitalize' }}>{description}</TableCell>
+                                                    {invoice.fee_type === 'maintenance_fee' && (
+                                                        <>
+                                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{formatDate(item.start_date || item.startDate)}</TableCell>
+
+                                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{formatDate(item.end_date || item.endDate)}</TableCell>
+                                                        </>
+                                                    )}
                                                     {invoice.fee_type === 'subscription_fee' && (
                                                         <>
                                                             <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.subscriptionType?.name || item.subscription_type_name || 'N/A'}</TableCell>
