@@ -1045,15 +1045,16 @@ class CorporateMembershipController extends Controller
             $query->where('mobile_number_a', 'like', '%' . $request->contact . '%');
         }
 
-        // Parent Name (Member Name)
+        // Parent Name (Member Name) or Parent Membership Number
         if ($request->filled('parent_name')) {
             $query->whereHas('parent', function ($q) use ($request) {
-                $parentName = $request->parent_name;
-                $q->where(function ($subQ) use ($parentName) {
+                $parentSearch = $request->parent_name;
+                $q->where(function ($subQ) use ($parentSearch) {
                     $subQ
-                        ->where('first_name', 'like', '%' . $parentName . '%')
-                        ->orWhere('last_name', 'like', '%' . $parentName . '%')
-                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $parentName . '%']);
+                        ->where('first_name', 'like', '%' . $parentSearch . '%')
+                        ->orWhere('last_name', 'like', '%' . $parentSearch . '%')
+                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $parentSearch . '%'])
+                        ->orWhere('membership_no', 'like', '%' . $parentSearch . '%');
                 });
             });
         }

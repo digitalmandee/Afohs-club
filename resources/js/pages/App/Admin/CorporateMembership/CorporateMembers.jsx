@@ -135,8 +135,8 @@ const CorporateMembers = ({ members }) => {
                                     <TableRow style={{ backgroundColor: '#063455' }}>
                                         <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                         <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Member</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Category</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Type</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}># Family Members</TableCell>
                                         <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CNIC</TableCell>
                                         <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Contact</TableCell>
                                         <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership Date</TableCell>
@@ -178,9 +178,9 @@ const CorporateMembers = ({ members }) => {
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{user.member_category?.description || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                <Chip label="Corporate" size="small" sx={{ backgroundColor: '#1976d2', color: 'white', fontWeight: 600, fontSize: '11px' }} />
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{user.member_category?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', textAlign: 'center' }}>
+                                                <Chip label={user.family_members_count ?? 0} size="small" sx={{ backgroundColor: '#e3f2fd', color: '#1565c0', fontWeight: 600, fontSize: '12px', minWidth: '32px' }} />
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{user.cnic_no || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
@@ -358,7 +358,7 @@ const CorporateMembers = ({ members }) => {
                                     ))}
                                     {filteredMembers.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                                            <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                                                 No corporate members found.
                                             </TableCell>
                                         </TableRow>

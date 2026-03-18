@@ -19,7 +19,6 @@ const CorporateMembershipDashboardFilter = () => {
         duration: props.filters?.duration || 'all',
         card_status: props.filters?.card_status || 'all',
         status: props.filters?.status || 'all',
-        member_category: props.filters?.member_category || 'all', // Changed from member_type
     });
 
     const handleFilterChange = (key, value) => {
@@ -42,7 +41,6 @@ const CorporateMembershipDashboardFilter = () => {
             duration: 'all',
             card_status: 'all',
             status: 'all',
-            member_category: 'all',
         };
         setFilters(reset);
 
@@ -419,47 +417,6 @@ const CorporateMembershipDashboardFilter = () => {
                             {status.replace(/_/g, ' ')}
                         </MenuItem>
                     ))}
-                </TextField>
-                <TextField
-                    select
-                    label="Member Category"
-                    size="small"
-                    value={filters.member_category}
-                    onChange={(e) => handleFilterChange('member_category', e.target.value)}
-                    fullWidth
-                    sx={{
-                        minWidth: 150,
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px'
-                        }
-                    }}
-                    SelectProps={{
-                        MenuProps: {
-                            sx: {
-                                mt: 1,  // ✅ Top margin
-                                '& .MuiPaper-root': {
-                                    borderRadius: '16px !important',
-                                    boxShadow: 'none !important',
-                                    maxHeight: '200px',
-                                    overflowY: 'auto'
-                                },
-                                '& .MuiMenuItem-root': {
-                                    '&:hover': {
-                                        backgroundColor: '#063455 !important',
-                                        color: '#fff !important'
-                                    }
-                                }
-                            }
-                        }
-                    }}
-                >
-                    <MenuItem value="all">All</MenuItem>
-                    {props.memberCategories &&
-                        props.memberCategories.map((cat, idx) => (
-                            <MenuItem key={idx} value={cat.id}>
-                                {cat.name}
-                            </MenuItem>
-                        ))}
                 </TextField>
 
                 <Box display="flex" justifyContent="flex-end" gap={1}>

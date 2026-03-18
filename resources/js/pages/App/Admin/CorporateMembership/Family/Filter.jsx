@@ -90,6 +90,34 @@ const CorporateFamilyFilter = () => {
         }
     };
 
+    // Membership # suggestive search state
+    const [membershipOpen, setMembershipOpen] = useState(false);
+    const [membershipOptions, setMembershipOptions] = useState([]);
+    const [membershipLoading, setMembershipLoading] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (membershipOpen && filters.membership_no) {
+                fetchMembersByMembershipNo(filters.membership_no);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [filters.membership_no, membershipOpen]);
+
+    const fetchMembersByMembershipNo = async (query) => {
+        setMembershipLoading(true);
+        try {
+            const response = await axios.get(route('api.corporate-members.search'), {
+                params: { query },
+            });
+            setMembershipOptions(response.data.members || []);
+        } catch (error) {
+            console.error('Failed to fetch members by membership no', error);
+        } finally {
+            setMembershipLoading(false);
+        }
+    };
+
     const [parentOpen, setParentOpen] = useState(false);
     const [parentOptions, setParentOptions] = useState([]);
     const [parentLoading, setParentLoading] = useState(false);
@@ -125,17 +153,72 @@ const CorporateFamilyFilter = () => {
     return (
         <Box backgroundColor="transparent" mb={3}>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(5, 1fr)' } }} gap={2} mb={2}>
-                <TextField
-                    label="Membership #"
-                    size="small"
-                    value={filters.membership_no}
-                    onChange={(e) => handleFilterChange('membership_no', e.target.value)}
-                    fullWidth
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px',
-                        },
+                <Autocomplete
+                    open={membershipOpen}
+                    onOpen={() => setMembershipOpen(true)}
+                    onClose={() => setMembershipOpen(false)}
+                    freeSolo
+                    isOptionEqualToValue={(option, value) => option.membership_no === value.membership_no}
+                    getOptionLabel={(option) => (typeof option === 'string' ? option : option.membership_no || '')}
+                    options={membershipOptions}
+                    loading={membershipLoading}
+                    inputValue={filters.membership_no}
+                    onInputChange={(event, newInputValue) => {
+                        handleFilterChange('membership_no', newInputValue);
                     }}
+                    onChange={(event, newValue) => {
+                        if (newValue && typeof newValue === 'object') {
+                            handleFilterChange('membership_no', newValue.membership_no);
+                        }
+                    }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Membership #"
+                            size="small"
+                            fullWidth
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                },
+                            }}
+                            InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                    <>
+                                        {membershipLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </>
+                                ),
+                            }}
+                        />
+                    )}
+                    renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                            <Box sx={{ width: '100%' }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                    <Typography variant="body2" fontWeight="bold">
+                                        {option.membership_no}
+                                    </Typography>
+                                    <Chip
+                                        component="span"
+                                        label={option.status}
+                                        size="small"
+                                        sx={{
+                                            height: '20px',
+                                            fontSize: '10px',
+                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                            textTransform: 'capitalize',
+                                        }}
+                                    />
+                                </Box>
+                                <Typography variant="caption" color="text.secondary">
+                                    {option.full_name}
+                                </Typography>
+                            </Box>
+                        </li>
+                    )}
                 />
 
                 <Autocomplete
@@ -231,13 +314,15 @@ const CorporateFamilyFilter = () => {
                     open={parentOpen}
                     onOpen={() => setParentOpen(true)}
                     onClose={() => setParentOpen(false)}
-                    isOptionEqualToValue={(option, value) => option.full_name === value.full_name}
-                    getOptionLabel={(option) => option.full_name || ''}
+                    isOptionEqualToValue={(option, value) => option.full_name === value.full_name || option.membership_no === value.membership_no}
+                    getOptionLabel={(option) => option.full_name ? `${option.full_name} (${option.membership_no || ''})` : ''}
                     options={parentOptions}
                     loading={parentLoading}
-                    value={parentOptions.find((opt) => opt.full_name === filters.parent_name) || (filters.parent_name ? { full_name: filters.parent_name } : null)}
+                    value={parentOptions.find((opt) => opt.full_name === filters.parent_name || opt.membership_no === filters.parent_name) || (filters.parent_name ? { full_name: filters.parent_name } : null)}
                     onInputChange={(event, newInputValue) => {
-                        handleFilterChange('parent_name', newInputValue);
+                        // Strip the " (membership_no)" suffix added by getOptionLabel when user types
+                        const stripped = newInputValue.replace(/\s*\(.*\)\s*$/, '');
+                        handleFilterChange('parent_name', stripped);
                     }}
                     onChange={(event, newValue) => {
                         handleFilterChange('parent_name', newValue ? newValue.full_name : '');
